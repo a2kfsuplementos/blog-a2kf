@@ -191,25 +191,25 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const SUPABASE_URL = 'https://lotyhojoixtqgxnqllac.supabase.co';
+  const SUPABASE_URL = 'https://lotyhojoixtqgxnqllac.supabase.co/rest/v1/';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvdHlob2pvaXh0cWd4bnFsbGFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMzE0MzMsImV4cCI6MjA5NDgwNzQzM30.JerocygTqXc_hQOB1YBhWIC6aUd95GQO9uH5sC-U0_g';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let allPosts = [];
 
   // Auth guard
-  supabase.auth.getSession().then(({ data: { session } }) => {
+  _sb.auth.getSession().then(({ data: { session } }) => {
     if (!session) window.location.href = 'login.html';
     else loadPosts();
   });
 
   async function logout() {
-    await supabase.auth.signOut();
+    await _sb.auth.signOut();
     window.location.href = 'login.html';
   }
 
   async function loadPosts() {
-    const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+    const { data, error } = await _sb.from('posts').select('*').order('created_at', { ascending: false });
     if (error) { showToast('Erro ao carregar posts.', 'error'); return; }
     allPosts = data || [];
     updateStats();
@@ -259,7 +259,7 @@
   }
 
   async function togglePublish(id, current) {
-    const { error } = await supabase.from('posts').update({ published: !current }).eq('id', id);
+    const { error } = await _sb.from('posts').update({ published: !current }).eq('id', id);
     if (error) { showToast('Erro ao atualizar post.', 'error'); return; }
     const p = allPosts.find(x => x.id === id);
     if (p) p.published = !current;
@@ -270,7 +270,7 @@
 
   async function deletePost(id) {
     if (!confirm('Tem certeza que quer excluir este post? Esta ação não pode ser desfeita.')) return;
-    const { error } = await supabase.from('posts').delete().eq('id', id);
+    const { error } = await _sb.from('posts').delete().eq('id', id);
     if (error) { showToast('Erro ao excluir post.', 'error'); return; }
     allPosts = allPosts.filter(p => p.id !== id);
     updateStats();
