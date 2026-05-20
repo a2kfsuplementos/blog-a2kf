@@ -1,0 +1,314 @@
+const express = require('express');
+const { createClient } = require('@supabase/supabase-js');
+const path = require('path');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// =============================================
+// CONFIGURAÇÃO — coloque no Render em Environment Variables
+// =============================================
+const SUPABASE_URL = process.env.SUPABASE_URL || 'SUPABASE_URL_AQUI';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'SUPABASE_ANON_KEY_AQUI';
+const SITE_URL = process.env.SITE_URL || 'https://blog.a2kfsuplementos.com.br';
+// =============================================
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Serve static files (CSS, JS, images)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ─── HOME ────────────────────────────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// ─── POST PAGE (URL limpa com slug) ─────────────────────────────────────────
+app.get('/post/:slug', async (req, res) => {
+  const { slug } = req.params;
+
+  const { data: post, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('slug', slug)
+    .eq('published', true)
+    .single();
+
+  if (error || !post) {
+    return res.status(404).send(notFoundPage());
+  }
+
+  const excerpt = post.excerpt || post.title;
+  const image = post.cover_url || `${SITE_URL}/logo.png`;
+  const url = `${SITE_URL}/post/${slug}`;
+  const date = new Date(post.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  res.send(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${post.title} – A2KF Suplementos</title>
+  <meta name="description" content="${excerpt}" />
+
+  <!-- Open Graph (WhatsApp, Facebook, Instagram) -->
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="${post.title}" />
+  <meta property="og:description" content="${excerpt}" />
+  <meta property="og:image" content="${image}" />
+  <meta property="og:url" content="${url}" />
+  <meta property="og:site_name" content="A2KF Suplementos" />
+  <meta property="article:published_time" content="${post.created_at}" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${post.title}" />
+  <meta name="twitter:description" content="${excerpt}" />
+  <meta name="twitter:image" content="${image}" />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="${url}" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { --yellow:#FFD400; --black:#0A0A0A; --white:#fff; --gray:#F4F4F2; --border:#E5E5E0; --muted:#6B6B6B; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Sans',sans-serif; background:var(--white); color:var(--black); }
+
+    nav {
+      position:sticky; top:0; z-index:100;
+      background:var(--black); border-bottom:3px solid var(--yellow);
+      padding:0 2rem; display:flex; align-items:center; justify-content:space-between; height:130px;
+    }
+    .nav-logo { text-decoration:none; }
+    .nav-logo img { height:120px; width:auto; display:block; }
+    .nav-links { display:flex; gap:2rem; align-items:center; }
+    .nav-links a { color:#ccc; text-decoration:none; font-size:14px; font-weight:500; transition:color .2s; }
+    .nav-links a:hover { color:var(--yellow); }
+    .nav-admin-btn { background:var(--yellow); color:var(--black); font-family:'DM Sans',sans-serif; font-weight:700; font-size:13px; padding:8px 18px; text-decoration:none; letter-spacing:1px; text-transform:uppercase; }
+
+    .post-hero {
+      background:var(--black); color:var(--white); padding:3rem 2rem 2.5rem;
+      border-bottom:3px solid var(--yellow);
+    }
+    .post-hero-inner { max-width:800px; margin:0 auto; }
+    .post-meta { display:flex; gap:1rem; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; }
+    .post-category { background:var(--yellow); color:var(--black); font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:3px 10px; }
+    .post-date { font-size:13px; color:#888; }
+    .post-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(2rem,6vw,4rem); line-height:1; letter-spacing:1px; }
+    .post-excerpt { color:#aaa; font-size:1.1rem; line-height:1.6; margin-top:1rem; max-width:640px; }
+
+    .post-cover { width:100%; max-height:480px; object-fit:cover; display:block; }
+
+    .post-body { max-width:800px; margin:0 auto; padding:3rem 2rem; }
+    .post-body h2 { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:1px; margin:2rem 0 .75rem; }
+    .post-body h3 { font-size:1.2rem; font-weight:700; margin:1.5rem 0 .5rem; }
+    .post-body p { font-size:16px; line-height:1.85; color:#222; margin-bottom:1.25rem; }
+    .post-body ul, .post-body ol { padding-left:1.5rem; margin-bottom:1.25rem; }
+    .post-body li { font-size:16px; line-height:1.85; color:#222; margin-bottom:.4rem; }
+    .post-body blockquote { border-left:4px solid var(--yellow); padding:1rem 1.5rem; background:var(--gray); margin:1.5rem 0; font-style:italic; color:#444; }
+    .post-body img { width:100%; height:auto; margin:1.5rem 0; }
+    .post-body a { color:var(--black); font-weight:700; border-bottom:2px solid var(--yellow); text-decoration:none; }
+
+    /* COMPARTILHAR */
+    .share-box { border-top:2px solid var(--border); margin-top:3rem; padding-top:2rem; }
+    .share-box h4 { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:1px; margin-bottom:1rem; }
+    .share-btns { display:flex; gap:.75rem; flex-wrap:wrap; }
+    .share-btn {
+      display:inline-flex; align-items:center; gap:8px; padding:10px 20px;
+      font-family:'DM Sans',sans-serif; font-weight:700; font-size:13px;
+      text-transform:uppercase; letter-spacing:.5px; cursor:pointer; border:none; text-decoration:none; transition:opacity .2s;
+    }
+    .share-btn:hover { opacity:.85; }
+    .share-btn-wpp { background:#25D366; color:#fff; }
+    .share-btn-copy { background:var(--black); color:#fff; }
+    .share-btn-copy.copied { background:var(--yellow); color:var(--black); }
+
+    /* BANNER LOJA */
+    .promo-banner {
+      background:var(--yellow); padding:2rem; margin-top:3rem;
+      display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+    }
+    .promo-banner-text h3 { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; letter-spacing:1px; }
+    .promo-banner-text p { font-size:14px; color:#333; margin-top:.25rem; }
+    .promo-banner-btn { background:var(--black); color:var(--white); padding:12px 28px; font-family:'DM Sans',sans-serif; font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:1px; text-decoration:none; white-space:nowrap; }
+
+    /* POSTS RELACIONADOS */
+    .related { background:var(--gray); padding:3rem 2rem; border-top:2px solid var(--border); }
+    .related-inner { max-width:1100px; margin:0 auto; }
+    .related h2 { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:1px; margin-bottom:1.5rem; }
+    .related-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1.5rem; }
+    .related-card { background:var(--white); border:1.5px solid var(--border); text-decoration:none; color:inherit; display:block; transition:border-color .2s,transform .2s; }
+    .related-card:hover { border-color:var(--yellow); transform:translateY(-3px); }
+    .related-card-img { width:100%; height:160px; object-fit:cover; display:block; background:var(--black); }
+    .related-card-placeholder { width:100%; height:160px; background:var(--black); display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--yellow); }
+    .related-card-body { padding:1.25rem; }
+    .related-card-cat { background:var(--yellow); color:var(--black); font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:2px 8px; display:inline-block; margin-bottom:.5rem; }
+    .related-card-title { font-family:'Bebas Neue',sans-serif; font-size:1.2rem; line-height:1.1; }
+
+    footer { background:var(--black); color:#666; text-align:center; padding:2rem; font-size:13px; border-top:3px solid var(--yellow); }
+    footer span { color:var(--yellow); }
+
+    @media(max-width:600px) {
+      .promo-banner { flex-direction:column; text-align:center; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <img src="/logo.png" alt="A2KF Suplementos" style="height:120px;width:auto;display:block;" />
+  </a>
+  <div class="nav-links">
+    <a href="/">Blog</a>
+    <a href="https://a2kfsuplementos.com.br">Loja</a>
+    <a href="/admin/login.html" class="nav-admin-btn">Admin</a>
+  </div>
+</nav>
+
+${post.cover_url ? `<img src="${post.cover_url}" class="post-cover" alt="${post.title}" />` : ''}
+
+<div class="post-hero">
+  <div class="post-hero-inner">
+    <div class="post-meta">
+      ${post.category ? `<span class="post-category">${post.category}</span>` : ''}
+      <span class="post-date">${date}</span>
+    </div>
+    <h1 class="post-title">${post.title}</h1>
+    ${post.excerpt ? `<p class="post-excerpt">${post.excerpt}</p>` : ''}
+  </div>
+</div>
+
+<div class="post-body">
+  ${post.content || ''}
+
+  <!-- COMPARTILHAR -->
+  <div class="share-box">
+    <h4>GOSTOU? COMPARTILHE!</h4>
+    <div class="share-btns">
+      <a class="share-btn share-btn-wpp" href="https://wa.me/?text=${encodeURIComponent(post.title + ' - ' + url)}" target="_blank">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.134.558 4.133 1.535 5.865L.057 23.535a.75.75 0 00.908.908l5.67-1.478A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.92 0-3.72-.504-5.27-1.385l-.378-.219-3.924 1.022 1.022-3.924-.219-.378A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        WhatsApp
+      </a>
+      <button class="share-btn share-btn-copy" id="copyBtn" onclick="copyLink()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copiar Link
+      </button>
+    </div>
+  </div>
+
+  <!-- BANNER LOJA -->
+  <div class="promo-banner">
+    <div class="promo-banner-text">
+      <h3>ENCONTRE OS MELHORES SUPLEMENTOS</h3>
+      <p>Qualidade garantida, preço justo e entrega rápida para todo o Brasil.</p>
+    </div>
+    <a href="https://a2kfsuplementos.com.br" target="_blank" class="promo-banner-btn">Visitar Loja →</a>
+  </div>
+</div>
+
+<!-- POSTS RELACIONADOS -->
+<div class="related" id="related">
+  <div class="related-inner">
+    <h2>ARTIGOS RELACIONADOS</h2>
+    <div class="related-grid" id="relatedGrid">Carregando...</div>
+  </div>
+</div>
+
+<footer>
+  <p>© 2026 <span>A2KF Suplementos</span> · Todos os direitos reservados</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const _sb = window.supabase.createClient('${SUPABASE_URL}', '${SUPABASE_ANON_KEY}');
+
+  async function loadRelated() {
+    const { data } = await _sb.from('posts')
+      .select('id, title, slug, category, cover_url')
+      .eq('published', true)
+      .neq('slug', '${slug}')
+      .eq('category', '${post.category || ''}')
+      .limit(3);
+
+    const grid = document.getElementById('relatedGrid');
+    if (!data || !data.length) {
+      document.getElementById('related').style.display = 'none';
+      return;
+    }
+    grid.innerHTML = data.map(p => \`
+      <a href="/post/\${p.slug}" class="related-card">
+        \${p.cover_url
+          ? \`<img src="\${p.cover_url}" class="related-card-img" alt="\${p.title}" />\`
+          : \`<div class="related-card-placeholder">A2KF</div>\`}
+        <div class="related-card-body">
+          \${p.category ? \`<span class="related-card-cat">\${p.category}</span>\` : ''}
+          <div class="related-card-title">\${p.title}</div>
+        </div>
+      </a>
+    \`).join('');
+  }
+
+  function copyLink() {
+    navigator.clipboard.writeText('${url}').then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = '✓ Link Copiado!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copiar Link'; btn.classList.remove('copied'); }, 2500);
+    });
+  }
+
+  loadRelated();
+</script>
+</body>
+</html>`);
+});
+
+// ─── SITEMAP.XML ─────────────────────────────────────────────────────────────
+app.get('/sitemap.xml', async (req, res) => {
+  const { data: posts } = await supabase
+    .from('posts')
+    .select('slug, updated_at')
+    .eq('published', true)
+    .order('updated_at', { ascending: false });
+
+  const urls = (posts || []).map(p => `
+  <url>
+    <loc>${SITE_URL}/post/${p.slug}</loc>
+    <lastmod>${new Date(p.updated_at).toISOString().split('T')[0]}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`).join('');
+
+  res.header('Content-Type', 'application/xml');
+  res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${SITE_URL}</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>${urls}
+</urlset>`);
+});
+
+// ─── ROBOTS.TXT ──────────────────────────────────────────────────────────────
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send(`User-agent: *\nAllow: /\nDisallow: /admin/\nSitemap: ${SITE_URL}/sitemap.xml`);
+});
+
+// ─── ADMIN (serve static) ────────────────────────────────────────────────────
+app.get('/admin', (req, res) => res.redirect('/admin/login.html'));
+
+// ─── 404 ─────────────────────────────────────────────────────────────────────
+app.use((req, res) => res.status(404).send(notFoundPage()));
+
+function notFoundPage() {
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>404 – A2KF Blog</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'DM Sans',sans-serif;background:#0A0A0A;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center}h1{font-family:'Bebas Neue',sans-serif;font-size:8rem;color:#FFD400;line-height:1}p{color:#888;margin:1rem 0 2rem}a{background:#FFD400;color:#000;padding:12px 28px;font-weight:700;text-decoration:none;text-transform:uppercase;letter-spacing:1px}</style>
+  </head><body><div><h1>404</h1><p>Página não encontrada.</p><a href="/">Voltar ao Blog</a></div></body></html>`;
+}
+
+app.listen(PORT, () => console.log(`A2KF Blog rodando na porta ${PORT}`));
