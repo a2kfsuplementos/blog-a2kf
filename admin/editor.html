@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Editor de Post – A2KF Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Quill rich text editor -->
+  <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+  <style>
+    :root { --yellow:#FFD400; --black:#0A0A0A; --white:#fff; --gray:#F4F4F2; --border:#E5E5E0; --muted:#6B6B6B; --red:#E53E3E; --green:#38A169; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Sans',sans-serif; background:#f7f7f5; color:var(--black); display:flex; min-height:100vh; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width:240px; background:var(--black); display:flex; flex-direction:column;
+      position:fixed; top:0; left:0; height:100vh; z-index:50;
+    }
+    .sidebar-logo { padding:1.5rem; border-bottom:2px solid #222; display:flex; align-items:center; gap:10px; }
+    .sidebar-logo-badge { background:var(--yellow); color:var(--black); font-family:'Bebas Neue',sans-serif; font-size:20px; padding:2px 10px; }
+    .sidebar-logo-text { color:#fff; font-size:12px; font-weight:500; letter-spacing:2px; text-transform:uppercase; }
+    .sidebar-nav { flex:1; padding:1rem 0; }
+    .sidebar-nav a {
+      display:flex; align-items:center; gap:12px; padding:.85rem 1.5rem;
+      color:#888; text-decoration:none; font-size:14px; font-weight:500; transition:all .2s;
+    }
+    .sidebar-nav a:hover, .sidebar-nav a.active { color:#fff; background:#1a1a1a; border-left:3px solid var(--yellow); }
+    .sidebar-nav a svg { width:18px; height:18px; flex-shrink:0; }
+    .sidebar-footer { padding:1.5rem; border-top:1px solid #222; }
+    .sidebar-footer button {
+      width:100%; padding:10px; background:transparent; border:1px solid #333; color:#888;
+      font-family:'DM Sans',sans-serif; font-size:13px; cursor:pointer; transition:all .2s;
+    }
+    .sidebar-footer button:hover { border-color:var(--red); color:var(--red); }
+
+    /* MAIN */
+    .main { margin-left:240px; flex:1; padding:2.5rem; }
+
+    /* TOPBAR */
+    .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem; }
+    .topbar h1 { font-family:'Bebas Neue',sans-serif; font-size:2.2rem; letter-spacing:1px; }
+    .topbar-actions { display:flex; gap:.75rem; }
+
+    /* BUTTONS */
+    .btn {
+      padding:10px 24px; border:none; font-family:'DM Sans',sans-serif; font-weight:700;
+      font-size:13px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all .2s;
+    }
+    .btn-primary { background:var(--yellow); color:var(--black); }
+    .btn-primary:hover { opacity:.9; }
+    .btn-secondary { background:var(--black); color:#fff; }
+    .btn-secondary:hover { opacity:.7; }
+    .btn-outline { background:transparent; color:var(--black); border:1.5px solid var(--border); }
+    .btn-outline:hover { border-color:var(--black); }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+
+    /* EDITOR LAYOUT */
+    .editor-layout { display:grid; grid-template-columns:1fr 320px; gap:1.5rem; align-items:start; }
+
+    /* CARD */
+    .card { background:var(--white); border:1.5px solid var(--border); padding:1.75rem; margin-bottom:1.5rem; }
+    .card-title { font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:1.25rem; }
+
+    /* FORM */
+    label { display:block; font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:.5rem; }
+    input[type="text"], input[type="url"], select, textarea {
+      width:100%; padding:10px 14px; border:1.5px solid var(--border);
+      font-family:'DM Sans',sans-serif; font-size:15px; outline:none; transition:border-color .2s;
+      background:var(--white); color:var(--black);
+    }
+    input[type="text"]:focus, input[type="url"]:focus, select:focus, textarea:focus { border-color:var(--yellow); }
+    .field { margin-bottom:1.25rem; }
+    .title-input {
+      width:100%; font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:1px;
+      border:none; border-bottom:2px solid var(--border); padding:.5rem 0;
+      outline:none; background:transparent; transition:border-color .2s; margin-bottom:1.5rem;
+    }
+    .title-input:focus { border-bottom-color:var(--yellow); }
+    .title-input::placeholder { color:#ccc; }
+
+    /* QUILL */
+    .quill-wrap { border:1.5px solid var(--border); background:var(--white); }
+    .quill-wrap:focus-within { border-color:var(--yellow); }
+    #editor { min-height:420px; font-family:'DM Sans',sans-serif; font-size:16px; line-height:1.8; }
+    .ql-toolbar { border:none; border-bottom:1.5px solid var(--border); }
+    .ql-container { border:none; }
+
+    /* STATUS TOGGLE */
+    .status-toggle { display:flex; gap:.75rem; }
+    .status-btn {
+      flex:1; padding:10px; border:1.5px solid var(--border); background:var(--white);
+      font-family:'DM Sans',sans-serif; font-size:13px; font-weight:700; cursor:pointer;
+      text-transform:uppercase; letter-spacing:.5px; transition:all .2s; text-align:center;
+    }
+    .status-btn.active-published { background:var(--yellow); border-color:var(--yellow); color:var(--black); }
+    .status-btn.active-draft { background:var(--black); border-color:var(--black); color:var(--white); }
+
+    /* COVER PREVIEW */
+    .cover-preview {
+      width:100%; height:160px; border:2px dashed var(--border); display:flex;
+      align-items:center; justify-content:center; flex-direction:column; gap:.5rem;
+      color:var(--muted); font-size:13px; margin-bottom:1rem; overflow:hidden; cursor:pointer;
+      transition:border-color .2s;
+    }
+    .cover-preview:hover { border-color:var(--yellow); }
+    .cover-preview img { width:100%; height:100%; object-fit:cover; }
+
+    /* CHAR COUNT */
+    .char-count { font-size:11px; color:var(--muted); text-align:right; margin-top:.25rem; }
+
+    /* TOAST */
+    .toast {
+      position:fixed; bottom:2rem; right:2rem; background:var(--black); color:#fff;
+      padding:12px 24px; font-size:14px; font-weight:500; z-index:999;
+      transform:translateY(100px); opacity:0; transition:all .3s;
+    }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast.success { border-left:4px solid var(--green); }
+    .toast.error { border-left:4px solid var(--red); }
+
+    /* SAVING INDICATOR */
+    .saving-dot {
+      display:inline-block; width:8px; height:8px; border-radius:50%;
+      background:#ccc; margin-right:6px; transition:background .3s;
+    }
+    .saving-dot.saving { background:var(--yellow); animation:pulse .8s infinite; }
+    .saving-dot.saved { background:var(--green); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    @media(max-width:1024px) {
+      .editor-layout { grid-template-columns:1fr; }
+      .sidebar { display:none; }
+      .main { margin-left:0; padding:1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="sidebar-logo-badge">A2KF</span>
+    <span class="sidebar-logo-text">Admin</span>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="dashboard.html">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a href="editor.html" class="active">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+      Novo Post
+    </a>
+    <a href="../index.html" target="_blank">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Ver Blog
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <button onclick="logout()">Sair da conta</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <h1 id="pageTitle">NOVO POST</h1>
+    <div class="topbar-actions">
+      <span style="display:flex;align-items:center;font-size:13px;color:var(--muted);">
+        <span class="saving-dot" id="savingDot"></span>
+        <span id="savingText"></span>
+      </span>
+      <button class="btn btn-outline" onclick="savePost(false)">Salvar Rascunho</button>
+      <button class="btn btn-primary" onclick="savePost(true)" id="publishBtn">Publicar</button>
+    </div>
+  </div>
+
+  <div class="editor-layout">
+    <!-- LEFT: MAIN CONTENT -->
+    <div>
+      <input type="text" class="title-input" id="postTitle" placeholder="Título do post..." maxlength="120" oninput="updateTitleCount()" />
+
+      <div class="card">
+        <div class="card-title">Conteúdo</div>
+        <div class="quill-wrap">
+          <div id="editor"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: SIDEBAR OPTIONS -->
+    <div>
+      <!-- STATUS -->
+      <div class="card">
+        <div class="card-title">Status</div>
+        <div class="status-toggle">
+          <button class="status-btn active-draft" id="btnDraft" onclick="setStatus(false)">Rascunho</button>
+          <button class="status-btn" id="btnPublished" onclick="setStatus(true)">Publicar</button>
+        </div>
+      </div>
+
+      <!-- IMAGEM DE CAPA -->
+      <div class="card">
+        <div class="card-title">Imagem de Capa</div>
+        <div class="cover-preview" id="coverPreview" onclick="document.getElementById('coverUrl').focus()">
+          <svg width="32" height="32" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span>Nenhuma imagem</span>
+        </div>
+        <div class="field">
+          <label>URL da Imagem</label>
+          <input type="url" id="coverUrl" placeholder="https://..." oninput="previewCover()" />
+        </div>
+      </div>
+
+      <!-- CATEGORIA -->
+      <div class="card">
+        <div class="card-title">Categoria</div>
+        <div class="field">
+          <select id="postCategory">
+            <option value="">Selecione...</option>
+            <option value="Suplementação">Suplementação</option>
+            <option value="Treino">Treino</option>
+            <option value="Nutrição">Nutrição</option>
+            <option value="Saúde">Saúde</option>
+            <option value="Receitas">Receitas</option>
+            <option value="Dicas">Dicas</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- RESUMO -->
+      <div class="card">
+        <div class="card-title">Resumo</div>
+        <div class="field">
+          <textarea id="postExcerpt" rows="4" placeholder="Breve descrição do post (aparece nos cards do blog)..." maxlength="200" oninput="updateExcerptCount()"></textarea>
+          <div class="char-count"><span id="excerptCount">0</span>/200</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const SUPABASE_URL = 'https://lotyhojoixtqgxnqllac.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvdHlob2pvaXh0cWd4bnFsbGFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMzE0MzMsImV4cCI6MjA5NDgwNzQzM30.JerocygTqXc_hQOB1YBhWIC6aUd95GQO9uH5sC-U0_g';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let postId = null;
+  let isPublished = false;
+  let quill;
+  let autoSaveTimer;
+
+  // Auth guard
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (!session) { window.location.href = 'login.html'; return; }
+    initEditor();
+    loadExistingPost();
+  });
+
+  async function logout() {
+    await supabase.auth.signOut();
+    window.location.href = 'login.html';
+  }
+
+  function initEditor() {
+    quill = new Quill('#editor', {
+      theme: 'snow',
+      placeholder: 'Escreva o conteúdo do post aqui...',
+      modules: {
+        toolbar: [
+          [{ header: [2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          ['blockquote', 'code-block'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['link', 'image'],
+          ['clean']
+        ]
+      }
+    });
+    // Auto-save on content change
+    quill.on('text-change', () => {
+      clearTimeout(autoSaveTimer);
+      setSavingState('saving');
+      autoSaveTimer = setTimeout(() => autoSave(), 3000);
+    });
+  }
+
+  async function loadExistingPost() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    if (!id) return;
+
+    postId = id;
+    document.getElementById('pageTitle').textContent = 'EDITAR POST';
+
+    const { data, error } = await supabase.from('posts').select('*').eq('id', id).single();
+    if (error || !data) { showToast('Post não encontrado.', 'error'); return; }
+
+    document.getElementById('postTitle').value = data.title || '';
+    document.getElementById('coverUrl').value = data.cover_url || '';
+    document.getElementById('postCategory').value = data.category || '';
+    document.getElementById('postExcerpt').value = data.excerpt || '';
+    if (data.cover_url) previewCover();
+    quill.root.innerHTML = data.content || '';
+    updateExcerptCount();
+    setStatus(data.published);
+  }
+
+  function setStatus(publish) {
+    isPublished = publish;
+    const btnDraft = document.getElementById('btnDraft');
+    const btnPublished = document.getElementById('btnPublished');
+    const publishBtn = document.getElementById('publishBtn');
+    if (publish) {
+      btnPublished.classList.add('active-published');
+      btnDraft.classList.remove('active-draft');
+      publishBtn.textContent = 'Atualizar';
+    } else {
+      btnDraft.classList.add('active-draft');
+      btnPublished.classList.remove('active-published');
+      publishBtn.textContent = 'Publicar';
+    }
+  }
+
+  function previewCover() {
+    const url = document.getElementById('coverUrl').value;
+    const preview = document.getElementById('coverPreview');
+    if (url) {
+      preview.innerHTML = `<img src="${url}" alt="Capa" onerror="this.parentElement.innerHTML='<span style=color:#e53e3e>URL inválida</span>'" />`;
+    } else {
+      preview.innerHTML = `<svg width="32" height="32" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Nenhuma imagem</span>`;
+    }
+  }
+
+  function updateExcerptCount() {
+    document.getElementById('excerptCount').textContent = document.getElementById('postExcerpt').value.length;
+  }
+
+  function updateTitleCount() { /* opcional: adicionar contador */ }
+
+  function getFormData(publish) {
+    return {
+      title: document.getElementById('postTitle').value.trim(),
+      content: quill.root.innerHTML,
+      cover_url: document.getElementById('coverUrl').value.trim() || null,
+      category: document.getElementById('postCategory').value || null,
+      excerpt: document.getElementById('postExcerpt').value.trim() || null,
+      published: publish !== undefined ? publish : isPublished,
+    };
+  }
+
+  async function savePost(publish) {
+    const data = getFormData(publish);
+    if (!data.title) { showToast('Adicione um título ao post.', 'error'); return; }
+
+    setSavingState('saving');
+
+    if (postId) {
+      const { error } = await supabase.from('posts').update(data).eq('id', postId);
+      if (error) { showToast('Erro ao salvar.', 'error'); setSavingState(''); return; }
+    } else {
+      const { data: created, error } = await supabase.from('posts').insert([data]).select().single();
+      if (error) { showToast('Erro ao criar post.', 'error'); setSavingState(''); return; }
+      postId = created.id;
+      history.replaceState(null, '', `editor.html?id=${postId}`);
+      document.getElementById('pageTitle').textContent = 'EDITAR POST';
+    }
+
+    setStatus(publish !== undefined ? publish : isPublished);
+    setSavingState('saved');
+    showToast(publish ? 'Post publicado!' : 'Rascunho salvo.', 'success');
+  }
+
+  async function autoSave() {
+    if (!document.getElementById('postTitle').value.trim()) { setSavingState(''); return; }
+    await savePost(undefined);
+  }
+
+  function setSavingState(state) {
+    const dot = document.getElementById('savingDot');
+    const text = document.getElementById('savingText');
+    dot.className = 'saving-dot';
+    if (state === 'saving') { dot.classList.add('saving'); text.textContent = 'Salvando...'; }
+    else if (state === 'saved') { dot.classList.add('saved'); text.textContent = 'Salvo'; setTimeout(() => { dot.className='saving-dot'; text.textContent=''; }, 2500); }
+    else { text.textContent = ''; }
+  }
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.className = 'toast', 3500);
+  }
+
+  // Ctrl+S to save
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); savePost(isPublished); }
+  });
+</script>
+</body>
+</html>
