@@ -248,7 +248,7 @@
 <script>
   const SUPABASE_URL = 'https://lotyhojoixtqgxnqllac.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvdHlob2pvaXh0cWd4bnFsbGFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMzE0MzMsImV4cCI6MjA5NDgwNzQzM30.JerocygTqXc_hQOB1YBhWIC6aUd95GQO9uH5sC-U0_g';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let postId = null;
   let isPublished = false;
@@ -256,14 +256,14 @@
   let autoSaveTimer;
 
   // Auth guard
-  supabase.auth.getSession().then(({ data: { session } }) => {
+  _sb.auth.getSession().then(({ data: { session } }) => {
     if (!session) { window.location.href = 'login.html'; return; }
     initEditor();
     loadExistingPost();
   });
 
   async function logout() {
-    await supabase.auth.signOut();
+    await _sb.auth.signOut();
     window.location.href = 'login.html';
   }
 
@@ -298,7 +298,7 @@
     postId = id;
     document.getElementById('pageTitle').textContent = 'EDITAR POST';
 
-    const { data, error } = await supabase.from('posts').select('*').eq('id', id).single();
+    const { data, error } = await _sb.from('posts').select('*').eq('id', id).single();
     if (error || !data) { showToast('Post não encontrado.', 'error'); return; }
 
     document.getElementById('postTitle').value = data.title || '';
@@ -361,10 +361,10 @@
     setSavingState('saving');
 
     if (postId) {
-      const { error } = await supabase.from('posts').update(data).eq('id', postId);
+      const { error } = await _sb.from('posts').update(data).eq('id', postId);
       if (error) { showToast('Erro ao salvar.', 'error'); setSavingState(''); return; }
     } else {
-      const { data: created, error } = await supabase.from('posts').insert([data]).select().single();
+      const { data: created, error } = await _sb.from('posts').insert([data]).select().single();
       if (error) { showToast('Erro ao criar post.', 'error'); setSavingState(''); return; }
       postId = created.id;
       history.replaceState(null, '', `editor.html?id=${postId}`);
