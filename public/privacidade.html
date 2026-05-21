@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Política de Privacidade – A2KF Suplementos</title>
+  <meta name="description" content="Política de Privacidade e Cookies do Blog A2KF Suplementos." />
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --yellow: #FFD400;
+      --black:  #0A0A0A;
+      --white:  #FFFFFF;
+      --gray:   #F4F4F2;
+      --border: #E5E5E0;
+      --muted:  #6B6B6B;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--white); color: var(--black); }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--black); border-bottom: 3px solid var(--yellow);
+      padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 80px;
+    }
+    .nav-logo { text-decoration: none; display: flex; align-items: center; }
+    .nav-logo img { height: 60px; width: auto; display: block; }
+    .nav-links { display: flex; gap: 2rem; align-items: center; }
+    .nav-links a { color: #ccc; text-decoration: none; font-size: 14px; font-weight: 500; transition: color .2s; }
+    .nav-links a:hover { color: var(--yellow); }
+
+    /* HERO */
+    .hero {
+      background: var(--black); color: var(--white);
+      padding: 4rem 2rem 3rem; border-bottom: 3px solid var(--yellow);
+    }
+    .hero-inner { max-width: 860px; margin: 0 auto; }
+    .hero-label {
+      display: inline-block; background: var(--yellow); color: var(--black);
+      font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+      padding: 4px 14px; margin-bottom: 1.25rem;
+    }
+    .hero h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      line-height: 1; letter-spacing: 1px;
+    }
+    .hero-meta { color: #666; font-size: 13px; margin-top: 1rem; }
+
+    /* CONTENT */
+    .content { max-width: 860px; margin: 0 auto; padding: 3.5rem 2rem 5rem; }
+
+    .toc {
+      background: var(--gray); border-left: 4px solid var(--yellow);
+      padding: 1.5rem 2rem; margin-bottom: 3rem;
+    }
+    .toc-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+    .toc ol { padding-left: 1.25rem; }
+    .toc li { margin-bottom: .4rem; }
+    .toc a { color: var(--black); font-size: 14px; font-weight: 500; text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color .2s; }
+    .toc a:hover { border-color: var(--yellow); color: var(--black); }
+
+    .section { margin-bottom: 3rem; scroll-margin-top: 100px; }
+    .section-num {
+      display: inline-block; background: var(--yellow); color: var(--black);
+      font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 1px;
+      padding: 2px 10px; margin-bottom: .75rem;
+    }
+    .section h2 {
+      font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 1px;
+      margin-bottom: 1rem; line-height: 1;
+    }
+    .section p { font-size: 15px; line-height: 1.85; color: #333; margin-bottom: 1rem; }
+    .section ul, .section ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+    .section li { font-size: 15px; line-height: 1.85; color: #333; margin-bottom: .4rem; }
+    .section a { color: var(--black); font-weight: 700; border-bottom: 2px solid var(--yellow); text-decoration: none; }
+    .section a:hover { opacity: .7; }
+
+    .highlight-box {
+      background: var(--black); color: var(--white);
+      padding: 1.5rem 2rem; margin: 1.5rem 0; border-left: 4px solid var(--yellow);
+    }
+    .highlight-box p { color: #ccc; font-size: 14px; line-height: 1.7; margin: 0; }
+    .highlight-box strong { color: var(--yellow); }
+
+    .cookie-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 14px; }
+    .cookie-table th {
+      background: var(--black); color: var(--white); padding: .75rem 1rem;
+      text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    }
+    .cookie-table td { padding: .75rem 1rem; border-bottom: 1px solid var(--border); color: #333; vertical-align: top; }
+    .cookie-table tr:last-child td { border-bottom: none; }
+    .cookie-table tr:nth-child(even) td { background: var(--gray); }
+    .badge-necessary { background: #e6f7ee; color: #256341; font-size: 11px; font-weight: 700; padding: 2px 8px; text-transform: uppercase; letter-spacing: .5px; }
+    .badge-functional { background: #fff8e6; color: #92600a; font-size: 11px; font-weight: 700; padding: 2px 8px; text-transform: uppercase; letter-spacing: .5px; }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+
+    .contact-card {
+      background: var(--gray); padding: 2rem; display: flex; gap: 2rem;
+      align-items: flex-start; flex-wrap: wrap; border: 1.5px solid var(--border);
+    }
+    .contact-card-icon { font-size: 2.5rem; line-height: 1; }
+    .contact-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 1px; margin-bottom: .5rem; }
+    .contact-card p { font-size: 14px; color: var(--muted); line-height: 1.6; margin: 0; }
+    .contact-card a { color: var(--black); font-weight: 700; border-bottom: 2px solid var(--yellow); text-decoration: none; }
+
+    /* FOOTER */
+    footer { background: var(--black); border-top: 3px solid var(--yellow); }
+    .footer-inner { max-width: 1200px; margin: 0 auto; padding: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+    .footer-copy { color: #444; font-size: 12px; }
+    .footer-copy span { color: var(--yellow); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <img src="/logo.png" alt="A2KF Suplementos" />
+  </a>
+  <div class="nav-links">
+    <a href="/">Blog</a>
+    <a href="https://a2kfsuplementos.com.br">Loja</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-label">Legal</div>
+    <h1>POLÍTICA DE PRIVACIDADE<br/>E COOKIES</h1>
+    <p class="hero-meta">Última atualização: maio de 2026 · Vigência: LGPD (Lei nº 13.709/2018)</p>
+  </div>
+</div>
+
+<div class="content">
+
+  <div class="toc">
+    <div class="toc-title">Índice</div>
+    <ol>
+      <li><a href="#s1">Quem somos</a></li>
+      <li><a href="#s2">Quais dados coletamos</a></li>
+      <li><a href="#s3">Como usamos seus dados</a></li>
+      <li><a href="#s4">Cookies e tecnologias similares</a></li>
+      <li><a href="#s5">Compartilhamento de dados</a></li>
+      <li><a href="#s6">Por quanto tempo guardamos</a></li>
+      <li><a href="#s7">Seus direitos (LGPD)</a></li>
+      <li><a href="#s8">Segurança</a></li>
+      <li><a href="#s9">Links externos</a></li>
+      <li><a href="#s10">Alterações nesta política</a></li>
+      <li><a href="#s11">Contato</a></li>
+    </ol>
+  </div>
+
+  <div class="highlight-box">
+    <p><strong>Resumo simples:</strong> Coletamos apenas o necessário para o blog funcionar — seu email (se você se inscrever na newsletter) e dados técnicos de navegação. Não vendemos seus dados para ninguém. Você pode cancelar a newsletter ou pedir a exclusão dos seus dados a qualquer momento.</p>
+  </div>
+
+  <!-- 1 -->
+  <div class="section" id="s1">
+    <span class="section-num">01</span>
+    <h2>Quem Somos</h2>
+    <p>Este blog é operado pela <strong>A2KF Suplementos</strong>, com sede no Rio de Janeiro – RJ, Brasil. Somos responsáveis pelo tratamento dos dados pessoais coletados neste site (<strong>blog.a2kfsuplementos.com.br</strong>).</p>
+    <p>Para fins da LGPD, atuamos como <strong>Controlador de Dados</strong>, determinando as finalidades e os meios de tratamento das informações coletadas.</p>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 2 -->
+  <div class="section" id="s2">
+    <span class="section-num">02</span>
+    <h2>Quais Dados Coletamos</h2>
+    <p>Coletamos apenas as informações estritamente necessárias para o funcionamento do blog:</p>
+    <ul>
+      <li><strong>Email</strong> — quando você se inscreve voluntariamente na nossa newsletter.</li>
+      <li><strong>Dados de acesso técnicos</strong> — endereço IP, tipo de navegador, sistema operacional e páginas visitadas, coletados automaticamente pelos servidores para fins de segurança e diagnóstico.</li>
+      <li><strong>Dados de autenticação</strong> — para administradores do blog (email e senha), armazenados de forma segura pelo Supabase.</li>
+    </ul>
+    <p>Não coletamos dados sensíveis como CPF, dados bancários, localização precisa ou informações de saúde.</p>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 3 -->
+  <div class="section" id="s3">
+    <span class="section-num">03</span>
+    <h2>Como Usamos Seus Dados</h2>
+    <p>Seus dados são usados exclusivamente para:</p>
+    <ul>
+      <li>Enviar a newsletter com artigos sobre treino, nutrição e suplementação (apenas se você se inscreveu).</li>
+      <li>Garantir o funcionamento seguro e estável do blog.</li>
+      <li>Autenticar administradores no painel de gerenciamento.</li>
+      <li>Melhorar o conteúdo e a experiência de navegação.</li>
+    </ul>
+    <p>A base legal para o tratamento é o <strong>consentimento</strong> (Art. 7º, I da LGPD) para a newsletter, e o <strong>legítimo interesse</strong> (Art. 7º, IX) para os dados técnicos de funcionamento.</p>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 4 -->
+  <div class="section" id="s4">
+    <span class="section-num">04</span>
+    <h2>Cookies e Tecnologias Similares</h2>
+    <p>Utilizamos cookies — pequenos arquivos de texto armazenados no seu navegador — para garantir o funcionamento correto do site. Veja quais usamos:</p>
+
+    <table class="cookie-table">
+      <thead>
+        <tr>
+          <th>Cookie / Serviço</th>
+          <th>Finalidade</th>
+          <th>Tipo</th>
+          <th>Duração</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Supabase Auth</strong></td>
+          <td>Manter a sessão de administradores logados no painel</td>
+          <td><span class="badge-necessary">Necessário</span></td>
+          <td>Sessão / 1 semana</td>
+        </tr>
+        <tr>
+          <td><strong>cookie_consent</strong></td>
+          <td>Lembrar que você já aceitou esta política de cookies</td>
+          <td><span class="badge-necessary">Necessário</span></td>
+          <td>1 ano</td>
+        </tr>
+        <tr>
+          <td><strong>Google Fonts</strong></td>
+          <td>Carregamento das fontes tipográficas do site (Bebas Neue, DM Sans)</td>
+          <td><span class="badge-functional">Funcional</span></td>
+          <td>Sem armazenamento local</td>
+        </tr>
+        <tr>
+          <td><strong>Brevo (Sendinblue)</strong></td>
+          <td>Plataforma de envio da newsletter — armazena o email cadastrado</td>
+          <td><span class="badge-functional">Funcional</span></td>
+          <td>Até cancelamento</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Não utilizamos cookies de rastreamento, publicidade comportamental ou analytics de terceiros no momento.</p>
+
+    <h3 style="margin: 1.5rem 0 .75rem; font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Como desativar cookies</h3>
+    <p>Você pode configurar seu navegador para recusar cookies. Veja como fazer isso nos principais navegadores:</p>
+    <ul>
+      <li><a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener">Google Chrome</a></li>
+      <li><a href="https://support.mozilla.org/pt-BR/kb/cookies-informacoes-sites-armazenam-no-computador" target="_blank" rel="noopener">Mozilla Firefox</a></li>
+      <li><a href="https://support.apple.com/pt-br/guide/safari/sfri11471/mac" target="_blank" rel="noopener">Safari</a></li>
+      <li><a href="https://support.microsoft.com/pt-br/windows/excluir-e-gerenciar-cookies-168dab11-0753-043d-7c16-ede5947fc64d" target="_blank" rel="noopener">Microsoft Edge</a></li>
+    </ul>
+    <p>Atenção: desativar cookies necessários pode impedir o funcionamento correto de algumas partes do site.</p>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 5 -->
+  <div class="section" id="s5">
+    <span class="section-num">05</span>
+    <h2>Compartilhamento de Dados</h2>
+    <p>Seus dados <strong>não são vendidos</strong> a terceiros em nenhuma hipótese. Compartilhamos informações apenas com os parceiros técnicos que nos ajudam a operar o blog:</p>
+    <ul>
+      <li><strong>Supabase</strong> — banco de dados e autenticação (<a href="https://supabase.com/privacy" target="_blank" rel="noopener">política de privacidade</a>)</li>
+      <li><strong>Brevo (Sendinblue)</strong> — plataforma de email marketing para a newsletter (<a href="https://www.brevo.com/pt/politica-de-privacidade/" target="_blank" rel="noopener">política de privacidade</a>)</li>
+      <li><strong>Render</strong> — hospedagem do servidor do blog</li>
+    </ul>
+    <p>Todos esses parceiros operam com seus próprios termos de privacidade e estão sujeitos às leis de proteção de dados aplicáveis.</p>
+    <p>Podemos divulgar informações se exigido por lei, ordem judicial ou autoridade competente.</p>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 6 -->
+  <div class="section" id="s6">
+    <span class="section-num">06</span>
+    <h2>Por Quanto Tempo Guardamos</h2>
+    <ul>
+      <li><strong>Email da newsletter</strong> — enquanto você permanecer inscrito. Após cancelamento, excluído em até 30 dias.</li>
+      <li><strong>Logs de acesso técnico</strong> — até 6 meses, conforme o Marco Civil da Internet (Lei nº 12.965/2014).</li>
+      <li><strong>Dados de administradores</strong> — enquanto a conta estiver ativa.</li>
+    </ul>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 7 -->
+  <div class="section" id="s7">
+    <span class="section-num">07</span>
+    <h2>Seus Direitos (LGPD)</h2>
+    <p>Nos termos da Lei Geral de Proteção de Dados (Lei nº 13.709/2018), você tem os seguintes direitos em relação aos seus dados pessoais:</p>
+    <ul>
+      <li><strong>Confirmação e acesso</strong> — saber se tratamos seus dados e obter uma cópia.</li>
+      <li><strong>Correção</strong> — solicitar a correção de dados incompletos ou desatualizados.</li>
+      <li><strong>Eliminação</strong> — pedir a exclusão dos dados tratados com base no seu consentimento.</li>
+      <li><strong>Portabilidade</strong> — receber seus dados em formato estruturado.</li>
+      <li><strong>Revogação do consentimento</strong> — cancelar a newsletter ou retirar o consentimento a qualquer momento.</li>
+      <li><strong>Oposição</strong> — se opor a tratamentos realizados com base em legítimo interesse.</li>
+      <li><strong>Informação sobre compartilhamento</strong> — saber com quais entidades compartilhamos seus dados.</li>
+    </ul>
+    <p>Para exercer qualquer um desses direitos, entre em contato pelo WhatsApp ou email listados na seção de contato abaixo.</p>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 8 -->
+  <div class="section" id="s8">
+    <span class="section-num">08</span>
+    <h2>Segurança</h2>
+    <p>Adotamos medidas técnicas e organizacionais para proteger seus dados:</p>
+    <ul>
+      <li>Comunicação criptografada via HTTPS/TLS em todo o site.</li>
+      <li>Senhas armazenadas com hash seguro pelo Supabase (nunca em texto simples).</li>
+      <li>Acesso ao painel administrativo restrito por autenticação.</li>
+      <li>Nenhum dado de pagamento é processado neste blog (compras ocorrem na loja separada).</li>
+    </ul>
+    <p>Apesar de todos os esforços, nenhum sistema é 100% inviolável. Em caso de incidente de segurança relevante, notificaremos os usuários afetados conforme exigido pela LGPD.</p>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 9 -->
+  <div class="section" id="s9">
+    <span class="section-num">09</span>
+    <h2>Links Externos</h2>
+    <p>O blog pode conter links para sites externos, como a nossa loja (<a href="https://a2kfsuplementos.com.br" target="_blank" rel="noopener">a2kfsuplementos.com.br</a>), redes sociais e fontes de referência. Não somos responsáveis pelas práticas de privacidade desses sites. Recomendamos que você leia a política de privacidade de cada site que visitar.</p>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 10 -->
+  <div class="section" id="s10">
+    <span class="section-num">10</span>
+    <h2>Alterações Nesta Política</h2>
+    <p>Esta política pode ser atualizada periodicamente para refletir mudanças em nossas práticas ou na legislação. A data da última atualização está sempre indicada no topo desta página.</p>
+    <p>Para alterações significativas, notificaremos os assinantes da newsletter por email.</p>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- 11 -->
+  <div class="section" id="s11">
+    <span class="section-num">11</span>
+    <h2>Contato</h2>
+    <p>Dúvidas, solicitações ou reclamações sobre privacidade? Fale com a gente:</p>
+    <div class="contact-card">
+      <div class="contact-card-icon">📋</div>
+      <div>
+        <h3>A2KF Suplementos — DPO / Privacidade</h3>
+        <p>
+          WhatsApp: <a href="https://wa.me/5521977377802" target="_blank" rel="noopener">+55 (21) 97737-7802</a><br />
+          Instagram: <a href="https://www.instagram.com/a2kfsuplementos" target="_blank" rel="noopener">@a2kfsuplementos</a><br />
+          Rio de Janeiro – RJ, Brasil<br /><br />
+          Respondemos em até <strong>15 dias úteis</strong>, conforme previsto na LGPD.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <p class="footer-copy">© 2026 <span>A2KF Suplementos</span> · Todos os direitos reservados · <a href="/" style="color:#666;text-decoration:none;">Voltar ao Blog</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
