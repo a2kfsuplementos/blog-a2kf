@@ -142,6 +142,12 @@ app.get('/post/:slug', async (req, res) => {
     .nav-links { display:flex; gap:2rem; align-items:center; }
     .nav-links a { color:#ccc; text-decoration:none; font-size:14px; font-weight:500; transition:color .2s; }
     .nav-links a:hover { color:var(--yellow); }
+    .nav-social { display:flex; gap:.5rem; align-items:center; }
+    .nav-social-icon {
+      color:#888; display:flex; align-items:center; justify-content:center;
+      width:34px; height:34px; border:1px solid #222; transition:all .2s;
+    }
+    .nav-social-icon:hover { color:var(--yellow); border-color:var(--yellow); background:#111; }
     .nav-admin-btn { background:var(--yellow); color:var(--black); font-family:'DM Sans',sans-serif; font-weight:700; font-size:13px; padding:8px 18px; text-decoration:none; letter-spacing:1px; text-transform:uppercase; }
 
     .post-hero {
@@ -212,6 +218,8 @@ app.get('/post/:slug', async (req, res) => {
     }
     .share-btn:hover { opacity:.85; }
     .share-btn-wpp { background:#25D366; color:#fff; }
+    .share-btn-fb { background:#1877F2; color:#fff; }
+    .share-btn-ig { background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); color:#fff; }
     .share-btn-copy { background:var(--black); color:#fff; }
     .share-btn-copy.copied { background:var(--yellow); color:var(--black); }
 
@@ -237,8 +245,16 @@ app.get('/post/:slug', async (req, res) => {
     .related-card-cat { background:var(--yellow); color:var(--black); font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:2px 8px; display:inline-block; margin-bottom:.5rem; }
     .related-card-title { font-family:'Bebas Neue',sans-serif; font-size:1.2rem; line-height:1.1; }
 
-    footer { background:var(--black); color:#666; text-align:center; padding:2rem; font-size:13px; border-top:3px solid var(--yellow); }
-    footer span { color:var(--yellow); }
+    footer { background:var(--black); border-top:3px solid var(--yellow); }
+    .footer-inner { max-width:1100px; margin:0 auto; padding:2.5rem 2rem; display:flex; flex-direction:column; align-items:center; gap:1.5rem; }
+    .footer-social { display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; }
+    .footer-social-icon {
+      display:flex; align-items:center; gap:8px; color:#666; text-decoration:none;
+      font-size:13px; font-weight:500; padding:8px 16px; border:1px solid #222; transition:all .2s;
+    }
+    .footer-social-icon:hover { color:var(--yellow); border-color:var(--yellow); background:#111; }
+    .footer-copy { color:#444; font-size:12px; }
+    .footer-copy span { color:var(--yellow); }
 
     @media(max-width:600px) {
       .promo-banner { flex-direction:column; text-align:center; }
@@ -254,6 +270,17 @@ app.get('/post/:slug', async (req, res) => {
   <div class="nav-links">
     <a href="/">Blog</a>
     <a href="https://a2kfsuplementos.com.br">Loja</a>
+    <div class="nav-social">
+      <a href="https://www.instagram.com/a2kfsuplementos" target="_blank" rel="noopener" aria-label="Instagram" class="nav-social-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+      </a>
+      <a href="https://wa.me/5521977377802" target="_blank" rel="noopener" aria-label="WhatsApp" class="nav-social-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.134.558 4.133 1.535 5.865L.057 23.535a.75.75 0 00.908.908l5.67-1.478A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.92 0-3.72-.504-5.27-1.385l-.378-.219-3.924 1.022 1.022-3.924-.219-.378A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+      </a>
+      <a href="https://www.youtube.com/@A2KFSuplementos" target="_blank" rel="noopener" aria-label="YouTube" class="nav-social-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+      </a>
+    </div>
     <a href="/admin/login.html" class="nav-admin-btn">Admin</a>
   </div>
 </nav>
@@ -288,6 +315,14 @@ ${post.cover_url ? `<img src="${post.cover_url}" class="post-cover" alt="${post.
       <a class="share-btn share-btn-wpp" href="https://wa.me/?text=${encodeURIComponent(post.title + ' - ' + url)}" target="_blank">
         <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.134.558 4.133 1.535 5.865L.057 23.535a.75.75 0 00.908.908l5.67-1.478A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.92 0-3.72-.504-5.27-1.385l-.378-.219-3.924 1.022 1.022-3.924-.219-.378A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
         WhatsApp
+      </a>
+      <a class="share-btn share-btn-fb" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}" target="_blank">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        Facebook
+      </a>
+      <a class="share-btn share-btn-ig" href="https://www.instagram.com/a2kfsuplementos" target="_blank">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+        Instagram
       </a>
       <button class="share-btn share-btn-copy" id="copyBtn" onclick="copyLink()">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
@@ -325,7 +360,23 @@ ${post.cover_url ? `<img src="${post.cover_url}" class="post-cover" alt="${post.
 </div>
 
 <footer>
-  <p>© 2026 <span>A2KF Suplementos</span> · Todos os direitos reservados</p>
+  <div class="footer-inner">
+    <div class="footer-social">
+      <a href="https://www.instagram.com/a2kfsuplementos" target="_blank" rel="noopener" class="footer-social-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+        Instagram
+      </a>
+      <a href="https://wa.me/5521977377802" target="_blank" rel="noopener" class="footer-social-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.134.558 4.133 1.535 5.865L.057 23.535a.75.75 0 00.908.908l5.67-1.478A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.92 0-3.72-.504-5.27-1.385l-.378-.219-3.924 1.022 1.022-3.924-.219-.378A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        WhatsApp
+      </a>
+      <a href="https://www.youtube.com/@A2KFSuplementos" target="_blank" rel="noopener" class="footer-social-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        YouTube
+      </a>
+    </div>
+    <p class="footer-copy">© 2026 <span>A2KF Suplementos</span> · Todos os direitos reservados</p>
+  </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
