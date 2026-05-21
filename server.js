@@ -132,7 +132,7 @@ app.get('/post/:slug', async (req, res) => {
     }
     .promo-banner-text h3 { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; letter-spacing:1px; }
     .promo-banner-text p { font-size:14px; color:#333; margin-top:.25rem; }
-    .promo-banner-btn { background:var(--black); color:var(--white); padding:12px 28px; font-family:'DM Sans',sans-serif; font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:1px; text-decoration:none; white-space:nowrap; }
+    .promo-banner-btn { background:var(--black); color:#FFD400; padding:12px 28px; font-family:'DM Sans',sans-serif; font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:1px; text-decoration:none; white-space:nowrap; display:inline-block; }
 
     /* POSTS RELACIONADOS */
     .related { background:var(--gray); padding:3rem 2rem; border-top:2px solid var(--border); }
