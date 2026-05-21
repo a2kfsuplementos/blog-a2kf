@@ -68,6 +68,7 @@ app.get('/post/:slug', async (req, res) => {
 
   <!-- Canonical -->
   <link rel="canonical" href="${url}" />
+  <link rel="icon" type="image/png" href="/logo.png" />
 
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
