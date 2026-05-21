@@ -1,6 +1,7 @@
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const path = require('path');
+const https = require('https');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,28 +29,47 @@ app.post('/api/newsletter', async (req, res) => {
   if (!email || !email.includes('@')) {
     return res.status(400).json({ error: 'Email inválido.' });
   }
+
+  const payload = JSON.stringify({
+    email,
+    listIds: [BREVO_LIST_ID],
+    updateEnabled: true,
+  });
+
+  const options = {
+    hostname: 'api.brevo.com',
+    path: '/v3/contacts',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': BREVO_API_KEY,
+      'Content-Length': Buffer.byteLength(payload),
+    },
+  };
+
   try {
-    const response = await fetch('https://api.brevo.com/v3/contacts', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-key': BREVO_API_KEY,
-      },
-      body: JSON.stringify({
-        email,
-        listIds: [BREVO_LIST_ID],
-        updateEnabled: true,
-      }),
+    const result = await new Promise((resolve, reject) => {
+      const request = https.request(options, (response) => {
+        let data = '';
+        response.on('data', chunk => data += chunk);
+        response.on('end', () => resolve({ status: response.statusCode, body: data }));
+      });
+      request.on('error', reject);
+      request.write(payload);
+      request.end();
     });
-    if (response.status === 201 || response.status === 204) {
+
+    if (result.status === 201 || result.status === 204) {
       return res.json({ success: true });
     }
-    const data = await response.json();
-    if (data.code === 'duplicate_parameter') {
+    const parsed = JSON.parse(result.body || '{}');
+    if (parsed.code === 'duplicate_parameter') {
       return res.json({ success: true, already: true });
     }
+    console.error('Brevo error:', result.status, result.body);
     return res.status(500).json({ error: 'Erro ao cadastrar.' });
   } catch (e) {
+    console.error('Newsletter error:', e);
     return res.status(500).json({ error: 'Erro interno.' });
   }
 });
