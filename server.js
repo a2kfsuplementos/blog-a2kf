@@ -78,7 +78,7 @@ app.get('/post/:slug', async (req, res) => {
 
     nav {
       position:sticky; top:0; z-index:100;
-      background:var(--black); border-bottom:3px solid var(--yellow);
+      background:var(--black); border-bottom:3px solid var(--yellow); 
       padding:0 2rem; display:flex; align-items:center; justify-content:space-between; height:130px;
     }
     .nav-logo { text-decoration:none; }
