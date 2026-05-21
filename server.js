@@ -302,7 +302,7 @@ ${post.cover_url ? `<img src="${post.cover_url}" class="post-cover" alt="${post.
       <h3>ENCONTRE OS MELHORES SUPLEMENTOS</h3>
       <p>Qualidade garantida, preço justo e entrega rápida para todo o Brasil.</p>
     </div>
-    <a href="https://a2kfsuplementos.com.br" target="_blank" class="promo-banner-btn">Visitar Loja →</a>
+    <a href="https://a2kfsuplementos.com.br" target="_blank" style="background:#000;color:#FFD400;padding:12px 28px;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:1px;text-decoration:none;display:inline-block;">VISITAR LOJA →</a>
   </div>
   <!-- NEWSLETTER -->
   <div class="newsletter-box">
