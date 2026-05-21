@@ -269,7 +269,7 @@
       ? `<img src="${p.cover_url}" alt="${p.title}" style="width:100%;height:100%;object-fit:cover;display:block;" />`
       : `<div style="height:360px;background:#111;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:5rem;color:#FFD400;">A2KF</div>`;
     return `
-      <div class="featured-card" onclick="window.location.href='/post/'+(p.slug||p.id)">
+      <div class="featured-card" onclick="window.location.href=this.dataset.url" data-url="/post/${p.slug||p.id}"">
         <div class="featured-img">${img}</div>
         <div class="featured-body">
           <span class="featured-label">${p.category || 'Destaque'}</span>
@@ -285,7 +285,7 @@
       ? `<img src="${p.cover_url}" class="card-img" alt="${p.title}" />`
       : `<div class="card-img-placeholder">A2KF</div>`;
     return `
-      <div class="post-card" onclick="window.location.href='/post/'+(p.slug||p.id)">
+      <div class="post-card" onclick="window.location.href=this.dataset.url" data-url="/post/${p.slug||p.id}"">
         ${img}
         <div class="card-body">
           <div class="card-meta">
