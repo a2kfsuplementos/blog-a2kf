@@ -447,6 +447,115 @@ ${post.cover_url ? `<img src="${post.cover_url}" class="post-cover" alt="${post.
 
   loadRelated();
 </script>
+
+<!-- ============================================================
+  BANNER DE COOKIES — A2KF Suplementos
+  Cole este bloco antes de </body> em: index.html e server.js
+  ============================================================ -->
+
+<!-- COOKIE BANNER HTML -->
+<div id="cookieBanner" style="display:none;" aria-live="polite" role="dialog" aria-label="Aviso de cookies">
+  <div class="cookie-inner">
+    <div class="cookie-text">
+      <span class="cookie-icon">🍪</span>
+      <div>
+        <strong>Usamos cookies</strong>
+        <p>Este site usa cookies essenciais para funcionar corretamente e para enviar a newsletter. Nenhum dado é vendido a terceiros. <a href="/privacidade.html" target="_blank">Saiba mais</a></p>
+      </div>
+    </div>
+    <div class="cookie-actions">
+      <a href="/privacidade.html" target="_blank" class="cookie-btn-link">Política completa</a>
+      <button onclick="rejectCookies()" class="cookie-btn-reject">Recusar</button>
+      <button onclick="acceptCookies()" class="cookie-btn-accept">Aceitar</button>
+    </div>
+  </div>
+</div>
+
+<!-- COOKIE BANNER CSS -->
+<style>
+  #cookieBanner {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
+    background: #111;
+    border-top: 3px solid #FFD400;
+    padding: 1.25rem 2rem;
+    box-shadow: 0 -4px 24px rgba(0,0,0,.4);
+    animation: slideUp .35s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+  .cookie-inner {
+    max-width: 1100px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1.5rem; flex-wrap: wrap;
+  }
+  .cookie-text {
+    display: flex; align-items: flex-start; gap: 1rem; flex: 1; min-width: 260px;
+  }
+  .cookie-icon { font-size: 1.6rem; line-height: 1; flex-shrink: 0; margin-top: 2px; }
+  .cookie-text strong { display: block; color: #FFD400; font-size: 14px; font-weight: 700; letter-spacing: .5px; margin-bottom: .25rem; }
+  .cookie-text p { color: #999; font-size: 13px; line-height: 1.5; margin: 0; }
+  .cookie-text a { color: #FFD400; font-weight: 600; text-decoration: none; border-bottom: 1px solid rgba(255,212,0,.3); }
+  .cookie-text a:hover { border-color: #FFD400; }
+  .cookie-actions {
+    display: flex; align-items: center; gap: .75rem; flex-shrink: 0; flex-wrap: wrap;
+  }
+  .cookie-btn-link {
+    color: #666; font-size: 12px; font-family: 'DM Sans', sans-serif;
+    text-decoration: none; white-space: nowrap; padding: 8px 0;
+    border-bottom: 1px solid #333; transition: color .2s, border-color .2s;
+  }
+  .cookie-btn-link:hover { color: #aaa; border-color: #666; }
+  .cookie-btn-reject {
+    background: transparent; color: #888; border: 1px solid #333;
+    font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 12px;
+    letter-spacing: 1px; text-transform: uppercase; padding: 9px 18px;
+    cursor: pointer; transition: all .2s; white-space: nowrap;
+  }
+  .cookie-btn-reject:hover { border-color: #888; color: #ccc; }
+  .cookie-btn-accept {
+    background: #FFD400; color: #0A0A0A; border: none;
+    font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 12px;
+    letter-spacing: 1px; text-transform: uppercase; padding: 10px 22px;
+    cursor: pointer; transition: opacity .2s; white-space: nowrap;
+  }
+  .cookie-btn-accept:hover { opacity: .9; }
+
+  @media (max-width: 600px) {
+    #cookieBanner { padding: 1.25rem; }
+    .cookie-actions { width: 100%; justify-content: flex-end; }
+    .cookie-btn-link { display: none; }
+  }
+</style>
+
+<!-- COOKIE BANNER JS -->
+<script>
+  (function() {
+    var consent = localStorage.getItem('a2kf_cookie_consent');
+    if (!consent) {
+      document.getElementById('cookieBanner').style.display = 'block';
+    }
+  })();
+
+  function acceptCookies() {
+    localStorage.setItem('a2kf_cookie_consent', 'accepted');
+    hideBanner();
+  }
+
+  function rejectCookies() {
+    localStorage.setItem('a2kf_cookie_consent', 'rejected');
+    hideBanner();
+  }
+
+  function hideBanner() {
+    var b = document.getElementById('cookieBanner');
+    b.style.transition = 'transform .3s ease, opacity .3s ease';
+    b.style.transform = 'translateY(100%)';
+    b.style.opacity = '0';
+    setTimeout(function() { b.style.display = 'none'; }, 320);
+  }
+</script>
 </body>
 </html>`);
 });
