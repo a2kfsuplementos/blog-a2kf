@@ -16,7 +16,43 @@ const SITE_URL = process.env.SITE_URL || 'https://blog.a2kfsuplementos.com.br';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Serve static files (CSS, JS, images)
+const BREVO_API_KEY = process.env.BREVO_API_KEY || '';
+const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID || '5');
+
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ─── NEWSLETTER (Brevo) ──────────────────────────────────────────────────────
+app.post('/api/newsletter', async (req, res) => {
+  const { email } = req.body;
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ error: 'Email inválido.' });
+  }
+  try {
+    const response = await fetch('https://api.brevo.com/v3/contacts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': BREVO_API_KEY,
+      },
+      body: JSON.stringify({
+        email,
+        listIds: [BREVO_LIST_ID],
+        updateEnabled: true,
+      }),
+    });
+    if (response.status === 201 || response.status === 204) {
+      return res.json({ success: true });
+    }
+    const data = await response.json();
+    if (data.code === 'duplicate_parameter') {
+      return res.json({ success: true, already: true });
+    }
+    return res.status(500).json({ error: 'Erro ao cadastrar.' });
+  } catch (e) {
+    return res.status(500).json({ error: 'Erro interno.' });
+  }
+});
 
 // ─── HOME ────────────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
@@ -78,7 +114,7 @@ app.get('/post/:slug', async (req, res) => {
 
     nav {
       position:sticky; top:0; z-index:100;
-      background:var(--black); border-bottom:3px solid var(--yellow); 
+      background:var(--black); border-bottom:3px solid var(--yellow);
       padding:0 2rem; display:flex; align-items:center; justify-content:space-between; height:130px;
     }
     .nav-logo { text-decoration:none; }
@@ -111,7 +147,41 @@ app.get('/post/:slug', async (req, res) => {
     .post-body img { width:100%; height:auto; margin:1.5rem 0; }
     .post-body a { color:var(--black); font-weight:700; border-bottom:2px solid var(--yellow); text-decoration:none; }
 
-    /* COMPARTILHAR */
+    /* BUSCA NO POST */
+    .post-search {
+      background:var(--gray); border-bottom:1px solid var(--border); padding:1rem 2rem; display:flex; justify-content:center;
+    }
+    .post-search-inner { display:flex; gap:0; width:100%; max-width:560px; }
+    .post-search input {
+      flex:1; padding:11px 18px; border:2px solid var(--border); border-right:none;
+      font-family:'DM Sans',sans-serif; font-size:15px; outline:none; transition:border-color .2s;
+    }
+    .post-search input:focus { border-color:var(--yellow); }
+    .post-search button {
+      background:var(--yellow); color:var(--black); border:none; padding:11px 20px;
+      font-family:'DM Sans',sans-serif; font-weight:700; font-size:14px; cursor:pointer; white-space:nowrap;
+    }
+
+    /* NEWSLETTER */
+    .newsletter-box {
+      background:var(--black); color:var(--white); padding:2.5rem; margin-top:3rem; text-align:center;
+      border-top:4px solid var(--yellow);
+    }
+    .newsletter-box h3 { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:1px; margin-bottom:.5rem; }
+    .newsletter-box p { color:#aaa; font-size:14px; margin-bottom:1.5rem; }
+    .newsletter-form { display:flex; gap:0; max-width:460px; margin:0 auto; }
+    .newsletter-form input {
+      flex:1; padding:12px 18px; border:none; font-family:'DM Sans',sans-serif; font-size:15px;
+      outline:none; background:#1a1a1a; color:#fff; border:2px solid #333; transition:border-color .2s;
+    }
+    .newsletter-form input:focus { border-color:var(--yellow); }
+    .newsletter-form button {
+      background:var(--yellow); color:var(--black); border:none; padding:12px 22px;
+      font-family:'DM Sans',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px;
+      text-transform:uppercase; cursor:pointer; white-space:nowrap; transition:opacity .2s;
+    }
+    .newsletter-form button:hover { opacity:.9; }
+    .newsletter-msg { margin-top:1rem; font-size:13px; min-height:20px; }
     .share-box { border-top:2px solid var(--border); margin-top:3rem; padding-top:2rem; }
     .share-box h4 { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:1px; margin-bottom:1rem; }
     .share-btns { display:flex; gap:.75rem; flex-wrap:wrap; }
@@ -168,6 +238,13 @@ app.get('/post/:slug', async (req, res) => {
   </div>
 </nav>
 
+<div class="post-search">
+  <div class="post-search-inner">
+    <input type="text" id="postSearchInput" placeholder="Buscar outros artigos..." onkeydown="if(event.key==='Enter') searchPosts()" />
+    <button onclick="searchPosts()">Buscar</button>
+  </div>
+</div>
+
 ${post.cover_url ? `<img src="${post.cover_url}" class="post-cover" alt="${post.title}" />` : ''}
 
 <div class="post-hero">
@@ -205,7 +282,17 @@ ${post.cover_url ? `<img src="${post.cover_url}" class="post-cover" alt="${post.
       <h3>ENCONTRE OS MELHORES SUPLEMENTOS</h3>
       <p>Qualidade garantida, preço justo e entrega rápida para todo o Brasil.</p>
     </div>
-    <a href="https://a2kfsuplementos.com.br" target="_blank" style="background:#000;color:#FFD400;padding:12px 28px;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:1px;text-decoration:none;display:inline-block;">VISITAR LOJA →</a>
+    <a href="https://a2kfsuplementos.com.br" target="_blank" class="promo-banner-btn">Visitar Loja →</a>
+  </div>
+  <!-- NEWSLETTER -->
+  <div class="newsletter-box">
+    <h3>FIQUE POR DENTRO DE TUDO</h3>
+    <p>Receba artigos sobre treino, nutrição e suplementação diretamente no seu email.</p>
+    <div class="newsletter-form">
+      <input type="email" id="newsletterEmail" placeholder="seu@email.com" onkeydown="if(event.key==='Enter') subscribeNewsletter()" />
+      <button onclick="subscribeNewsletter()">Quero receber</button>
+    </div>
+    <div class="newsletter-msg" id="newsletterMsg"></div>
   </div>
 </div>
 
@@ -224,6 +311,33 @@ ${post.cover_url ? `<img src="${post.cover_url}" class="post-cover" alt="${post.
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const _sb = window.supabase.createClient('${SUPABASE_URL}', '${SUPABASE_ANON_KEY}');
+
+  function searchPosts() {
+    const q = document.getElementById('postSearchInput').value.trim();
+    if (q) window.location.href = '/?q=' + encodeURIComponent(q);
+  }
+
+  async function subscribeNewsletter() {
+    const email = document.getElementById('newsletterEmail').value.trim();
+    const msg = document.getElementById('newsletterMsg');
+    if (!email) { msg.style.color = '#ff8888'; msg.textContent = 'Digite seu email.'; return; }
+    msg.style.color = '#aaa'; msg.textContent = 'Enviando...';
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (data.success) {
+        msg.style.color = '#FFD400';
+        msg.textContent = data.already ? '✓ Você já está cadastrado!' : '✓ Cadastrado com sucesso! Bem-vindo à família A2KF!';
+        document.getElementById('newsletterEmail').value = '';
+      } else {
+        msg.style.color = '#ff8888'; msg.textContent = 'Erro ao cadastrar. Tente novamente.';
+      }
+    } catch { msg.style.color = '#ff8888'; msg.textContent = 'Erro de conexão.'; }
+  }
 
   async function loadRelated() {
     const { data } = await _sb.from('posts')
