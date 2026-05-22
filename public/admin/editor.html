@@ -133,7 +133,20 @@
     @media(max-width:1024px) {
       .editor-layout { grid-template-columns:1fr; }
       .sidebar { display:none; }
-      .main { margin-left:0; padding:1.5rem; }
+      .main { margin-left:0; padding:1.25rem; }
+      .topbar { flex-wrap:wrap; gap:.75rem; }
+      .topbar h1 { font-size:1.6rem; }
+      .topbar-actions { width:100%; justify-content:flex-end; flex-wrap:wrap; gap:.5rem; }
+      .btn { padding:9px 16px; font-size:12px; }
+      .title-input { font-size:1.6rem; }
+      #editor { min-height:300px; }
+      .card { padding:1.25rem; }
+    }
+    @media(max-width:480px) {
+      .main { padding:1rem; }
+      .topbar-actions { gap:.4rem; }
+      .btn-outline { display:none; } /* esconde "Salvar Rascunho" em tela muito pequena — já tem Ctrl+S */
+      .title-input { font-size:1.3rem; }
     }
   </style>
 </head>
