@@ -127,6 +127,16 @@ app.get('/post/:slug', async (req, res) => {
   <link rel="icon" type="image/png" href="/logo.png" />
 
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  
+  <!-- Google Analytics GA4 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TN3RMJHTKX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-TN3RMJHTKX');
+  </script>
+  
   <style>
     :root { --yellow:#FFD400; --black:#0A0A0A; --white:#fff; --gray:#F4F4F2; --border:#E5E5E0; --muted:#6B6B6B; }
     * { margin:0; padding:0; box-sizing:border-box; }
