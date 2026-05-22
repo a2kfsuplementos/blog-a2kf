@@ -179,10 +179,10 @@ app.get('/post/:slug', async (req, res) => {
     nav {
       position:sticky; top:0; z-index:100;
       background:var(--black); border-bottom:3px solid var(--yellow);
-      padding:0 2rem; display:flex; align-items:center; justify-content:space-between; height:130px;
+      padding:0 1.25rem; display:flex; align-items:center; justify-content:space-between; height:70px;
     }
     .nav-logo { text-decoration:none; }
-    .nav-logo img { height:120px; width:auto; display:block; }
+    .nav-logo img { height:56px; width:auto; display:block; }
     .nav-links { display:flex; gap:2rem; align-items:center; }
     .nav-links a { color:#ccc; text-decoration:none; font-size:14px; font-weight:500; transition:color .2s; }
     .nav-links a:hover { color:var(--yellow); }
@@ -195,7 +195,7 @@ app.get('/post/:slug', async (req, res) => {
     .nav-admin-btn { background:var(--yellow); color:var(--black); font-family:'DM Sans',sans-serif; font-weight:700; font-size:13px; padding:8px 18px; text-decoration:none; letter-spacing:1px; text-transform:uppercase; }
 
     .post-hero {
-      background:var(--black); color:var(--white); padding:3rem 2rem 2.5rem;
+      background:var(--black); color:var(--white); padding:2rem 1.25rem 2rem;
       border-bottom:3px solid var(--yellow);
     }
     .post-hero-inner { max-width:800px; margin:0 auto; }
@@ -207,13 +207,13 @@ app.get('/post/:slug', async (req, res) => {
 
     .post-cover { width:100%; max-height:480px; object-fit:cover; display:block; }
 
-    .post-body { max-width:800px; margin:0 auto; padding:3rem 2rem; }
-    .post-body h2 { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:1px; margin:2rem 0 .75rem; }
-    .post-body h3 { font-size:1.2rem; font-weight:700; margin:1.5rem 0 .5rem; }
+    .post-body { max-width:800px; margin:0 auto; padding:2rem 1.25rem; }
+    .post-body h2 { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; letter-spacing:1px; margin:2rem 0 .75rem; }
+    .post-body h3 { font-size:1.1rem; font-weight:700; margin:1.5rem 0 .5rem; }
     .post-body p { font-size:16px; line-height:1.85; color:#222; margin-bottom:1.25rem; }
     .post-body ul, .post-body ol { padding-left:1.5rem; margin-bottom:1.25rem; }
     .post-body li { font-size:16px; line-height:1.85; color:#222; margin-bottom:.4rem; }
-    .post-body blockquote { border-left:4px solid var(--yellow); padding:1rem 1.5rem; background:var(--gray); margin:1.5rem 0; font-style:italic; color:#444; }
+    .post-body blockquote { border-left:4px solid var(--yellow); padding:1rem 1.25rem; background:var(--gray); margin:1.5rem 0; font-style:italic; color:#444; }
     .post-body img { width:100%; height:auto; margin:1.5rem 0; }
     .post-body a { color:var(--black); font-weight:700; border-bottom:2px solid var(--yellow); text-decoration:none; }
 
@@ -234,21 +234,21 @@ app.get('/post/:slug', async (req, res) => {
 
     /* NEWSLETTER */
     .newsletter-box {
-      background:var(--black); color:var(--white); padding:2.5rem; margin-top:3rem; text-align:center;
+      background:var(--black); color:var(--white); padding:2rem 1.25rem; margin-top:3rem; text-align:center;
       border-top:4px solid var(--yellow);
     }
-    .newsletter-box h3 { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:1px; margin-bottom:.5rem; }
+    .newsletter-box h3 { font-family:'Bebas Neue',sans-serif; font-size:clamp(1.6rem,5vw,2rem); letter-spacing:1px; margin-bottom:.5rem; }
     .newsletter-box p { color:#aaa; font-size:14px; margin-bottom:1.5rem; }
-    .newsletter-form { display:flex; gap:0; max-width:460px; margin:0 auto; }
+    .newsletter-form { display:flex; flex-wrap:wrap; gap:.75rem; max-width:460px; margin:0 auto; }
     .newsletter-form input {
-      flex:1; padding:12px 18px; border:none; font-family:'DM Sans',sans-serif; font-size:15px;
+      flex:1; min-width:200px; padding:12px 18px; border:none; font-family:'DM Sans',sans-serif; font-size:16px;
       outline:none; background:#1a1a1a; color:#fff; border:2px solid #333; transition:border-color .2s;
     }
     .newsletter-form input:focus { border-color:var(--yellow); }
     .newsletter-form button {
-      background:var(--yellow); color:var(--black); border:none; padding:12px 22px;
+      width:100%; background:var(--yellow); color:var(--black); border:none; padding:12px 22px;
       font-family:'DM Sans',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px;
-      text-transform:uppercase; cursor:pointer; white-space:nowrap; transition:opacity .2s;
+      text-transform:uppercase; cursor:pointer; transition:opacity .2s;
     }
     .newsletter-form button:hover { opacity:.9; }
     .newsletter-msg { margin-top:1rem; font-size:13px; min-height:20px; }
@@ -256,9 +256,10 @@ app.get('/post/:slug', async (req, res) => {
     .share-box h4 { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:1px; margin-bottom:1rem; }
     .share-btns { display:flex; gap:.75rem; flex-wrap:wrap; }
     .share-btn {
-      display:inline-flex; align-items:center; gap:8px; padding:10px 20px;
+      display:inline-flex; align-items:center; gap:8px; padding:10px 16px;
       font-family:'DM Sans',sans-serif; font-weight:700; font-size:13px;
       text-transform:uppercase; letter-spacing:.5px; cursor:pointer; border:none; text-decoration:none; transition:opacity .2s;
+      flex:1; min-width:130px; justify-content:center;
     }
     .share-btn:hover { opacity:.85; }
     .share-btn-wpp { background:#25D366; color:#fff; }
@@ -269,39 +270,46 @@ app.get('/post/:slug', async (req, res) => {
 
     /* BANNER LOJA */
     .promo-banner {
-      background:var(--yellow); padding:2rem; margin-top:3rem;
+      background:var(--yellow); padding:1.5rem 1.25rem; margin-top:3rem;
       display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
     }
-    .promo-banner-text h3 { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; letter-spacing:1px; }
+    .promo-banner-text h3 { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:1px; }
     .promo-banner-text p { font-size:14px; color:#333; margin-top:.25rem; }
-    .promo-banner-btn { background:var(--black); color:#FFD400; padding:12px 28px; font-family:'DM Sans',sans-serif; font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:1px; text-decoration:none; white-space:nowrap; display:inline-block; }
+    .promo-banner-btn { background:var(--black); color:#FFD400; padding:12px 24px; font-family:'DM Sans',sans-serif; font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:1px; text-decoration:none; white-space:nowrap; display:inline-block; }
 
     /* POSTS RELACIONADOS */
-    .related { background:var(--gray); padding:3rem 2rem; border-top:2px solid var(--border); }
+    .related { background:var(--gray); padding:2rem 1.25rem; border-top:2px solid var(--border); }
     .related-inner { max-width:1100px; margin:0 auto; }
-    .related h2 { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:1px; margin-bottom:1.5rem; }
-    .related-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1.5rem; }
+    .related h2 { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; letter-spacing:1px; margin-bottom:1.25rem; }
+    .related-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:1.25rem; }
     .related-card { background:var(--white); border:1.5px solid var(--border); text-decoration:none; color:inherit; display:block; transition:border-color .2s,transform .2s; }
     .related-card:hover { border-color:var(--yellow); transform:translateY(-3px); }
     .related-card-img { width:100%; height:160px; object-fit:cover; display:block; background:var(--black); }
     .related-card-placeholder { width:100%; height:160px; background:var(--black); display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--yellow); }
-    .related-card-body { padding:1.25rem; }
+    .related-card-body { padding:1rem; }
     .related-card-cat { background:var(--yellow); color:var(--black); font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:2px 8px; display:inline-block; margin-bottom:.5rem; }
     .related-card-title { font-family:'Bebas Neue',sans-serif; font-size:1.2rem; line-height:1.1; }
 
     footer { background:var(--black); border-top:3px solid var(--yellow); }
-    .footer-inner { max-width:1100px; margin:0 auto; padding:2.5rem 2rem; display:flex; flex-direction:column; align-items:center; gap:1.5rem; }
-    .footer-social { display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; }
+    .footer-inner { max-width:1100px; margin:0 auto; padding:2rem 1.25rem; display:flex; flex-direction:column; align-items:center; gap:1.25rem; }
+    .footer-social { display:flex; gap:.75rem; flex-wrap:wrap; justify-content:center; }
     .footer-social-icon {
       display:flex; align-items:center; gap:8px; color:#666; text-decoration:none;
-      font-size:13px; font-weight:500; padding:8px 16px; border:1px solid #222; transition:all .2s;
+      font-size:13px; font-weight:500; padding:8px 12px; border:1px solid #222; transition:all .2s;
     }
     .footer-social-icon:hover { color:var(--yellow); border-color:var(--yellow); background:#111; }
-    .footer-copy { color:#444; font-size:12px; }
+    .footer-copy { color:#444; font-size:12px; text-align:center; }
     .footer-copy span { color:var(--yellow); }
 
     @media(max-width:600px) {
       .promo-banner { flex-direction:column; text-align:center; }
+      .promo-banner-btn { width:100%; text-align:center; }
+      .post-title { font-size:clamp(1.8rem,8vw,3rem); }
+      .share-btns { gap:.5rem; }
+      .nav-social { display:none; }
+      .nav-links { gap:.75rem; }
+      .post-search { padding:.75rem 1rem; }
+      .post-search input { font-size:16px; }
     }
   </style>
 </head>
@@ -309,7 +317,7 @@ app.get('/post/:slug', async (req, res) => {
 
 <nav>
   <a href="/" class="nav-logo">
-    <img src="/logo.png" alt="A2KF Suplementos" style="height:120px;width:auto;display:block;" />
+    <img src="/logo.png" alt="A2KF Suplementos" style="height:56px;width:auto;display:block;" />
   </a>
   <div class="nav-links">
     <a href="/">Blog</a>
