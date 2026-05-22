@@ -126,6 +126,40 @@ app.get('/post/:slug', async (req, res) => {
   <link rel="canonical" href="${url}" />
   <link rel="icon" type="image/png" href="/logo.png" />
 
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "${post.title.replace(/"/g, '\\"')}",
+    "description": "${(post.excerpt || post.title).replace(/"/g, '\\"')}",
+    "image": "${image}",
+    "datePublished": "${new Date(post.created_at).toISOString()}",
+    "dateModified": "${new Date(post.updated_at || post.created_at).toISOString()}",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "${url}"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "A2KF Suplementos",
+      "url": "https://a2kfsuplementos.com.br"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "A2KF Suplementos",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "${SITE_URL}/logo.png",
+        "width": 200,
+        "height": 200
+      }
+    }${post.category ? `,
+    "articleSection": "${post.category}"` : ''}${post.cover_url ? `,
+    "thumbnailUrl": "${post.cover_url}"` : ''}
+  }
+  </script>
+
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
   
   <!-- Google Analytics GA4 -->
