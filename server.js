@@ -77,11 +77,11 @@ app.post('/api/newsletter', async (req, res) => {
 // ─── NOTIFICAR INSCRITOS (novo post publicado) ───────────────────────────────
 app.post('/api/notify-subscribers', async (req, res) => {
   const { postTitle, postSlug, postExcerpt, postCategory, coverUrl } = req.body;
- 
+
   if (!postTitle || !postSlug) {
     return res.status(400).json({ error: 'postTitle e postSlug são obrigatórios.' });
   }
- 
+
   const postUrl = `${SITE_URL}/post/${postSlug}`;
   const categoryLabel = postCategory ? `<span style="background:#FFD400;color:#000;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:3px 10px;font-family:sans-serif;">${postCategory}</span>` : '';
   const coverHtml = coverUrl
@@ -90,7 +90,7 @@ app.post('/api/notify-subscribers', async (req, res) => {
   const excerptHtml = postExcerpt
     ? `<p style="color:#555;font-size:15px;line-height:1.7;margin:0 0 1.5rem;">${postExcerpt}</p>`
     : '';
- 
+
   const htmlContent = `
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -137,10 +137,11 @@ app.post('/api/notify-subscribers', async (req, res) => {
   </table>
 </body>
 </html>`;
- 
+
   // Busca todos os contatos da lista Brevo
   let contacts = [];
   try {
+    console.log(`[notify] Buscando contatos da lista ${BREVO_LIST_ID}...`);
     const listRes = await new Promise((resolve, reject) => {
       const opts = {
         hostname: 'api.brevo.com',
@@ -156,22 +157,26 @@ app.post('/api/notify-subscribers', async (req, res) => {
       r.on('error', reject);
       r.end();
     });
- 
+
+    console.log(`[notify] Brevo lista status: ${listRes.status}`);
+    console.log(`[notify] Brevo lista body: ${listRes.body.substring(0, 300)}`);
+
     const parsed = JSON.parse(listRes.body || '{}');
     contacts = (parsed.contacts || []).filter(c => c.email && !c.emailBlacklisted);
+    console.log(`[notify] Contatos encontrados: ${contacts.length}`);
   } catch (e) {
     console.error('Erro ao buscar contatos Brevo:', e);
     return res.status(500).json({ error: 'Erro ao buscar inscritos.' });
   }
- 
+
   if (!contacts.length) {
     return res.json({ success: true, sent: 0, message: 'Nenhum inscrito encontrado.' });
   }
- 
+
   // Envia email transacional para cada inscrito via Brevo
   let sent = 0;
   let errors = 0;
- 
+
   const BATCH_SIZE = 10; // envia em lotes para não sobrecarregar
   for (let i = 0; i < contacts.length; i += BATCH_SIZE) {
     const batch = contacts.slice(i, i + BATCH_SIZE);
@@ -197,18 +202,19 @@ app.post('/api/notify-subscribers', async (req, res) => {
           const r = https.request(opts, (response) => {
             let data = '';
             response.on('data', chunk => data += chunk);
-            response.on('end', () => resolve({ status: response.statusCode }));
+            response.on('end', () => resolve({ status: response.statusCode, body: data }));
           });
           r.on('error', reject);
           r.write(payload);
           r.end();
         });
+        console.log(`[notify] Email para ${contact.email}: status ${result.status} — ${result.body?.substring(0, 200)}`);
         if (result.status === 201) sent++;
         else errors++;
       } catch { errors++; }
     }));
   }
- 
+
   console.log(`[notify] Novo post "${postTitle}": ${sent} enviados, ${errors} erros.`);
   return res.json({ success: true, sent, errors });
 });
