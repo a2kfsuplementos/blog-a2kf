@@ -238,6 +238,10 @@ app.get('/post/:slug', async (req, res) => {
     return res.status(404).send(notFoundPage());
   }
 
+  // Incrementa contador de visualizações (fire-and-forget)
+  supabase.rpc('increment_views', { post_slug: slug }).catch(() => {});
+  const views = (post.views || 0) + 1;
+  
   const excerpt = post.excerpt || post.title;
   const image = post.cover_url || `${SITE_URL}/logo.png`;
   const url = `${SITE_URL}/post/${slug}`;
