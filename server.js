@@ -181,7 +181,7 @@ app.post('/api/notify-subscribers', async (req, res) => {
     const batch = contacts.slice(i, i + BATCH_SIZE);
     await Promise.all(batch.map(async (contact) => {
       const payload = JSON.stringify({
-        sender: { name: 'A2KF Suplementos', email: 'no-reply@a2kfsuplementos.com.br' },
+        sender: { name: 'A2KF Suplementos', email: 'contato@a2kfsuplementos.com.br' },
         to: [{ email: contact.email }],
         subject: `📢 Novo artigo: ${postTitle}`,
         htmlContent,
@@ -239,9 +239,9 @@ app.get('/post/:slug', async (req, res) => {
   }
 
   // Incrementa contador de visualizações (fire-and-forget)
-  supabase.rpc('increment_views', { post_slug: slug }).catch(() => {});
+  supabase.rpc('increment_views', { post_slug: slug }).then(() => {}).catch(() => {});
   const views = (post.views || 0) + 1;
-  
+
   const excerpt = post.excerpt || post.title;
   const image = post.cover_url || `${SITE_URL}/logo.png`;
   const url = `${SITE_URL}/post/${slug}`;
@@ -350,6 +350,7 @@ app.get('/post/:slug', async (req, res) => {
     .post-meta { display:flex; gap:1rem; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; }
     .post-category { background:var(--yellow); color:var(--black); font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:3px 10px; }
     .post-date { font-size:13px; color:#888; }
+    .post-views { font-size:13px; color:#888; display:flex; align-items:center; gap:4px; }
     .post-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(2rem,6vw,4rem); line-height:1; letter-spacing:1px; }
     .post-excerpt { color:#aaa; font-size:1.1rem; line-height:1.6; margin-top:1rem; max-width:640px; }
 
@@ -499,6 +500,9 @@ ${post.cover_url ? `<img src="${post.cover_url}" class="post-cover" alt="${post.
     <div class="post-meta">
       ${post.category ? `<span class="post-category">${post.category}</span>` : ''}
       <span class="post-date">${date}</span>
+      <span class="post-views">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>${views.toLocaleString('pt-BR')} visualizações
+      </span>
     </div>
     <h1 class="post-title">${post.title}</h1>
     ${post.excerpt ? `<p class="post-excerpt">${post.excerpt}</p>` : ''}
