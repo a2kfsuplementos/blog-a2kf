@@ -74,6 +74,145 @@ app.post('/api/newsletter', async (req, res) => {
   }
 });
 
+// ─── NOTIFICAR INSCRITOS (novo post publicado) ───────────────────────────────
+app.post('/api/notify-subscribers', async (req, res) => {
+  const { postTitle, postSlug, postExcerpt, postCategory, coverUrl } = req.body;
+ 
+  if (!postTitle || !postSlug) {
+    return res.status(400).json({ error: 'postTitle e postSlug são obrigatórios.' });
+  }
+ 
+  const postUrl = `${SITE_URL}/post/${postSlug}`;
+  const categoryLabel = postCategory ? `<span style="background:#FFD400;color:#000;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:3px 10px;font-family:sans-serif;">${postCategory}</span>` : '';
+  const coverHtml = coverUrl
+    ? `<img src="${coverUrl}" alt="${postTitle}" style="width:100%;max-height:300px;object-fit:cover;display:block;margin-bottom:0;" />`
+    : '';
+  const excerptHtml = postExcerpt
+    ? `<p style="color:#555;font-size:15px;line-height:1.7;margin:0 0 1.5rem;">${postExcerpt}</p>`
+    : '';
+ 
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
+<body style="margin:0;padding:0;background:#f4f4f2;font-family:'DM Sans',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f2;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="100%" style="max-width:600px;background:#fff;border-top:4px solid #FFD400;">
+        <!-- HEADER -->
+        <tr>
+          <td style="background:#0A0A0A;padding:20px 32px;border-bottom:3px solid #FFD400;">
+            <span style="font-family:Arial,sans-serif;font-size:28px;font-weight:900;color:#FFD400;letter-spacing:2px;">A2KF</span>
+            <span style="color:#666;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin-left:10px;">Blog</span>
+          </td>
+        </tr>
+        <!-- COVER -->
+        ${coverHtml ? `<tr><td style="padding:0;">${coverHtml}</td></tr>` : ''}
+        <!-- BODY -->
+        <tr>
+          <td style="padding:32px;">
+            <p style="color:#888;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;">Novo artigo publicado</p>
+            ${categoryLabel ? `<div style="margin-bottom:16px;">${categoryLabel}</div>` : ''}
+            <h1 style="font-family:Arial,sans-serif;font-size:28px;font-weight:900;color:#0A0A0A;line-height:1.1;margin:0 0 16px;letter-spacing:1px;">${postTitle}</h1>
+            ${excerptHtml}
+            <a href="${postUrl}" style="display:inline-block;background:#FFD400;color:#000;font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;padding:14px 28px;text-decoration:none;margin-bottom:32px;">
+              Ler artigo completo →
+            </a>
+            <hr style="border:none;border-top:1px solid #e5e5e0;margin:24px 0;" />
+            <p style="color:#aaa;font-size:12px;line-height:1.6;margin:0;">
+              Você está recebendo este email porque se inscreveu na newsletter da A2KF Suplementos.<br/>
+              Para cancelar sua inscrição, responda este email com o assunto <strong>cancelar</strong> ou
+              <a href="${SITE_URL}" style="color:#888;">acesse o blog</a>.
+            </p>
+          </td>
+        </tr>
+        <!-- FOOTER -->
+        <tr>
+          <td style="background:#0A0A0A;padding:20px 32px;text-align:center;">
+            <p style="color:#444;font-size:11px;margin:0;">© 2026 <span style="color:#FFD400;">A2KF Suplementos</span> · Rio de Janeiro, Brasil</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+ 
+  // Busca todos os contatos da lista Brevo
+  let contacts = [];
+  try {
+    const listRes = await new Promise((resolve, reject) => {
+      const opts = {
+        hostname: 'api.brevo.com',
+        path: `/v3/contacts/lists/${BREVO_LIST_ID}/contacts?limit=500&offset=0`,
+        method: 'GET',
+        headers: { 'api-key': BREVO_API_KEY, 'Accept': 'application/json' },
+      };
+      const r = https.request(opts, (response) => {
+        let data = '';
+        response.on('data', chunk => data += chunk);
+        response.on('end', () => resolve({ status: response.statusCode, body: data }));
+      });
+      r.on('error', reject);
+      r.end();
+    });
+ 
+    const parsed = JSON.parse(listRes.body || '{}');
+    contacts = (parsed.contacts || []).filter(c => c.email && !c.emailBlacklisted);
+  } catch (e) {
+    console.error('Erro ao buscar contatos Brevo:', e);
+    return res.status(500).json({ error: 'Erro ao buscar inscritos.' });
+  }
+ 
+  if (!contacts.length) {
+    return res.json({ success: true, sent: 0, message: 'Nenhum inscrito encontrado.' });
+  }
+ 
+  // Envia email transacional para cada inscrito via Brevo
+  let sent = 0;
+  let errors = 0;
+ 
+  const BATCH_SIZE = 10; // envia em lotes para não sobrecarregar
+  for (let i = 0; i < contacts.length; i += BATCH_SIZE) {
+    const batch = contacts.slice(i, i + BATCH_SIZE);
+    await Promise.all(batch.map(async (contact) => {
+      const payload = JSON.stringify({
+        sender: { name: 'A2KF Suplementos', email: 'no-reply@a2kfsuplementos.com.br' },
+        to: [{ email: contact.email }],
+        subject: `📢 Novo artigo: ${postTitle}`,
+        htmlContent,
+      });
+      try {
+        const result = await new Promise((resolve, reject) => {
+          const opts = {
+            hostname: 'api.brevo.com',
+            path: '/v3/smtp/email',
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'api-key': BREVO_API_KEY,
+              'Content-Length': Buffer.byteLength(payload),
+            },
+          };
+          const r = https.request(opts, (response) => {
+            let data = '';
+            response.on('data', chunk => data += chunk);
+            response.on('end', () => resolve({ status: response.statusCode }));
+          });
+          r.on('error', reject);
+          r.write(payload);
+          r.end();
+        });
+        if (result.status === 201) sent++;
+        else errors++;
+      } catch { errors++; }
+    }));
+  }
+ 
+  console.log(`[notify] Novo post "${postTitle}": ${sent} enviados, ${errors} erros.`);
+  return res.json({ success: true, sent, errors });
+});
+
 // ─── HOME ────────────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
