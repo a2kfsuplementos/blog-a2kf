@@ -386,6 +386,9 @@
 
     setSavingState('saving');
 
+    // Guarda se era rascunho ANTES de salvar (para saber se deve notificar)
+    const wasUnpublished = !isPublished;
+
     if (postId) {
       const { error } = await _sb.from('posts').update(data).eq('id', postId);
       if (error) { showToast('Erro ao salvar.', 'error'); setSavingState(''); return; }
@@ -397,9 +400,41 @@
       document.getElementById('pageTitle').textContent = 'EDITAR POST';
     }
 
-    setStatus(publish !== undefined ? publish : isPublished);
+    const nowPublished = publish !== undefined ? publish : isPublished;
+    setStatus(nowPublished);
     setSavingState('saved');
     showToast(publish ? 'Post publicado!' : 'Rascunho salvo.', 'success');
+
+    // Notifica inscritos somente quando muda de rascunho → publicado
+    if (nowPublished && wasUnpublished && publish === true) {
+      notifySubscribers(data);
+    }
+  }
+
+  async function notifySubscribers(data) {
+    try {
+      showToast('Notificando inscritos...', 'success');
+      const res = await fetch('/api/notify-subscribers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          postTitle: data.title,
+          postSlug: data.slug,
+          postExcerpt: data.excerpt || '',
+          postCategory: data.category || '',
+          coverUrl: data.cover_url || '',
+        }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        showToast(`✓ ${result.sent} inscrito(s) notificado(s)!`, 'success');
+      } else {
+        showToast('Aviso: erro ao notificar inscritos.', 'error');
+      }
+    } catch (e) {
+      console.error('Notify error:', e);
+      showToast('Aviso: não foi possível notificar inscritos.', 'error');
+    }
   }
 
   async function autoSave() {

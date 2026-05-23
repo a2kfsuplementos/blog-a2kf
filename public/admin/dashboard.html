@@ -281,7 +281,38 @@
     if (p) p.published = !current;
     updateStats();
     renderTable(allPosts);
+    const nowPublished = !current;
     showToast(current ? 'Post despublicado.' : 'Post publicado!', 'success');
+
+    // Notifica inscritos somente quando muda de rascunho → publicado
+    if (nowPublished && p) {
+      notifySubscribers(p);
+    }
+  }
+
+  async function notifySubscribers(post) {
+    try {
+      showToast('Notificando inscritos...', 'success');
+      const res = await fetch('/api/notify-subscribers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          postTitle: post.title,
+          postSlug: post.slug || post.id,
+          postExcerpt: post.excerpt || '',
+          postCategory: post.category || '',
+          coverUrl: post.cover_url || '',
+        }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        showToast(`✓ ${result.sent} inscrito(s) notificado(s)!`, 'success');
+      } else {
+        showToast('Aviso: erro ao notificar inscritos.', 'error');
+      }
+    } catch (e) {
+      console.error('Notify error:', e);
+    }
   }
 
   async function deletePost(id) {
