@@ -101,9 +101,8 @@ app.post('/api/notify-subscribers', async (req, res) => {
       <table width="100%" style="max-width:600px;background:#fff;border-top:4px solid #FFD400;">
         <!-- HEADER -->
         <tr>
-          <td style="background:#0A0A0A;padding:20px 32px;border-bottom:3px solid #FFD400;">
-            <span style="font-family:Arial,sans-serif;font-size:28px;font-weight:900;color:#FFD400;letter-spacing:2px;">A2KF</span>
-            <span style="color:#666;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin-left:10px;">Blog</span>
+          <td style="background:#0A0A0A;padding:20px 32px;border-bottom:3px solid #FFD400;text-align:center;">
+            <img src="https://blog.a2kfsuplementos.com.br/logo.png" alt="A2KF Suplementos" style="height:60px;width:auto;display:inline-block;" />
           </td>
         </tr>
         <!-- COVER -->
@@ -129,7 +128,7 @@ app.post('/api/notify-subscribers', async (req, res) => {
         <!-- FOOTER -->
         <tr>
           <td style="background:#0A0A0A;padding:20px 32px;text-align:center;">
-            <p style="color:#444;font-size:11px;margin:0;">© 2026 <span style="color:#FFD400;">A2KF Suplementos</span> · Rio de Janeiro, Brasil</p>
+            <p style="color:#444;font-size:11px;margin:0;">© 2026 <span style="color:#FFD400;">A2KF Suplementos</span> · Todos os direitos reservados</p>
           </td>
         </tr>
       </table>
@@ -182,7 +181,7 @@ app.post('/api/notify-subscribers', async (req, res) => {
     const batch = contacts.slice(i, i + BATCH_SIZE);
     await Promise.all(batch.map(async (contact) => {
       const payload = JSON.stringify({
-        sender: { name: 'A2KF Suplementos', email: 'no-reply@a2kfsuplementos.com.br' },
+        sender: { name: 'A2KF Suplementos', email: 'contato@a2kfsuplementos.com.br' },
         to: [{ email: contact.email }],
         subject: `📢 Novo artigo: ${postTitle}`,
         htmlContent,
