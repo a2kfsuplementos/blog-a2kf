@@ -181,7 +181,7 @@ app.post('/api/notify-subscribers', async (req, res) => {
     const batch = contacts.slice(i, i + BATCH_SIZE);
     await Promise.all(batch.map(async (contact) => {
       const payload = JSON.stringify({
-        sender: { name: 'A2KF Suplementos', email: 'contato@a2kfsuplementos.com.br' },
+        sender: { name: 'A2KF Suplementos', email: 'no-reply@a2kfsuplementos.com.br' },
         to: [{ email: contact.email }],
         subject: `📢 Novo artigo: ${postTitle}`,
         htmlContent,
