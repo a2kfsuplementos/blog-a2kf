@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – A2KF Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root { --yellow:#FFD400; --black:#0A0A0A; --white:#fff; --gray:#F4F4F2; --border:#E5E5E0; --muted:#6B6B6B; --red:#E53E3E; --green:#38A169; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Sans',sans-serif; background:#f7f7f5; color:var(--black); display:flex; min-height:100vh; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width:240px; background:var(--black); display:flex; flex-direction:column;
+      position:fixed; top:0; left:0; height:100vh; z-index:50;
+    }
+    .sidebar-logo { padding:1.5rem; border-bottom:2px solid #222; display:flex; align-items:center; gap:10px; }
+    .sidebar-logo-badge { background:var(--yellow); color:var(--black); font-family:'Bebas Neue',sans-serif; font-size:20px; padding:2px 10px; }
+    .sidebar-logo-text { color:#fff; font-size:12px; font-weight:500; letter-spacing:2px; text-transform:uppercase; }
+    .sidebar-nav { flex:1; padding:1rem 0; }
+    .sidebar-nav a {
+      display:flex; align-items:center; gap:12px; padding:.85rem 1.5rem;
+      color:#888; text-decoration:none; font-size:14px; font-weight:500; transition:all .2s;
+    }
+    .sidebar-nav a:hover, .sidebar-nav a.active { color:#fff; background:#1a1a1a; border-left:3px solid var(--yellow); }
+    .sidebar-nav a svg { width:18px; height:18px; flex-shrink:0; }
+    .sidebar-footer { padding:1.5rem; border-top:1px solid #222; }
+    .sidebar-footer button {
+      width:100%; padding:10px; background:transparent; border:1px solid #333; color:#888;
+      font-family:'DM Sans',sans-serif; font-size:13px; cursor:pointer; transition:all .2s;
+    }
+    .sidebar-footer button:hover { border-color:var(--red); color:var(--red); }
+
+    /* MAIN */
+    .main { margin-left:240px; flex:1; padding:2.5rem; }
+
+    /* TOPBAR */
+    .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem; }
+    .topbar h1 { font-family:'Bebas Neue',sans-serif; font-size:2.2rem; letter-spacing:1px; }
+    .btn-new {
+      background:var(--yellow); color:var(--black); border:none; padding:10px 24px;
+      font-family:'DM Sans',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px;
+      text-transform:uppercase; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+    }
+    .btn-new:hover { opacity:.9; }
+
+    /* STATS */
+    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-bottom:2.5rem; }
+    .stat-card { background:var(--white); border:1.5px solid var(--border); padding:1.5rem; }
+    .stat-label { font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:.5rem; }
+    .stat-value { font-family:'Bebas Neue',sans-serif; font-size:2.5rem; letter-spacing:1px; }
+    .stat-value.yellow { color:var(--yellow); }
+
+    /* TABLE */
+    .table-wrap { background:var(--white); border:1.5px solid var(--border); }
+    .table-header { padding:1.25rem 1.5rem; border-bottom:1.5px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .table-header h2 { font-size:15px; font-weight:700; }
+    .search-input {
+      padding:8px 14px; border:1.5px solid var(--border); font-family:'DM Sans',sans-serif; font-size:14px;
+      outline:none; width:240px; transition:border-color .2s;
+    }
+    .search-input:focus { border-color:var(--yellow); }
+    table { width:100%; border-collapse:collapse; }
+    th { padding:.9rem 1.25rem; text-align:left; font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); border-bottom:1.5px solid var(--border); background:#fafafa; }
+    td { padding:1rem 1.25rem; border-bottom:1px solid var(--border); font-size:14px; vertical-align:middle; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#fafaf8; }
+
+    .badge {
+      display:inline-block; padding:3px 10px; font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+    }
+    .badge-published { background:#e6f7ee; color:#256341; }
+    .badge-draft { background:#f5f5f5; color:#888; }
+    .badge-cat { background:var(--yellow); color:var(--black); }
+
+    .post-title-cell { font-weight:600; max-width:280px; }
+    .post-title-cell small { display:block; color:var(--muted); font-size:12px; font-weight:400; margin-top:2px; }
+
+    .action-btns { display:flex; gap:8px; align-items:center; }
+    .btn-edit, .btn-delete, .btn-toggle {
+      border:none; padding:6px 14px; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:700;
+      cursor:pointer; letter-spacing:.5px; text-transform:uppercase; transition:opacity .2s;
+    }
+    .btn-edit { background:var(--black); color:var(--white); text-decoration:none; }
+    .btn-edit:hover { opacity:.7; }
+    .btn-delete { background:transparent; color:var(--red); border:1px solid var(--red); }
+    .btn-delete:hover { background:var(--red); color:var(--white); }
+    .btn-toggle { background:transparent; color:#555; border:1px solid var(--border); }
+    .btn-toggle:hover { border-color:#555; }
+
+    /* LOADER */
+    .loader-row td { text-align:center; padding:3rem; color:var(--muted); }
+    .spinner { width:32px; height:32px; border:3px solid var(--border); border-top-color:var(--yellow); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto .75rem; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* TOAST */
+    .toast {
+      position:fixed; bottom:2rem; right:2rem; background:var(--black); color:#fff;
+      padding:12px 24px; font-size:14px; font-weight:500; z-index:999;
+      transform:translateY(100px); opacity:0; transition:all .3s;
+    }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast.success { border-left:4px solid var(--green); }
+    .toast.error { border-left:4px solid var(--red); }
+
+    @media(max-width:900px) {
+      .sidebar { display:none; }
+      .main { margin-left:0; padding:1.25rem; }
+      .stats { grid-template-columns:1fr 1fr; gap:1rem; }
+      .topbar { flex-wrap:wrap; gap:.75rem; }
+      .topbar h1 { font-size:1.8rem; }
+      .table-header { flex-direction:column; align-items:flex-start; gap:.75rem; }
+      .search-input { width:100%; }
+      th, td { padding:.75rem .875rem; font-size:13px; }
+      .action-btns { flex-wrap:wrap; gap:6px; }
+      .btn-edit, .btn-delete, .btn-toggle { padding:5px 10px; font-size:11px; }
+      .post-title-cell { max-width:180px; }
+      /* Oculta colunas menos críticas em tela pequena */
+      table th:nth-child(3), table td:nth-child(3) { display:none; }
+    }
+    @media(max-width:480px) {
+      .stats { grid-template-columns:1fr; }
+      table th:nth-child(4), table td:nth-child(4) { display:none; }
+      .stat-value { font-size:2rem; }
+      .btn-new { padding:8px 16px; font-size:12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="sidebar-logo-badge">A2KF</span>
+    <span class="sidebar-logo-text">Admin</span>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="dashboard.html" class="active">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a href="editor.html">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+      Novo Post
+    </a>
+    <a href="../index.html" target="_blank">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Ver Blog
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <button onclick="logout()">Sair da conta</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <h1>DASHBOARD</h1>
+    <a href="editor.html" class="btn-new">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Novo Post
+    </a>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Total de Posts</div>
+      <div class="stat-value yellow" id="statTotal">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Publicados</div>
+      <div class="stat-value" id="statPublished">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Rascunhos</div>
+      <div class="stat-value" id="statDraft">—</div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <div class="table-header">
+      <h2>Todos os Posts</h2>
+      <input type="text" class="search-input" placeholder="Buscar posts..." id="searchInput" oninput="filterTable()" />
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Categoria</th>
+          <th>Status</th>
+          <th>Data</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="postsTableBody">
+        <tr class="loader-row"><td colspan="5"><div class="spinner"></div>Carregando...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const SUPABASE_URL = 'https://cducpjclmtzktncqhjoa.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkdWNwamNsbXR6a3RuY3Foam9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMDY4OTEsImV4cCI6MjA5NDg4Mjg5MX0.ReDmQFqXEWzOKW2akPrOnLMuf7wBo4ZY5Oh_8ocfZZg';
+  const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let allPosts = [];
+
+  // Auth guard
+  _sb.auth.getSession().then(({ data: { session } }) => {
+    if (!session) window.location.href = 'login.html';
+    else loadPosts();
+  });
+
+  async function logout() {
+    await _sb.auth.signOut();
+    window.location.href = 'login.html';
+  }
+
+  async function loadPosts() {
+    const { data, error } = await _sb.from('posts').select('*').order('created_at', { ascending: false });
+    if (error) { showToast('Erro ao carregar posts.', 'error'); return; }
+    allPosts = data || [];
+    updateStats();
+    renderTable(allPosts);
+  }
+
+  function updateStats() {
+    document.getElementById('statTotal').textContent = allPosts.length;
+    document.getElementById('statPublished').textContent = allPosts.filter(p => p.published).length;
+    document.getElementById('statDraft').textContent = allPosts.filter(p => !p.published).length;
+  }
+
+  function filterTable() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = allPosts.filter(p => p.title.toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q));
+    renderTable(filtered);
+  }
+
+  function formatDate(d) {
+    return new Date(d).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
+  }
+
+  function renderTable(posts) {
+    const tbody = document.getElementById('postsTableBody');
+    if (!posts.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:#888;">Nenhum post encontrado.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = posts.map(p => `
+      <tr>
+        <td class="post-title-cell">
+          ${p.title}
+          <small>${(p.excerpt || '').substring(0, 60)}${p.excerpt && p.excerpt.length > 60 ? '...' : ''}</small>
+        </td>
+        <td><span class="badge badge-cat">${p.category || '—'}</span></td>
+        <td><span class="badge ${p.published ? 'badge-published' : 'badge-draft'}">${p.published ? 'Publicado' : 'Rascunho'}</span></td>
+        <td>${formatDate(p.created_at)}</td>
+        <td>
+          <div class="action-btns">
+            <a href="editor.html?id=${p.id}" class="btn-edit">Editar</a>
+            <button class="btn-toggle" onclick="togglePublish('${p.id}', ${p.published})">${p.published ? 'Despublicar' : 'Publicar'}</button>
+            <button class="btn-delete" onclick="deletePost('${p.id}')">Excluir</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function togglePublish(id, current) {
+    const { error } = await _sb.from('posts').update({ published: !current }).eq('id', id);
+    if (error) { showToast('Erro ao atualizar post.', 'error'); return; }
+    const p = allPosts.find(x => x.id === id);
+    if (p) p.published = !current;
+    updateStats();
+    renderTable(allPosts);
+    const nowPublished = !current;
+    showToast(current ? 'Post despublicado.' : 'Post publicado!', 'success');
+
+    // Notifica inscritos somente quando muda de rascunho → publicado
+    if (nowPublished && p) {
+      notifySubscribers(p);
+    }
+  }
+
+  async function notifySubscribers(post) {
+    try {
+      showToast('Notificando inscritos...', 'success');
+      const res = await fetch('/api/notify-subscribers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          postTitle: post.title,
+          postSlug: post.slug || post.id,
+          postExcerpt: post.excerpt || '',
+          postCategory: post.category || '',
+          coverUrl: post.cover_url || '',
+        }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        showToast(`✓ ${result.sent} inscrito(s) notificado(s)!`, 'success');
+      } else {
+        showToast('Aviso: erro ao notificar inscritos.', 'error');
+      }
+    } catch (e) {
+      console.error('Notify error:', e);
+    }
+  }
+
+  async function deletePost(id) {
+    if (!confirm('Tem certeza que quer excluir este post? Esta ação não pode ser desfeita.')) return;
+    const { error } = await _sb.from('posts').delete().eq('id', id);
+    if (error) { showToast('Erro ao excluir post.', 'error'); return; }
+    allPosts = allPosts.filter(p => p.id !== id);
+    updateStats();
+    renderTable(allPosts);
+    showToast('Post excluído.', 'success');
+  }
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.className = 'toast', 3000);
+  }
+</script>
+</body>
+</html>
