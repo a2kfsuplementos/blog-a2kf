@@ -327,10 +327,10 @@ app.get('/post/:slug', async (req, res) => {
     nav {
       position:sticky; top:0; z-index:100;
       background:var(--black); border-bottom:3px solid var(--yellow);
-      padding:0 1.25rem; display:flex; align-items:center; justify-content:space-between; height:64px;
+      padding:0 1.25rem; display:flex; align-items:center; justify-content:space-between; height:110px;
     }
     .nav-logo { text-decoration:none; }
-    .nav-logo img { height:44px; width:auto; display:block; }
+    .nav-logo img { height:95px; width:auto; display:block; }
     .nav-links { display:flex; gap:1.25rem; align-items:center; }
     .nav-links a { color:#ccc; text-decoration:none; font-size:14px; font-weight:500; transition:color .2s; }
     .nav-links a:hover { color:var(--yellow); }
@@ -452,7 +452,7 @@ app.get('/post/:slug', async (req, res) => {
 
     @media(max-width:600px) {
       nav { height:56px; }
-      .nav-logo img { height:36px; }
+      .nav-logo img { height:44px; }
       .nav-links { gap:.75rem; }
       .nav-links a { font-size:13px; }
       .promo-banner { flex-direction:column; text-align:center; }
