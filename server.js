@@ -316,7 +316,6 @@ app.get('/post/:slug', async (req, res) => {
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-TN3RMJHTKX');
 </script>
   
