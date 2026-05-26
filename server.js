@@ -242,6 +242,12 @@ app.get('/post/:slug', async (req, res) => {
   supabase.rpc('increment_views', { post_slug: slug }).then(() => {}).catch(() => {});
   const views = (post.views || 0) + 1;
 
+  // Tempo de leitura
+  const plainText = (post.content || '').replace(/<[^>]*>/g, '').trim();
+  const wordCount = plainText.split(/\s+/).filter(Boolean).length;
+  const readMins = Math.max(1, Math.round(wordCount / 200));
+  const readingTime = readMins === 1 ? '1 min de leitura' : \`\${readMins} min de leitura\`;
+
   const excerpt = post.excerpt || post.title;
   const image = post.cover_url || `${SITE_URL}/logo.png`;
   const url = `${SITE_URL}/post/${slug}`;
@@ -350,6 +356,7 @@ app.get('/post/:slug', async (req, res) => {
     .post-category { background:var(--yellow); color:var(--black); font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:3px 10px; }
     .post-date { font-size:12px; color:#888; }
     .post-views { font-size:12px; color:#888; display:flex; align-items:center; gap:4px; }
+    .post-read-time { font-size:12px; color:#FFD400; display:flex; align-items:center; gap:4px; font-weight:600; }
     .post-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(1.8rem,7vw,4rem); line-height:1; letter-spacing:1px; }
     .post-excerpt { color:#aaa; font-size:clamp(.9rem,3.5vw,1.1rem); line-height:1.6; margin-top:.75rem; max-width:640px; }
 
@@ -541,6 +548,10 @@ ${post.cover_url ? `
     <div class="post-meta">
       ${post.category ? `<span class="post-category">${post.category}</span>` : ''}
       <span class="post-date">${date}</span>
+      <span class="post-read-time">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        ${readingTime}
+      </span>
       <span class="post-views">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>${views.toLocaleString('pt-BR')} visualizações
       </span>
