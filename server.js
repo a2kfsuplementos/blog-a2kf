@@ -310,14 +310,14 @@ app.get('/post/:slug', async (req, res) => {
 
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
   
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-TN3RMJHTKX"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-TN3RMJHTKX');
-</script>
+  <!-- Google Analytics GA4 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TN3RMJHTKX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-TN3RMJHTKX');
+  </script>
   
   <style>
     :root { --yellow:#FFD400; --black:#0A0A0A; --white:#fff; --gray:#F4F4F2; --border:#E5E5E0; --muted:#6B6B6B; }
@@ -472,9 +472,34 @@ app.get('/post/:slug', async (req, res) => {
     @media(max-width:400px) {
       .share-btn { min-width:80px; font-size:11px; padding:9px 8px; }
     }
+
+    /* BARRA DE PROGRESSO */
+    #read-progress {
+      position: fixed; top: 0; left: 0; z-index: 9999;
+      height: 3px; width: 0%; background: var(--yellow);
+      transition: width .1s linear;
+      box-shadow: 0 0 8px rgba(255,212,0,.6);
+    }
+
+    /* LAZY LOAD IMAGEM DE CAPA */
+    .post-cover-wrap { position: relative; background: #111; overflow: hidden; }
+    .post-cover-wrap::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.05) 50%, transparent 100%);
+      animation: shimmer 1.4s infinite; z-index: 1;
+    }
+    .post-cover-wrap.loaded::before { display: none; }
+    .post-cover {
+      width: 100%; max-height: 480px; object-fit: cover; display: block;
+      opacity: 0; transition: opacity .5s ease;
+    }
+    .post-cover.loaded { opacity: 1; }
+    @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+    @media(max-width:600px) { .post-cover { max-height: 220px; } }
   </style>
 </head>
 <body>
+<div id="read-progress"></div>
 
 <nav>
   <a href="/" class="nav-logo">
@@ -504,7 +529,12 @@ app.get('/post/:slug', async (req, res) => {
   </div>
 </div>
 
-${post.cover_url ? `<img src="${post.cover_url}" class="post-cover" alt="${post.title}" />` : ''}
+${post.cover_url ? `
+<div class="post-cover-wrap" id="cover-wrap">
+  <img src="${post.cover_url}" class="post-cover" alt="${post.title}" loading="lazy"
+    onload="this.classList.add('loaded');this.parentElement.classList.add('loaded')"
+    onerror="this.parentElement.style.display='none'" />
+</div>` : ''}
 
 <div class="post-hero">
   <div class="post-hero-inner">
@@ -641,7 +671,7 @@ ${post.cover_url ? `<img src="${post.cover_url}" class="post-cover" alt="${post.
     grid.innerHTML = data.map(p => \`
       <a href="/post/\${p.slug}" class="related-card">
         \${p.cover_url
-          ? \`<img src="\${p.cover_url}" class="related-card-img" alt="\${p.title}" />\`
+          ? \`<img src="\${p.cover_url}" class="related-card-img" alt="\${p.title}" loading="lazy" />\`
           : \`<div class="related-card-placeholder">A2KF</div>\`}
         <div class="related-card-body">
           \${p.category ? \`<span class="related-card-cat">\${p.category}</span>\` : ''}
@@ -795,9 +825,16 @@ ${post.cover_url ? `<img src="${post.cover_url}" class="post-cover" alt="${post.
 </style>
 <script>
   (function() {
+    // Back to top
     var btn = document.getElementById('backToTop');
+    // Barra de progresso de leitura
+    var bar = document.getElementById('read-progress');
     window.addEventListener('scroll', function() {
       btn.classList.toggle('visible', window.scrollY > 320);
+      // Progresso: scroll atual / (altura total - viewport)
+      var docH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      var pct = docH > 0 ? (window.scrollY / docH) * 100 : 0;
+      bar.style.width = Math.min(pct, 100) + '%';
     }, { passive: true });
   })();
 </script>
