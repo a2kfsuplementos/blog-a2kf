@@ -190,6 +190,36 @@
     .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--yellow); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 1rem; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ANIMAÇÃO FADE-IN DOS CARDS */
+    .post-card, .featured-card {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity .5s ease, transform .5s ease;
+    }
+    .post-card.visible, .featured-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* BOTÃO CARREGAR MAIS */
+    .load-more-wrap { text-align: center; margin-top: 2rem; padding-bottom: 1rem; }
+    .btn-load-more {
+      background: transparent; color: var(--black);
+      border: 2px solid var(--black); padding: 12px 40px;
+      font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 13px;
+      letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer;
+      transition: all .2s; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-load-more:hover { background: var(--yellow); border-color: var(--yellow); }
+    .btn-load-more:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-load-more .load-spinner {
+      width: 14px; height: 14px; border: 2px solid currentColor;
+      border-top-color: transparent; border-radius: 50%;
+      animation: spin .6s linear infinite; display: none;
+    }
+    .btn-load-more.loading .load-spinner { display: inline-block; }
+    .btn-load-more.loading .load-text { display: none; }
+
     /* FOOTER */
     footer { background: var(--black); border-top: 3px solid var(--yellow); }
     .footer-inner { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
@@ -268,6 +298,12 @@
 <div class="container">
   <div id="postsGrid" class="posts-grid">
     <div class="loader"><div class="spinner"></div><p>Carregando artigos...</p></div>
+  </div>
+  <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
+    <button class="btn-load-more" id="btnLoadMore" onclick="loadMore()">
+      <span class="load-spinner"></span>
+      <span class="load-text">Carregar mais artigos</span>
+    </button>
   </div>
 </div>
 
@@ -364,6 +400,7 @@
     btn.classList.add('active');
     activeCategory = cat;
     renderPosts();
+    document.getElementById('postsGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   document.getElementById('searchInput').addEventListener('input', e => {
@@ -383,28 +420,78 @@
     return new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
+  const POSTS_PER_PAGE = 6;
+  let currentPage = 0;
+  let filteredPosts = [];
+
+  // Intersection Observer para fade-in
+  const fadeObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        fadeObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08 });
+
+  function observeCards() {
+    document.querySelectorAll('.post-card:not(.visible), .featured-card:not(.visible)').forEach(el => {
+      fadeObserver.observe(el);
+    });
+  }
+
   function renderPosts() {
-    let posts = allPosts.filter(p => p.published);
-    if (activeCategory) posts = posts.filter(p => p.category === activeCategory);
-    if (searchQuery) posts = posts.filter(p =>
+    currentPage = 0;
+    filteredPosts = allPosts.filter(p => p.published);
+    if (activeCategory) filteredPosts = filteredPosts.filter(p => p.category === activeCategory);
+    if (searchQuery) filteredPosts = filteredPosts.filter(p =>
       p.title.toLowerCase().includes(searchQuery) ||
       (p.excerpt || '').toLowerCase().includes(searchQuery)
     );
 
     const grid = document.getElementById('postsGrid');
-    if (!posts.length) {
+    if (!filteredPosts.length) {
       grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><h2>NENHUM ARTIGO ENCONTRADO</h2><p>Tente outro termo ou categoria.</p></div>';
+      document.getElementById('loadMoreWrap').style.display = 'none';
       return;
     }
 
     grid.innerHTML = '';
-    posts.forEach((post, i) => {
-      if (i === 0) {
-        grid.insertAdjacentHTML('beforeend', featuredCardHTML(post));
-      } else {
-        grid.insertAdjacentHTML('beforeend', cardHTML(post));
-      }
+    renderPage();
+  }
+
+  function renderPage() {
+    const grid = document.getElementById('postsGrid');
+    const start = currentPage * POSTS_PER_PAGE;
+    const end = start + POSTS_PER_PAGE;
+    const slice = filteredPosts.slice(start, end);
+
+    slice.forEach((post, i) => {
+      const isFirst = currentPage === 0 && i === 0;
+      grid.insertAdjacentHTML('beforeend', isFirst ? featuredCardHTML(post) : cardHTML(post));
     });
+
+    currentPage++;
+
+    // Botão carregar mais
+    const wrap = document.getElementById('loadMoreWrap');
+    const hasMore = currentPage * POSTS_PER_PAGE < filteredPosts.length;
+    wrap.style.display = hasMore ? 'block' : 'none';
+
+    // Ativa fade-in nos novos cards
+    setTimeout(observeCards, 50);
+  }
+
+  function loadMore() {
+    const btn = document.getElementById('btnLoadMore');
+    btn.classList.add('loading');
+    btn.disabled = true;
+    // Pequeno delay para dar feedback visual
+    setTimeout(() => {
+      renderPage();
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }, 300);
   }
 
   function featuredCardHTML(p) {
