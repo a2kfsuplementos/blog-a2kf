@@ -246,7 +246,7 @@ app.get('/post/:slug', async (req, res) => {
   const plainText = (post.content || '').replace(/<[^>]*>/g, '').trim();
   const wordCount = plainText.split(/\s+/).filter(Boolean).length;
   const readMins = Math.max(1, Math.round(wordCount / 200));
-  const readingTime = readMins === 1 ? '1 min de leitura' : \`\${readMins} min de leitura\`;
+  const readingTime = readMins === 1 ? '1 min de leitura' : readMins + ' min de leitura';
 
   const excerpt = post.excerpt || post.title;
   const image = post.cover_url || `${SITE_URL}/logo.png`;
