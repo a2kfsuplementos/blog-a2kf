@@ -853,6 +853,13 @@ ${post.cover_url ? `
 <!-- Brevo Conversations {literal} -->
 <script>
     (function(d, w, c) {
+        // Horário de atendimento: Seg–Sex, 9h–18h (horário de Brasília)
+        var now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+        var day = now.getDay();
+        var hour = now.getHours();
+        var isOpen = day >= 1 && day <= 5 && hour >= 9 && hour < 18;
+        if (!isOpen) return;
+
         w.BrevoConversationsID = '6a0a4ded00173bc1510e7e11';
         w[c] = w[c] || function() {
             (w[c].q = w[c].q || []).push(arguments);
