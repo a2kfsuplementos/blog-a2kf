@@ -759,5 +759,204 @@
 </script>
 <!-- /Brevo Conversations {/literal} -->
 
+<!-- EXIT INTENT POPUP -->
+<div id="exitPopup" aria-modal="true" role="dialog" aria-label="Oferta especial" style="display:none;">
+  <div class="exit-overlay" onclick="closeExitPopup()"></div>
+  <div class="exit-box">
+    <button class="exit-close" onclick="closeExitPopup()" aria-label="Fechar">&times;</button>
+
+    <div class="exit-badge">OFERTA EXCLUSIVA</div>
+
+    <div class="exit-top">
+      <img src="logo.png" alt="A2KF Suplementos" class="exit-logo" />
+    </div>
+
+    <h2 class="exit-title">ESPERA!<br/>NÃO VÁ EMBORA<br/><span>SEM ESSE DESCONTO</span></h2>
+
+    <p class="exit-sub">Na sua primeira compra na loja A2KF Suplementos, use o cupom abaixo e ganhe:</p>
+
+    <div class="exit-discount">10% OFF</div>
+
+    <div class="exit-coupon-wrap">
+      <span class="exit-coupon-label">SEU CUPOM</span>
+      <div class="exit-coupon-row">
+        <span class="exit-coupon-code" id="exitCouponCode">PRIMEIRACOMPRA</span>
+        <button class="exit-copy-btn" onclick="copyCoupon()" id="exitCopyBtn">COPIAR</button>
+      </div>
+    </div>
+
+    <a href="https://a2kfsuplementos.com.br" target="_blank" rel="noopener" class="exit-cta" onclick="closeExitPopup()">
+      IR PARA A LOJA →
+    </a>
+
+    <button class="exit-skip" onclick="closeExitPopup()">Não, obrigado</button>
+  </div>
+</div>
+
+<style>
+  /* OVERLAY */
+  #exitPopup {
+    position: fixed; inset: 0; z-index: 99999;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  .exit-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,.75); backdrop-filter: blur(3px);
+  }
+
+  /* BOX */
+  .exit-box {
+    position: relative; z-index: 1;
+    background: #0A0A0A; border: 2px solid #FFD400;
+    max-width: 480px; width: 100%;
+    padding: 2.5rem 2rem 2rem;
+    text-align: center;
+    animation: exitPop .35s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes exitPop {
+    from { transform: scale(.85); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+
+  /* FECHAR */
+  .exit-close {
+    position: absolute; top: .75rem; right: 1rem;
+    background: none; border: none; color: #555;
+    font-size: 1.75rem; line-height: 1; cursor: pointer;
+    transition: color .2s;
+  }
+  .exit-close:hover { color: #FFD400; }
+
+  /* BADGE */
+  .exit-badge {
+    display: inline-block; background: #FFD400; color: #000;
+    font-size: 10px; font-weight: 700; letter-spacing: 3px;
+    text-transform: uppercase; padding: 4px 14px; margin-bottom: 1.25rem;
+  }
+
+  /* LOGO */
+  .exit-top { margin-bottom: 1rem; }
+  .exit-logo { height: 48px; width: auto; filter: brightness(0) invert(1); opacity: .85; }
+
+  /* TÍTULO */
+  .exit-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 7vw, 2.8rem);
+    line-height: 1; letter-spacing: 1px; color: #fff;
+    margin-bottom: 1rem;
+  }
+  .exit-title span { color: #FFD400; }
+
+  /* SUBTÍTULO */
+  .exit-sub { color: #888; font-size: 14px; line-height: 1.6; margin-bottom: 1.25rem; }
+
+  /* DESCONTO */
+  .exit-discount {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem; color: #FFD400; line-height: 1;
+    letter-spacing: 2px; margin-bottom: 1.25rem;
+  }
+
+  /* CUPOM */
+  .exit-coupon-wrap {
+    background: #111; border: 1.5px dashed #FFD400;
+    padding: 1rem 1.25rem; margin-bottom: 1.5rem;
+  }
+  .exit-coupon-label {
+    display: block; font-size: 10px; font-weight: 700;
+    letter-spacing: 2px; color: #555; margin-bottom: .5rem;
+  }
+  .exit-coupon-row { display: flex; align-items: center; justify-content: center; gap: .75rem; }
+  .exit-coupon-code {
+    font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem;
+    letter-spacing: 3px; color: #FFD400;
+  }
+  .exit-copy-btn {
+    background: #FFD400; color: #000; border: none;
+    font-family: 'DM Sans', sans-serif; font-weight: 700;
+    font-size: 11px; letter-spacing: 1px; padding: 6px 14px;
+    cursor: pointer; transition: opacity .2s; white-space: nowrap;
+  }
+  .exit-copy-btn:hover { opacity: .85; }
+  .exit-copy-btn.copied { background: #38A169; color: #fff; }
+
+  /* CTA */
+  .exit-cta {
+    display: block; background: #FFD400; color: #000;
+    font-family: 'DM Sans', sans-serif; font-weight: 700;
+    font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 14px; text-decoration: none; margin-bottom: .875rem;
+    transition: opacity .2s;
+  }
+  .exit-cta:hover { opacity: .9; }
+
+  /* SKIP */
+  .exit-skip {
+    background: none; border: none; color: #444;
+    font-family: 'DM Sans', sans-serif; font-size: 12px;
+    cursor: pointer; text-decoration: underline; transition: color .2s;
+  }
+  .exit-skip:hover { color: #888; }
+
+  @media (max-width: 480px) {
+    .exit-box { padding: 2rem 1.25rem 1.5rem; }
+    .exit-discount { font-size: 3rem; }
+    .exit-coupon-code { font-size: 1.5rem; }
+  }
+</style>
+
+<script>
+  (function() {
+    var POPUP_KEY = 'a2kf_exit_popup_shown';
+    var shown = false;
+
+    // Não mostra se já foi exibido nessa sessão
+    if (sessionStorage.getItem(POPUP_KEY)) return;
+
+    function showPopup() {
+      if (shown) return;
+      shown = true;
+      sessionStorage.setItem(POPUP_KEY, '1');
+      document.getElementById('exitPopup').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    // Desktop: detecta mouse saindo para fora do topo da janela
+    document.addEventListener('mouseleave', function(e) {
+      if (e.clientY <= 10) showPopup();
+    });
+
+    // Mobile: mostra após 40 segundos de permanência na página
+    var mobileTimer = setTimeout(function() {
+      if (/Mobi|Android/i.test(navigator.userAgent)) showPopup();
+    }, 40000);
+
+    // Também cancela o timer se o usuário já fechou
+    window.closeExitPopup = function() {
+      document.getElementById('exitPopup').style.display = 'none';
+      document.body.style.overflow = '';
+      clearTimeout(mobileTimer);
+    };
+
+    window.copyCoupon = function() {
+      navigator.clipboard.writeText('PRIMEIRACOMPRA').then(function() {
+        var btn = document.getElementById('exitCopyBtn');
+        btn.textContent = '✓ COPIADO';
+        btn.classList.add('copied');
+        setTimeout(function() {
+          btn.textContent = 'COPIAR';
+          btn.classList.remove('copied');
+        }, 2500);
+      });
+    };
+
+    // Fecha com ESC
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeExitPopup();
+    });
+  })();
+</script>
+
 </body>
 </html>
