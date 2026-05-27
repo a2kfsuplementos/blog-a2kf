@@ -8,14 +8,14 @@
   <link rel="icon" type="image/png" href="/logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet" />
 
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-TN3RMJHTKX"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-TN3RMJHTKX');
-</script>
+  <!-- Google Analytics GA4 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TN3RMJHTKX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-TN3RMJHTKX');
+  </script>
   <style>
     :root {
       --yellow: #FFD400;
@@ -429,6 +429,13 @@
 <!-- Brevo Conversations {literal} -->
 <script>
     (function(d, w, c) {
+        // Horário de atendimento: Seg–Sex, 9h–18h (horário de Brasília)
+        var now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+        var day = now.getDay();
+        var hour = now.getHours();
+        var isOpen = day >= 1 && day <= 5 && hour >= 9 && hour < 18;
+        if (!isOpen) return;
+
         w.BrevoConversationsID = '6a0a4ded00173bc1510e7e11';
         w[c] = w[c] || function() {
             (w[c].q = w[c].q || []).push(arguments);
