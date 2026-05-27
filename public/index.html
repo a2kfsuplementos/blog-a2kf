@@ -809,8 +809,8 @@
   .exit-box {
     position: relative; z-index: 1;
     background: #0A0A0A; border: 2px solid #FFD400;
-    max-width: 480px; width: 100%;
-    padding: 2.5rem 2rem 2rem;
+    max-width: 380px; width: 100%;
+    padding: 1.75rem 1.5rem 1.5rem;
     text-align: center;
     animation: exitPop .35s cubic-bezier(.34,1.56,.64,1);
   }
@@ -821,9 +821,9 @@
 
   /* FECHAR */
   .exit-close {
-    position: absolute; top: .75rem; right: 1rem;
+    position: absolute; top: .5rem; right: .75rem;
     background: none; border: none; color: #555;
-    font-size: 1.75rem; line-height: 1; cursor: pointer;
+    font-size: 1.5rem; line-height: 1; cursor: pointer;
     transition: color .2s;
   }
   .exit-close:hover { color: #FFD400; }
@@ -831,51 +831,51 @@
   /* BADGE */
   .exit-badge {
     display: inline-block; background: #FFD400; color: #000;
-    font-size: 10px; font-weight: 700; letter-spacing: 3px;
-    text-transform: uppercase; padding: 4px 14px; margin-bottom: 1.25rem;
+    font-size: 9px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; padding: 3px 10px; margin-bottom: .875rem;
   }
 
   /* LOGO */
-  .exit-top { margin-bottom: 1rem; }
-  .exit-logo { height: 48px; width: auto; filter: brightness(0) invert(1); opacity: .85; }
+  .exit-top { margin-bottom: .75rem; }
+  .exit-logo { height: 36px; width: auto; filter: brightness(0) invert(1); opacity: .85; }
 
   /* TÍTULO */
   .exit-title {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(2rem, 7vw, 2.8rem);
+    font-size: clamp(1.5rem, 6vw, 2rem);
     line-height: 1; letter-spacing: 1px; color: #fff;
-    margin-bottom: 1rem;
+    margin-bottom: .75rem;
   }
   .exit-title span { color: #FFD400; }
 
   /* SUBTÍTULO */
-  .exit-sub { color: #888; font-size: 14px; line-height: 1.6; margin-bottom: 1.25rem; }
+  .exit-sub { color: #888; font-size: 12px; line-height: 1.5; margin-bottom: .875rem; }
 
   /* DESCONTO */
   .exit-discount {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 4rem; color: #FFD400; line-height: 1;
-    letter-spacing: 2px; margin-bottom: 1.25rem;
+    font-size: 2.8rem; color: #FFD400; line-height: 1;
+    letter-spacing: 2px; margin-bottom: .875rem;
   }
 
   /* CUPOM */
   .exit-coupon-wrap {
     background: #111; border: 1.5px dashed #FFD400;
-    padding: 1rem 1.25rem; margin-bottom: 1.5rem;
+    padding: .75rem 1rem; margin-bottom: 1rem;
   }
   .exit-coupon-label {
-    display: block; font-size: 10px; font-weight: 700;
-    letter-spacing: 2px; color: #555; margin-bottom: .5rem;
+    display: block; font-size: 9px; font-weight: 700;
+    letter-spacing: 2px; color: #555; margin-bottom: .4rem;
   }
-  .exit-coupon-row { display: flex; align-items: center; justify-content: center; gap: .75rem; }
+  .exit-coupon-row { display: flex; align-items: center; justify-content: center; gap: .625rem; }
   .exit-coupon-code {
-    font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem;
-    letter-spacing: 3px; color: #FFD400;
+    font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem;
+    letter-spacing: 2px; color: #FFD400;
   }
   .exit-copy-btn {
     background: #FFD400; color: #000; border: none;
     font-family: 'DM Sans', sans-serif; font-weight: 700;
-    font-size: 11px; letter-spacing: 1px; padding: 6px 14px;
+    font-size: 10px; letter-spacing: 1px; padding: 5px 11px;
     cursor: pointer; transition: opacity .2s; white-space: nowrap;
   }
   .exit-copy-btn:hover { opacity: .85; }
@@ -885,8 +885,8 @@
   .exit-cta {
     display: block; background: #FFD400; color: #000;
     font-family: 'DM Sans', sans-serif; font-weight: 700;
-    font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase;
-    padding: 14px; text-decoration: none; margin-bottom: .875rem;
+    font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 11px; text-decoration: none; margin-bottom: .625rem;
     transition: opacity .2s;
   }
   .exit-cta:hover { opacity: .9; }
@@ -894,15 +894,15 @@
   /* SKIP */
   .exit-skip {
     background: none; border: none; color: #444;
-    font-family: 'DM Sans', sans-serif; font-size: 12px;
+    font-family: 'DM Sans', sans-serif; font-size: 11px;
     cursor: pointer; text-decoration: underline; transition: color .2s;
   }
   .exit-skip:hover { color: #888; }
 
   @media (max-width: 480px) {
-    .exit-box { padding: 2rem 1.25rem 1.5rem; }
-    .exit-discount { font-size: 3rem; }
-    .exit-coupon-code { font-size: 1.5rem; }
+    .exit-box { padding: 1.5rem 1.1rem 1.25rem; max-width: 320px; }
+    .exit-discount { font-size: 2.2rem; }
+    .exit-coupon-code { font-size: 1.2rem; }
   }
 </style>
 
