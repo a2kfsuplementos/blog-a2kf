@@ -740,6 +740,13 @@
 <!-- Brevo Conversations {literal} -->
 <script>
     (function(d, w, c) {
+        // Horário de atendimento: Seg–Sex, 9h–18h (horário de Brasília)
+        var now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+        var day = now.getDay();   // 0=Dom, 1=Seg ... 6=Sáb
+        var hour = now.getHours();
+        var isOpen = day >= 1 && day <= 5 && hour >= 9 && hour < 18;
+        if (!isOpen) return; // fora do horário: não carrega o widget
+
         w.BrevoConversationsID = '6a0a4ded00173bc1510e7e11';
         w[c] = w[c] || function() {
             (w[c].q = w[c].q || []).push(arguments);
