@@ -23,6 +23,60 @@ const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID || '5');
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// ─── CRON: Publica posts agendados (verifica a cada minuto) ──────────────────
+async function checkScheduledPosts() {
+  try {
+    const now = new Date().toISOString();
+    const { data: posts, error } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('published', false)
+      .not('scheduled_at', 'is', null)
+      .lte('scheduled_at', now);
+
+    if (error || !posts || !posts.length) return;
+
+    for (const post of posts) {
+      const { error: updateError } = await supabase
+        .from('posts')
+        .update({ published: true, scheduled_at: null })
+        .eq('id', post.id);
+
+      if (updateError) {
+        console.error(`[scheduler] Erro ao publicar post ${post.id}:`, updateError.message);
+        continue;
+      }
+
+      console.log(`[scheduler] ✓ Post publicado: "${post.title}"`);
+
+      // Notifica inscritos
+      try {
+        const baseUrl = SITE_URL.replace(/\/$/, '');
+        await fetch(`${baseUrl}/api/notify-subscribers`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            postTitle: post.title,
+            postSlug: post.slug || post.id,
+            postExcerpt: post.excerpt || '',
+            postCategory: post.category || '',
+            coverUrl: post.cover_url || '',
+          }),
+        });
+      } catch (e) {
+        console.error(`[scheduler] Erro ao notificar inscritos:`, e.message);
+      }
+    }
+  } catch (e) {
+    console.error('[scheduler] Erro geral:', e.message);
+  }
+}
+
+// Roda imediatamente ao iniciar e depois a cada 60 segundos
+checkScheduledPosts();
+setInterval(checkScheduledPosts, 60 * 1000);
+console.log('[scheduler] Agendamento de posts ativo ✓');
+
 // ─── NEWSLETTER (Brevo) ──────────────────────────────────────────────────────
 app.post('/api/newsletter', async (req, res) => {
   const { email } = req.body;
