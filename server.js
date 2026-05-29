@@ -24,9 +24,100 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── CRON: Publica posts agendados (verifica a cada minuto) ──────────────────
+// ─── FUNÇÃO REUTILIZÁVEL DE NOTIFICAÇÃO ──────────────────────────────────────
+async function sendNewsletterNotification({ postTitle, postSlug, postExcerpt, postCategory, coverUrl }) {
+  const postUrl = `${SITE_URL}/post/${postSlug}`;
+  const categoryLabel = postCategory ? `<span style="background:#FFD400;color:#000;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:3px 10px;font-family:sans-serif;">${postCategory}</span>` : '';
+  const coverHtml = coverUrl ? `<img src="${coverUrl}" alt="${postTitle}" style="width:100%;max-height:300px;object-fit:cover;display:block;margin-bottom:0;" />` : '';
+  const excerptHtml = postExcerpt ? `<p style="color:#555;font-size:15px;line-height:1.7;margin:0 0 1.5rem;">${postExcerpt}</p>` : '';
+
+  const htmlContent = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f4f4f2;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f2;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="100%" style="max-width:600px;background:#fff;border-top:4px solid #FFD400;">
+        <tr><td style="background:#0A0A0A;padding:20px 32px;border-bottom:3px solid #FFD400;text-align:center;">
+          <img src="https://blog.a2kfsuplementos.com.br/logo.png" alt="A2KF Suplementos" style="height:60px;width:auto;" />
+        </td></tr>
+        ${coverHtml ? `<tr><td style="padding:0;">${coverHtml}</td></tr>` : ''}
+        <tr><td style="padding:32px;">
+          <p style="color:#888;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;">Novo artigo publicado</p>
+          ${categoryLabel ? `<div style="margin-bottom:16px;">${categoryLabel}</div>` : ''}
+          <h1 style="font-family:Arial,sans-serif;font-size:28px;font-weight:900;color:#0A0A0A;line-height:1.1;margin:0 0 16px;">${postTitle}</h1>
+          ${excerptHtml}
+          <a href="${postUrl}" style="display:inline-block;background:#FFD400;color:#000;font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;padding:14px 28px;text-decoration:none;margin-bottom:32px;">Ler artigo completo →</a>
+          <hr style="border:none;border-top:1px solid #e5e5e0;margin:24px 0;" />
+          <p style="color:#aaa;font-size:12px;line-height:1.6;margin:0;">Você está recebendo este email porque se inscreveu na newsletter da A2KF Suplementos.</p>
+        </td></tr>
+        <tr><td style="background:#0A0A0A;padding:20px 32px;text-align:center;">
+          <p style="color:#444;font-size:11px;margin:0;">© 2026 <span style="color:#FFD400;">A2KF Suplementos</span> · Todos os direitos reservados</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  // Busca contatos da lista Brevo
+  const listRes = await new Promise((resolve, reject) => {
+    const opts = {
+      hostname: 'api.brevo.com',
+      path: `/v3/contacts/lists/${BREVO_LIST_ID}/contacts?limit=500&offset=0`,
+      method: 'GET',
+      headers: { 'api-key': BREVO_API_KEY, 'Accept': 'application/json' },
+    };
+    const r = https.request(opts, (response) => {
+      let data = '';
+      response.on('data', chunk => data += chunk);
+      response.on('end', () => resolve({ status: response.statusCode, body: data }));
+    });
+    r.on('error', reject);
+    r.end();
+  });
+
+  const parsed = JSON.parse(listRes.body || '{}');
+  const contacts = (parsed.contacts || []).filter(c => c.email && !c.emailBlacklisted);
+  if (!contacts.length) return { sent: 0, errors: 0 };
+
+  let sent = 0, errors = 0;
+  const BATCH_SIZE = 10;
+  for (let i = 0; i < contacts.length; i += BATCH_SIZE) {
+    const batch = contacts.slice(i, i + BATCH_SIZE);
+    await Promise.all(batch.map(async (contact) => {
+      const payload = JSON.stringify({
+        sender: { name: 'A2KF Suplementos', email: 'no-reply@a2kfsuplementos.com.br' },
+        to: [{ email: contact.email }],
+        subject: `📢 Novo artigo: ${postTitle}`,
+        htmlContent,
+      });
+      try {
+        const result = await new Promise((resolve, reject) => {
+          const opts = {
+            hostname: 'api.brevo.com',
+            path: '/v3/smtp/email',
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'api-key': BREVO_API_KEY, 'Content-Length': Buffer.byteLength(payload) },
+          };
+          const r = https.request(opts, (response) => {
+            let data = '';
+            response.on('data', chunk => data += chunk);
+            response.on('end', () => resolve({ status: response.statusCode }));
+          });
+          r.on('error', reject);
+          r.write(payload);
+          r.end();
+        });
+        if (result.status === 201) sent++; else errors++;
+      } catch { errors++; }
+    }));
+  }
+  return { sent, errors };
+}
+
 async function checkScheduledPosts() {
   try {
     const now = new Date().toISOString();
+    console.log(`[scheduler] Verificando posts agendados... (${now})`);
+
     const { data: posts, error } = await supabase
       .from('posts')
       .select('*')
@@ -34,7 +125,10 @@ async function checkScheduledPosts() {
       .not('scheduled_at', 'is', null)
       .lte('scheduled_at', now);
 
-    if (error || !posts || !posts.length) return;
+    if (error) { console.error('[scheduler] Erro na query:', error.message); return; }
+    if (!posts || !posts.length) { console.log('[scheduler] Nenhum post para publicar.'); return; }
+
+    console.log(`[scheduler] ${posts.length} post(s) para publicar.`);
 
     for (const post of posts) {
       const { error: updateError } = await supabase
@@ -43,26 +137,22 @@ async function checkScheduledPosts() {
         .eq('id', post.id);
 
       if (updateError) {
-        console.error(`[scheduler] Erro ao publicar post ${post.id}:`, updateError.message);
+        console.error(`[scheduler] Erro ao publicar "${post.title}":`, updateError.message);
         continue;
       }
 
       console.log(`[scheduler] ✓ Post publicado: "${post.title}"`);
 
-      // Notifica inscritos
+      // Notifica inscritos diretamente (sem fetch interno)
       try {
-        const baseUrl = SITE_URL.replace(/\/$/, '');
-        await fetch(`${baseUrl}/api/notify-subscribers`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            postTitle: post.title,
-            postSlug: post.slug || post.id,
-            postExcerpt: post.excerpt || '',
-            postCategory: post.category || '',
-            coverUrl: post.cover_url || '',
-          }),
+        await sendNewsletterNotification({
+          postTitle: post.title,
+          postSlug: post.slug || post.id,
+          postExcerpt: post.excerpt || '',
+          postCategory: post.category || '',
+          coverUrl: post.cover_url || '',
         });
+        console.log(`[scheduler] ✓ Inscritos notificados para: "${post.title}"`);
       } catch (e) {
         console.error(`[scheduler] Erro ao notificar inscritos:`, e.message);
       }
