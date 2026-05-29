@@ -132,6 +132,58 @@
     .toast.success { border-left:4px solid var(--green); }
     .toast.error { border-left:4px solid var(--red); }
 
+    /* GERADOR IA */
+    .btn-ia {
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      color: #fff; border: none; padding: 10px 20px;
+      font-family: 'DM Sans', sans-serif; font-weight: 700;
+      font-size: 13px; letter-spacing: 1px; text-transform: uppercase;
+      cursor: pointer; transition: opacity .2s;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-ia:hover { opacity: .85; }
+    .btn-ia:disabled { opacity: .5; cursor: not-allowed; }
+
+    #iaModal {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      align-items: center; justify-content: center; padding: 1rem;
+    }
+    .ia-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(3px); }
+    .ia-box {
+      position: relative; z-index: 1; background: var(--white);
+      border: 2px solid var(--border); max-width: 520px; width: 100%;
+      padding: 2rem; animation: iaIn .3s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes iaIn { from{transform:scale(.88);opacity:0} to{transform:scale(1);opacity:1} }
+    .ia-box h2 { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 1px; margin-bottom: .25rem; }
+    .ia-box p { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+    .ia-close { position: absolute; top: .75rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; line-height: 1; }
+    .ia-close:hover { color: var(--black); }
+    .ia-field { margin-bottom: 1rem; }
+    .ia-field label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: .5rem; }
+    .ia-field input, .ia-field select, .ia-field textarea {
+      width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+      font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none;
+      transition: border-color .2s; background: var(--white);
+    }
+    .ia-field input:focus, .ia-field select:focus, .ia-field textarea:focus { border-color: #7c3aed; }
+    .ia-options { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: 1rem; }
+    .ia-btn-generate {
+      width: 100%; padding: 13px; background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      color: #fff; border: none; font-family: 'DM Sans', sans-serif; font-weight: 700;
+      font-size: 14px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+      transition: opacity .2s; display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .ia-btn-generate:hover { opacity: .85; }
+    .ia-btn-generate:disabled { opacity: .5; cursor: not-allowed; }
+    .ia-progress { margin-top: 1rem; display: none; background: #f8f4ff; border: 1px solid #e0d4ff; padding: 1rem; }
+    .ia-progress-bar-wrap { background: #e0d4ff; height: 4px; border-radius: 2px; margin-bottom: .5rem; overflow: hidden; }
+    .ia-progress-bar { height: 100%; background: linear-gradient(90deg,#7c3aed,#4f46e5); width: 0%; transition: width .5s ease; }
+    .ia-progress-text { font-size: 12px; color: #7c3aed; font-weight: 600; }
+    .ia-spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; display: none; }
+    .ia-btn-generate.loading .ia-spinner { display: inline-block; }
+    .ia-btn-generate.loading .ia-btn-text { display: none; }
+
     /* SAVING INDICATOR */
     .saving-dot {
       display:inline-block; width:8px; height:8px; border-radius:50%;
@@ -205,6 +257,10 @@
       </span>
       <button class="btn btn-outline" onclick="savePost(false)">Salvar Rascunho</button>
       <button class="btn btn-primary" onclick="savePost(true)" id="publishBtn">Publicar</button>
+      <button class="btn-ia" onclick="openIAModal()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a4 4 0 014 4v1h1a3 3 0 010 6h-1v1a4 4 0 01-8 0v-1H7a3 3 0 010-6h1V6a4 4 0 014-4z"/></svg>
+        Gerar com IA
+      </button>
     </div>
   </div>
 
@@ -560,5 +616,179 @@
     if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); savePost(isPublished); }
   });
 </script>
+<!-- MODAL GERADOR IA -->
+<div id="iaModal">
+  <div class="ia-overlay" onclick="closeIAModal()"></div>
+  <div class="ia-box">
+    <button class="ia-close" onclick="closeIAModal()">×</button>
+    <h2>✨ Gerar Post com IA</h2>
+    <p>Descreva o tema e a IA escreve o artigo completo para você.</p>
+
+    <div class="ia-field">
+      <label>Tema do post *</label>
+      <input type="text" id="iaTema" placeholder="Ex: Benefícios da creatina para ganho muscular" maxlength="200" />
+    </div>
+
+    <div class="ia-options">
+      <div class="ia-field">
+        <label>Categoria</label>
+        <select id="iaCategoria">
+          <option value="Suplementação">Suplementação</option>
+          <option value="Treino">Treino</option>
+          <option value="Nutrição">Nutrição</option>
+          <option value="Saúde">Saúde</option>
+          <option value="Receitas">Receitas</option>
+          <option value="Dicas">Dicas</option>
+        </select>
+      </div>
+      <div class="ia-field">
+        <label>Tamanho</label>
+        <select id="iaTamanho">
+          <option value="curto">Curto (~400 palavras)</option>
+          <option value="medio" selected>Médio (~700 palavras)</option>
+          <option value="longo">Longo (~1200 palavras)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="ia-field">
+      <label>Informações extras (opcional)</label>
+      <textarea id="iaExtras" rows="2" placeholder="Ex: mencionar a marca A2KF, público iniciante, tom descontraído..."></textarea>
+    </div>
+
+    <button class="ia-btn-generate" id="iaBtnGerar" onclick="gerarPostIA()">
+      <span class="ia-spinner"></span>
+      <span class="ia-btn-text">✨ Gerar Artigo</span>
+    </button>
+
+    <div class="ia-progress" id="iaProgress">
+      <div class="ia-progress-bar-wrap"><div class="ia-progress-bar" id="iaProgressBar"></div></div>
+      <div class="ia-progress-text" id="iaProgressText">Iniciando geração...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── GERADOR IA ────────────────────────────────────────────────────────────
+  function openIAModal() {
+    document.getElementById('iaModal').style.display = 'flex';
+    document.getElementById('iaTema').focus();
+  }
+
+  function closeIAModal() {
+    document.getElementById('iaModal').style.display = 'none';
+    document.getElementById('iaProgress').style.display = 'none';
+    document.getElementById('iaProgressBar').style.width = '0%';
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeIAModal();
+  });
+
+  function setIAProgress(pct, text) {
+    document.getElementById('iaProgress').style.display = 'block';
+    document.getElementById('iaProgressBar').style.width = pct + '%';
+    document.getElementById('iaProgressText').textContent = text;
+  }
+
+  async function gerarPostIA() {
+    const tema = document.getElementById('iaTema').value.trim();
+    if (!tema) { document.getElementById('iaTema').focus(); return; }
+
+    const categoria = document.getElementById('iaCategoria').value;
+    const tamanho = document.getElementById('iaTamanho').value;
+    const extras = document.getElementById('iaExtras').value.trim();
+
+    const tamanhoMap = { curto: '400', medio: '700', longo: '1200' };
+    const palavras = tamanhoMap[tamanho];
+
+    const btn = document.getElementById('iaBtnGerar');
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    setIAProgress(10, 'Conectando com a IA...');
+
+    const prompt = `Você é um especialista em nutrição esportiva e suplementação. Escreva um artigo de blog completo em português do Brasil sobre o tema: "${tema}".
+
+Categoria: ${categoria}
+Tamanho: aproximadamente ${palavras} palavras
+${extras ? `Informações adicionais: ${extras}` : ''}
+
+Retorne SOMENTE um JSON válido neste formato exato, sem texto antes ou depois:
+{
+  "titulo": "Título do artigo (atraente e com foco em SEO)",
+  "resumo": "Resumo de até 160 caracteres para aparecer nos cards do blog",
+  "conteudo": "Conteúdo completo em HTML usando apenas tags <h2>, <h3>, <p>, <ul>, <li>, <strong>. Sem <html>, <body>, <head>."
+}`;
+
+    try {
+      setIAProgress(30, 'A IA está escrevendo o artigo...');
+
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + await getGroqKey(),
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7,
+          max_tokens: 4096,
+        }),
+      });
+
+      setIAProgress(70, 'Processando resposta...');
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error?.message || 'Erro na API Groq');
+      }
+
+      const data = await response.json();
+      const raw = data.choices[0].message.content.trim();
+
+      // Extrai JSON mesmo se vier com ```json
+      const jsonStr = raw.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+      const result = JSON.parse(jsonStr);
+
+      setIAProgress(90, 'Preenchendo o editor...');
+
+      // Preenche o editor
+      document.getElementById('postTitle').value = result.titulo || '';
+      document.getElementById('postExcerpt').value = result.resumo || '';
+      document.getElementById('postCategory').value = categoria;
+      document.getElementById('excerptCount').textContent = (result.resumo || '').length;
+
+      if (result.conteudo) {
+        quill.root.innerHTML = result.conteudo;
+      }
+
+      setIAProgress(100, '✓ Artigo gerado com sucesso!');
+
+      setTimeout(() => {
+        closeIAModal();
+        showToast('✨ Artigo gerado! Revise antes de publicar.', 'success');
+      }, 800);
+
+    } catch (e) {
+      console.error('Erro IA:', e);
+      setIAProgress(0, '');
+      document.getElementById('iaProgress').style.display = 'none';
+      showToast('Erro ao gerar: ' + e.message, 'error');
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  }
+
+  async function getGroqKey() {
+    // Busca a chave do servidor para não expor no frontend
+    const res = await fetch('/api/groq-key');
+    const data = await res.json();
+    return data.key;
+  }
+</script>
+
 </body>
 </html>
