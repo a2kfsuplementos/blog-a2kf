@@ -714,12 +714,10 @@ Categoria: ${categoria}
 Tamanho: aproximadamente ${palavras} palavras
 ${extras ? `Informações adicionais: ${extras}` : ''}
 
-Retorne SOMENTE um JSON válido neste formato exato, sem texto antes ou depois:
-{
-  "titulo": "Título do artigo (atraente e com foco em SEO)",
-  "resumo": "Resumo de até 160 caracteres para aparecer nos cards do blog",
-  "conteudo": "Conteúdo completo em HTML usando apenas tags <h2>, <h3>, <p>, <ul>, <li>, <strong>. Sem <html>, <body>, <head>."
-}`;
+Retorne SOMENTE um JSON minificado (sem quebras de linha desnecessárias) neste formato:
+{"titulo":"Título aqui","resumo":"Resumo de até 160 caracteres","conteudo":"HTML aqui usando h2 h3 p ul li strong, tudo em uma linha só, sem quebras de linha reais dentro das strings"}
+
+IMPORTANTE: O JSON deve ser válido. Escape aspas duplas dentro do conteúdo com \\". Não use quebras de linha dentro dos valores de string.`;
 
     try {
       setIAProgress(30, 'A IA está escrevendo o artigo...');
@@ -748,9 +746,22 @@ Retorne SOMENTE um JSON válido neste formato exato, sem texto antes ou depois:
       const data = await response.json();
       const raw = data.choices[0].message.content.trim();
 
-      // Extrai JSON mesmo se vier com ```json
-      const jsonStr = raw.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-      const result = JSON.parse(jsonStr);
+      // Extrai JSON - tenta múltiplas abordagens
+      let result;
+      try {
+        let jsonStr = raw.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+        // Remove caracteres de controle inválidos em JSON
+        jsonStr = jsonStr.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+        result = JSON.parse(jsonStr);
+      } catch(e1) {
+        // Fallback: extrai campos individualmente com regex
+        const titulo = raw.match(/"titulo"\s*:\s*"((?:[^"\\]|\\.)*)"/)?.[1] || tema;
+        const resumo = raw.match(/"resumo"\s*:\s*"((?:[^"\\]|\\.)*)"/)?.[1] || '';
+        // Para o conteúdo, pega tudo entre "conteudo": " e o último "
+        const conteudoMatch = raw.match(/"conteudo"\s*:\s*"([\s\S]*?)"\s*\}?\s*$/);
+        const conteudo = conteudoMatch ? conteudoMatch[1].replace(/\\n/g, '').replace(/\\"/g, '"') : '';
+        result = { titulo, resumo, conteudo };
+      }
 
       setIAProgress(90, 'Preenchendo o editor...');
 
