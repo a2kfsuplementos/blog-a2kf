@@ -444,7 +444,9 @@
     const title = document.getElementById('postTitle').value.trim();
     const scheduleCheck = document.getElementById('scheduleCheck').checked;
     const scheduledAtVal = document.getElementById('scheduledAt').value;
-    const isScheduled = scheduleCheck && scheduledAtVal && !publish;
+
+    // scheduled_at só vai quando o checkbox estiver marcado, tiver data e não for publicação imediata
+    const isScheduled = scheduleCheck && scheduledAtVal && publish !== true;
 
     return {
       title,
@@ -453,7 +455,7 @@
       cover_url: document.getElementById('coverUrl').value.trim() || null,
       category: document.getElementById('postCategory').value || null,
       excerpt: document.getElementById('postExcerpt').value.trim() || null,
-      published: publish !== undefined ? publish : isPublished,
+      published: publish === true ? true : false,
       scheduled_at: isScheduled ? new Date(scheduledAtVal).toISOString() : null,
     };
   }
@@ -461,17 +463,15 @@
   async function savePost(publish) {
     const scheduleCheck = document.getElementById('scheduleCheck').checked;
     const scheduledAtVal = document.getElementById('scheduledAt').value;
-    const isScheduling = scheduleCheck && scheduledAtVal && publish !== false;
+    const isScheduling = scheduleCheck && scheduledAtVal && publish !== true;
 
     // Validação do agendamento
-    if (isScheduling && publish !== false) {
+    if (isScheduling) {
       const schedDate = new Date(scheduledAtVal);
       if (schedDate <= new Date()) {
         showToast('A data de agendamento deve ser no futuro.', 'error');
         return;
       }
-      // Quando agendado, salva como rascunho com scheduled_at
-      publish = false;
     }
 
     const data = getFormData(publish);
@@ -483,16 +483,16 @@
 
     if (postId) {
       const { error } = await _sb.from('posts').update(data).eq('id', postId);
-      if (error) { showToast('Erro ao salvar.', 'error'); setSavingState(''); return; }
+      if (error) { showToast('Erro ao salvar: ' + error.message, 'error'); setSavingState(''); return; }
     } else {
       const { data: created, error } = await _sb.from('posts').insert([data]).select().single();
-      if (error) { showToast('Erro ao criar post.', 'error'); setSavingState(''); return; }
+      if (error) { showToast('Erro ao criar: ' + error.message, 'error'); setSavingState(''); return; }
       postId = created.id;
       history.replaceState(null, '', `editor.html?id=${postId}`);
       document.getElementById('pageTitle').textContent = 'EDITAR POST';
     }
 
-    const nowPublished = publish !== undefined ? publish : isPublished;
+    const nowPublished = data.published;
     setStatus(nowPublished);
     setSavingState('saved');
 
