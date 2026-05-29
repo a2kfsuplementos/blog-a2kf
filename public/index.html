@@ -666,46 +666,70 @@
   }
 
   // ── CARROSSEL ──────────────────────────────────────────────────────────────
-  const CAROUSEL_INTERVAL = 5000; // 5 segundos
+  const CAROUSEL_INTERVAL = 5000;
   const CAROUSEL_MAX = 4;
   let carouselIndex = 0;
   let carouselTimer = null;
-  let carouselPosts = [];
+  let carouselItems = [];
 
-  function buildCarousel(posts) {
-    carouselPosts = posts.filter(p => p.published).slice(0, CAROUSEL_MAX);
-    if (!carouselPosts.length) {
-      document.getElementById('carousel').style.display = 'none';
-      return;
+  async function buildCarousel(posts) {
+    // Busca banners ativos
+    const { data: banners } = await _sb.from('banners').select('*').eq('active', true).order('ordem').limit(4);
+
+    // Monta slides: intercala posts e banners
+    const postSlides = posts.filter(p => p.published).slice(0, 3).map(p => ({ type: 'post', ...p }));
+    const bannerSlides = (banners || []).map(b => ({ type: 'banner', ...b }));
+
+    // Intercala: post, banner, post, banner...
+    const mixed = [];
+    const maxLen = Math.max(postSlides.length, bannerSlides.length);
+    for (let i = 0; i < maxLen && mixed.length < CAROUSEL_MAX; i++) {
+      if (i < postSlides.length) mixed.push(postSlides[i]);
+      if (mixed.length < CAROUSEL_MAX && i < bannerSlides.length) mixed.push(bannerSlides[i]);
     }
+    carouselItems = mixed.slice(0, CAROUSEL_MAX);
+
+    if (!carouselItems.length) { document.getElementById('carousel').style.display = 'none'; return; }
 
     const track = document.getElementById('carouselTrack');
     const dots = document.getElementById('carouselDots');
 
-    track.innerHTML = carouselPosts.map((p, i) => {
-      const img = p.cover_url
-        ? `<img src="${p.cover_url}" alt="${p.title}" loading="${i === 0 ? 'eager' : 'lazy'}"
-             onload="this.classList.add('loaded')"
-             onerror="this.style.display='none'" />`
-        : `<div class="carousel-placeholder">A2KF</div>`;
-      return `
-        <div class="carousel-slide" onclick="window.location.href='/post/${p.slug || p.id}'">
-          ${img}
-          <div class="carousel-slide-overlay"></div>
-          <div class="carousel-slide-body">
-            ${p.category ? `<span class="carousel-cat">${p.category}</span>` : ''}
-            <h2 class="carousel-title">${p.title}</h2>
-            ${p.excerpt ? `<p class="carousel-excerpt">${p.excerpt}</p>` : ''}
-            <span class="carousel-read">Ler artigo →</span>
-          </div>
-        </div>`;
+    track.innerHTML = carouselItems.map((item, i) => {
+      if (item.type === 'post') {
+        const img = item.cover_url
+          ? `<img src="${item.cover_url}" alt="${item.title}" loading="${i === 0 ? 'eager' : 'lazy'}" onload="this.classList.add('loaded')" onerror="this.style.display='none'" />`
+          : `<div class="carousel-placeholder">A2KF</div>`;
+        return `
+          <div class="carousel-slide" onclick="window.location.href='/post/${item.slug || item.id}'">
+            ${img}
+            <div class="carousel-slide-overlay"></div>
+            <div class="carousel-slide-body">
+              ${item.category ? `<span class="carousel-cat">${item.category}</span>` : ''}
+              <h2 class="carousel-title">${item.title}</h2>
+              ${item.excerpt ? `<p class="carousel-excerpt">${item.excerpt}</p>` : ''}
+              <span class="carousel-read">Ler artigo →</span>
+            </div>
+          </div>`;
+      } else {
+        // Banner de produto
+        return `
+          <div class="carousel-slide" onclick="window.open('${item.link}','_blank')">
+            <img src="${item.image_url}" alt="${item.title}" loading="${i === 0 ? 'eager' : 'lazy'}" onload="this.classList.add('loaded')" onerror="this.style.display='none'" />
+            <div class="carousel-slide-overlay"></div>
+            <div class="carousel-slide-body">
+              <span class="carousel-cat">Loja A2KF</span>
+              <h2 class="carousel-title">${item.title}</h2>
+              ${item.subtitle ? `<p class="carousel-excerpt">${item.subtitle}</p>` : ''}
+              <span class="carousel-read">Ver na loja →</span>
+            </div>
+          </div>`;
+      }
     }).join('');
 
-    dots.innerHTML = carouselPosts.map((_, i) =>
+    dots.innerHTML = carouselItems.map((_, i) =>
       `<button class="carousel-dot ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})"></button>`
     ).join('');
 
-    // Inicia primeira imagem
     const firstImg = track.querySelector('.carousel-slide img');
     if (firstImg && firstImg.complete) firstImg.classList.add('loaded');
 
@@ -720,7 +744,7 @@
   }
 
   function nextSlide() {
-    goToSlide((carouselIndex + 1) % carouselPosts.length);
+    goToSlide((carouselIndex + 1) % carouselItems.length);
   }
 
   function resetProgress() {
@@ -734,7 +758,7 @@
   }
 
   function startCarousel() {
-    if (carouselPosts.length <= 1) return;
+    if (carouselItems.length <= 1) return;
     resetProgress();
     clearInterval(carouselTimer);
     carouselTimer = setInterval(nextSlide, CAROUSEL_INTERVAL);
