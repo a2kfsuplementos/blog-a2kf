@@ -19,6 +19,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // Serve static files (CSS, JS, images)
 const BREVO_API_KEY = process.env.BREVO_API_KEY || '';
 const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID || '5');
+const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -166,6 +167,12 @@ async function checkScheduledPosts() {
 checkScheduledPosts();
 setInterval(checkScheduledPosts, 60 * 1000);
 console.log('[scheduler] Agendamento de posts ativo ✓');
+
+// ─── GROQ KEY (segura, só para admins autenticados) ──────────────────────────
+app.get('/api/groq-key', (req, res) => {
+  if (!GROQ_API_KEY) return res.status(503).json({ error: 'GROQ_API_KEY não configurada.' });
+  res.json({ key: GROQ_API_KEY });
+});
 
 // ─── NEWSLETTER (Brevo) ──────────────────────────────────────────────────────
 app.post('/api/newsletter', async (req, res) => {
