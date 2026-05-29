@@ -1149,6 +1149,7 @@ app.get('/robots.txt', (req, res) => {
 
 // ─── ADMIN (serve static) ────────────────────────────────────────────────────
 app.get('/admin', (req, res) => res.redirect('/admin/login.html'));
+app.get('/admin/banners', (req, res) => res.redirect('/admin/banners.html'));
 
 // ─── 404 ─────────────────────────────────────────────────────────────────────
 app.use((req, res) => res.status(404).send(notFoundPage()));
