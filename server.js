@@ -221,10 +221,17 @@ app.get('/api/produtos-destaque', async (req, res) => {
     : 0;
 
   // Pega a primeira imagem
-  const images = p.images?.data || [];
-  const image = images.length
-    ? (images[0].url || images[0].thumbs?.['1x'] || '')
-    : '';
+ const images = p.images?.data || [];
+
+const image = images.length
+  ? (
+      images[0].thumb?.url ||
+      images[0].small?.url ||
+      images[0].large?.url ||
+      images[0].url ||
+      ''
+    )
+  : '';
   console.log('Produto:', p.name);
   console.log('Imagem JSON:', JSON.stringify(p.images, null, 2));
 
