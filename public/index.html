@@ -571,7 +571,9 @@
     if (activeCategory) filteredPosts = filteredPosts.filter(p => p.category === activeCategory);
     if (searchQuery) filteredPosts = filteredPosts.filter(p =>
       p.title.toLowerCase().includes(searchQuery) ||
-      (p.excerpt || '').toLowerCase().includes(searchQuery)
+      (p.excerpt || '').toLowerCase().includes(searchQuery) ||
+      (p.category || '').toLowerCase().includes(searchQuery) ||
+      (p.tags || []).some(t => t.toLowerCase().includes(searchQuery))
     );
 
     const grid = document.getElementById('postsGrid');
@@ -673,6 +675,7 @@
           </div>
           <h2 class="card-title">${p.title}</h2>
           <p class="card-excerpt">${p.excerpt || ''}</p>
+          ${p.tags && p.tags.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:.5rem;">${p.tags.map(t => `<span style="background:#f4f4f2;color:#555;font-size:10px;font-weight:700;padding:2px 8px;letter-spacing:.5px;text-transform:uppercase;">#${t}</span>`).join('')}</div>` : ''}
           ${views}
           <span class="card-read">Ler artigo</span>
         </div>
