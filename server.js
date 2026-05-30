@@ -20,6 +20,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const BREVO_API_KEY = process.env.BREVO_API_KEY || '';
 const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID || '5');
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
+const YAMPI_API_KEY = process.env.YAMPI_API_KEY || '';
+const YAMPI_ALIAS = process.env.YAMPI_ALIAS || 'a2kf-suplementos2';
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -168,7 +170,71 @@ checkScheduledPosts();
 setInterval(checkScheduledPosts, 60 * 1000);
 console.log('[scheduler] Agendamento de posts ativo ✓');
 
-// ─── GROQ KEY (segura, só para admins autenticados) ──────────────────────────
+// ─── PRODUTOS DESTAQUE (Yampi) ───────────────────────────────────────────────
+app.get('/api/produtos-destaque', async (req, res) => {
+  if (!YAMPI_API_KEY) return res.status(503).json({ error: 'YAMPI_API_KEY não configurada.' });
+
+  try {
+    // Busca produtos ordenados por vendas (mais vendidos primeiro)
+    const result = await new Promise((resolve, reject) => {
+      const opts = {
+        hostname: 'api.dooki.com.br',
+        path: `/v2/${YAMPI_ALIAS}/catalog/products?include=images,skus&limit=8&page=1&sort=-total_sold`,
+        method: 'GET',
+        headers: {
+          'User-Token': YAMPI_API_KEY,
+          'User-Secret-Key': YAMPI_API_KEY,
+          'Accept': 'application/json',
+        },
+      };
+      const r = https.request(opts, (response) => {
+        let data = '';
+        response.on('data', chunk => data += chunk);
+        response.on('end', () => resolve({ status: response.statusCode, body: data }));
+      });
+      r.on('error', reject);
+      r.end();
+    });
+
+    console.log(`[yampi] Status: ${result.status}`);
+
+    if (result.status !== 200) {
+      console.error('[yampi] Erro:', result.body.substring(0, 300));
+      return res.status(502).json({ error: 'Erro ao buscar produtos.' });
+    }
+
+    const parsed = JSON.parse(result.body);
+    const products = (parsed.data || []).map(p => {
+      // Pega o menor preço dos SKUs
+      const skus = p.skus?.data || [];
+      const price = skus.length ? Math.min(...skus.map(s => parseFloat(s.price_sale || s.price || 0))) : 0;
+      const originalPrice = skus.length ? Math.min(...skus.map(s => parseFloat(s.price || 0))) : 0;
+
+      // Pega a primeira imagem
+      const images = p.images?.data || [];
+      const image = images.length ? (images[0].url || images[0].thumbs?.['1x'] || '') : '';
+
+      return {
+        id: p.id,
+        name: p.name,
+        slug: p.url || p.slug || '',
+        image,
+        price,
+        originalPrice,
+        url: `https://www.a2kfsuplementos.com.br/${p.url || p.slug || p.id}`,
+      };
+    }).filter(p => p.name && p.price > 0);
+
+    // Cache por 10 minutos
+    res.set('Cache-Control', 'public, max-age=600');
+    res.json({ success: true, products });
+  } catch (e) {
+    console.error('[yampi] Erro:', e.message);
+    res.status(500).json({ error: 'Erro interno.' });
+  }
+});
+
+// ─── GROQ KEY (segura) ───────────────────────────────────────────────────────
 app.get('/api/groq-key', (req, res) => {
   if (!GROQ_API_KEY) return res.status(503).json({ error: 'GROQ_API_KEY não configurada.' });
   res.json({ key: GROQ_API_KEY });
