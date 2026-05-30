@@ -214,19 +214,20 @@
     .produtos-header h2 span { color:var(--yellow); }
     .produtos-ver-mais { color:var(--yellow); font-size:13px; font-weight:700; text-decoration:none; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; gap:6px; transition:opacity .2s; }
     .produtos-ver-mais:hover { opacity:.75; }
-    .produtos-track-wrap { overflow:hidden; padding:0 2rem; }
-    .produtos-track { display:flex; gap:1rem; transition:transform .5s cubic-bezier(.77,0,.175,1); align-items: stretch !important; }
     
-    /* Força altura fixa idêntica para todos os cards no Desktop */
+    .produtos-track-wrap { max-width:1200px; margin:0 auto; overflow:hidden; padding:0 2rem; }
+    .produtos-track { display:flex; gap:1rem; transition:transform .5s cubic-bezier(.77,0,.175,1); align-items:stretch !important; }
+    
+    /* Configuração para Desktop: Exibe exatamente 4 produtos por bloco (considerando o gap de 1rem) */
     .produto-card { 
       background:#111 !important; 
       border:1.5px solid #222 !important; 
-      width:220px !important;
-      min-width:220px !important; 
-      max-width:220px !important;
-      height:360px !important; 
-      min-height:360px !important;
-      max-height:360px !important;
+      width: calc((100% - 3rem) / 4) !important; /* Divide o espaço igualmente para 4 cards */
+      min-width: calc((100% - 3rem) / 4) !important; 
+      max-width: calc((100% - 3rem) / 4) !important;
+      height:380px !important; 
+      min-height:380px !important;
+      max-height:380px !important;
       flex-shrink:0 !important; 
       text-decoration:none !important; 
       color:var(--white) !important; 
@@ -236,10 +237,10 @@
       overflow:hidden !important;
     }
     .produto-card:hover { border-color:var(--yellow) !important; transform:translateY(-3px) !important; }
-    .produto-img-wrap { width:100% !important; height:160px !important; max-height:160px !important; background:#1a1a1a !important; overflow:hidden !important; }
+    .produto-img-wrap { width:100% !important; height:180px !important; max-height:180px !important; background:#1a1a1a !important; overflow:hidden !important; }
     .produto-img { width:100% !important; height:100% !important; object-fit:contain !important; display:block !important; transition:transform .3s !important; }
     .produto-card:hover .produto-img { transform:scale(1.04) !important; }
-    .produto-img-placeholder { width:100% !important; height:160px !important; background:#1a1a1a !important; display:flex !important; align-items:center !important; justify-content:center !important; font-family:'Bebas Neue',sans-serif !important; font-size:1.5rem !important; color:#333 !important; }
+    .produto-img-placeholder { width:100% !important; height:180px !important; background:#1a1a1a !important; display:flex !important; align-items:center !important; justify-content:center !important; font-family:'Bebas Neue',sans-serif !important; font-size:1.5rem !important; color:#333 !important; }
     
     .produto-body { 
       padding:.875rem !important; 
@@ -286,20 +287,37 @@
     .produtos-nav-btn:hover { background:var(--yellow); border-color:var(--yellow); color:var(--black); }
     .produtos-nav-btn:disabled { opacity:.3; cursor:not-allowed; }
     
-    /* Responsividade Forçada (Mobile e Tablet) */
-    @media(max-width:768px) { 
+    /* Configuração para Tablets (3 produtos por bloco) */
+    @media(max-width:992px) {
       .produto-card { 
-        width:160px !important; min-width:160px !important; max-width:160px !important;
+        width: calc((100% - 2rem) / 3) !important; 
+        min-width: calc((100% - 2rem) / 3) !important; 
+        max-width: calc((100% - 2rem) / 3) !important;
+        height:350px !important; min-height:350px !important; max-height:350px !important;
+      }
+      .produto-img-wrap { height:150px !important; max-height:150px !important; }
+    }
+
+    /* Configuração para Celular: Exibe exatamente 2 produtos por bloco e mantém os botões visíveis */
+    @media(max-width:768px) { 
+      .produtos-track-wrap { padding:0 1rem; } 
+      .produtos-header { padding:0 1rem 1.25rem; } 
+      .produtos-nav { padding:0 1rem; display:flex !important; } /* Garante que as setas continuam aparecendo no mobile */
+      
+      .produto-card { 
+        width: calc((100% - 1rem) / 2) !important; /* Divide o espaço igualmente para 2 cards */
+        min-width: calc((100% - 1rem) / 2) !important; 
+        max-width: calc((100% - 1rem) / 2) !important;
         height:310px !important; min-height:310px !important; max-height:310px !important;
       } 
       .produto-img-wrap { height:130px !important; max-height:130px !important; } 
-      .produtos-track-wrap { padding:0 1rem; } 
-      .produtos-header { padding:0 1rem 1.25rem; } 
-      .produtos-nav { padding:0 1rem; } 
     }
+    
     @media(max-width:480px) { 
       .produto-card { 
-        width:145px !important; min-width:145px !important; max-width:145px !important;
+        width: calc((100% - 1rem) / 2) !important;
+        min-width: calc((100% - 1rem) / 2) !important; 
+        max-width: calc((100% - 1rem) / 2) !important;
         height:295px !important; min-height:295px !important; max-height:295px !important;
       } 
       .produto-img-wrap { height:115px !important; max-height:115px !important; } 
