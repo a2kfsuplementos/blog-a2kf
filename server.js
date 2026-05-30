@@ -205,6 +205,10 @@ app.get('/api/produtos-destaque', async (req, res) => {
     }
 
     const parsed = JSON.parse(result.body);
+    console.log(
+  JSON.stringify(parsed.data?.[0], null, 2)
+    );
+    
    const products = (parsed.data || []).map(p => {
   // Pega o menor preço dos SKUs
   const skus = p.skus?.data || [];
