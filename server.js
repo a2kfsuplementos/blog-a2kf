@@ -205,26 +205,38 @@ app.get('/api/produtos-destaque', async (req, res) => {
     }
 
     const parsed = JSON.parse(result.body);
-    const products = (parsed.data || []).map(p => {
-      // Pega o menor preço dos SKUs
-      const skus = p.skus?.data || [];
-      const price = skus.length ? Math.min(...skus.map(s => parseFloat(s.price_sale || s.price || 0))) : 0;
-      const originalPrice = skus.length ? Math.min(...skus.map(s => parseFloat(s.price || 0))) : 0;
+   const products = (parsed.data || []).map(p => {
+  // Pega o menor preço dos SKUs
+  const skus = p.skus?.data || [];
+  const price = skus.length
+    ? Math.min(...skus.map(s => parseFloat(s.price_sale || s.price || 0)))
+    : 0;
 
-      // Pega a primeira imagem
-      const images = p.images?.data || [];
-      const image = images.length ? (images[0].url || images[0].thumbs?.['1x'] || '') : '';
+  const originalPrice = skus.length
+    ? Math.min(...skus.map(s => parseFloat(s.price || 0)))
+    : 0;
 
-      return {
-        id: p.id,
-        name: p.name,
-        slug: p.url || p.slug || '',
-        image,
-        price,
-        originalPrice,
-        url: `https://www.a2kfsuplementos.com.br/${p.url || p.slug || p.id}`,
-      };
-    }).filter(p => p.name && p.price > 0);
+  // Pega a primeira imagem
+  const images = p.images?.data || [];
+  const image = images.length
+    ? (images[0].url || images[0].thumbs?.['1x'] || '')
+    : '';
+
+  // Corrige URL duplicada
+  const productUrl = p.url?.startsWith('http')
+    ? p.url
+    : `https://www.a2kfsuplementos.com.br/${p.url || p.slug || p.id}`;
+
+  return {
+    id: p.id,
+    name: p.name,
+    slug: p.slug || '',
+    image,
+    price,
+    originalPrice,
+    url: productUrl,
+  };
+}).filter(p => p.name && p.price > 0);
 
     // Cache por 10 minutos
     res.set('Cache-Control', 'public, max-age=600');
