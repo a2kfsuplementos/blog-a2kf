@@ -215,82 +215,96 @@
     .produtos-ver-mais { color:var(--yellow); font-size:13px; font-weight:700; text-decoration:none; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; gap:6px; transition:opacity .2s; }
     .produtos-ver-mais:hover { opacity:.75; }
     .produtos-track-wrap { overflow:hidden; padding:0 2rem; }
-    .produtos-track { display:flex; gap:1rem; transition:transform .5s cubic-bezier(.77,0,.175,1); }
+    .produtos-track { display:flex; gap:1rem; transition:transform .5s cubic-bezier(.77,0,.175,1); align-items: stretch !important; }
     
-    /* Configuração padrão para Desktop */
+    /* Força altura fixa idêntica para todos os cards no Desktop */
     .produto-card { 
-      background:#111; 
-      border:1.5px solid #222; 
-      min-width:200px; 
-      height:360px; /* Altura fixa garantida para todos os cards no PC */
-      flex-shrink:0; 
-      text-decoration:none; 
-      color:var(--white); 
-      transition:border-color .2s,transform .2s; 
-      display:flex; 
-      flex-direction:column; 
+      background:#111 !important; 
+      border:1.5px solid #222 !important; 
+      width:220px !important;
+      min-width:220px !important; 
+      max-width:220px !important;
+      height:360px !important; 
+      min-height:360px !important;
+      max-height:360px !important;
+      flex-shrink:0 !important; 
+      text-decoration:none !important; 
+      color:var(--white) !important; 
+      transition:border-color .2s, transform .2s !important; 
+      display:flex !important; 
+      flex-direction:column !important; 
+      overflow:hidden !important;
     }
-    .produto-card:hover { border-color:var(--yellow); transform:translateY(-3px); }
-    .produto-img-wrap { width:100%; height:180px; background:#1a1a1a; overflow:hidden; }
-    .produto-img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .3s; }
-    .produto-card:hover .produto-img { transform:scale(1.04); }
-    .produto-img-placeholder { width:100%; height:180px; background:#1a1a1a; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:1.5rem; color:#333; }
+    .produto-card:hover { border-color:var(--yellow) !important; transform:translateY(-3px) !important; }
+    .produto-img-wrap { width:100% !important; height:160px !important; max-height:160px !important; background:#1a1a1a !important; overflow:hidden !important; }
+    .produto-img { width:100% !important; height:100% !important; object-fit:contain !important; display:block !important; transition:transform .3s !important; }
+    .produto-card:hover .produto-img { transform:scale(1.04) !important; }
+    .produto-img-placeholder { width:100% !important; height:160px !important; background:#1a1a1a !important; display:flex !important; align-items:center !important; justify-content:center !important; font-family:'Bebas Neue',sans-serif !important; font-size:1.5rem !important; color:#333 !important; }
     
     .produto-body { 
-      padding:.875rem; 
-      flex:1; 
-      display:flex; 
-      flex-direction:column; 
+      padding:.875rem !important; 
+      flex:1 !important; 
+      display:flex !important; 
+      flex-direction:column !important; 
+      justify-content:space-between !important;
     }
     .produto-name { 
-      font-size:13px; 
-      font-weight:600; 
-      line-height:1.4; 
-      margin-bottom:.5rem; 
-      color:#eee; 
-      /* Limita o texto a 2 linhas e adiciona reticências se for maior */
-      display:-webkit-box; 
-      -webkit-line-clamp:2; 
-      -webkit-box-orient:vertical; 
-      overflow:hidden; 
+      font-size:13px !important; 
+      font-weight:600 !important; 
+      line-height:1.4 !important; 
+      margin-bottom:.5rem !important; 
+      color:#eee !important; 
+      display:-webkit-box !important; 
+      -webkit-line-clamp:2 !important; 
+      -webkit-box-orient:vertical !important; 
+      overflow:hidden !important; 
+      height:36px !important; 
+      min-height:36px !important;
+      max-height:36px !important;
     }
-    .produto-original { font-size:11px; color:#555; text-decoration:line-through; margin-bottom:.2rem; }
-    .produto-price { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; color:var(--yellow); letter-spacing:.5px; }
+    .produto-original { font-size:11px !important; color:#555 !important; text-decoration:line-through !important; margin-bottom:.2rem !important; height:15px !important; }
+    .produto-price { font-family:'Bebas Neue',sans-serif !important; font-size:1.4rem !important; color:var(--yellow) !important; letter-spacing:.5px !important; margin-bottom:.5rem !important; }
     
     .produto-btn { 
-      display:block; 
-      background:var(--yellow); 
-      color:var(--black); 
-      font-family:'DM Sans',sans-serif; 
-      font-weight:700; 
-      font-size:11px; 
-      letter-spacing:1px; 
-      text-transform:uppercase; 
-      text-align:center; 
-      padding:8px; 
-      margin-top:auto; /* Empurra o botão e alinha perfeitamente no rodapé */
-      transition:opacity .2s; 
+      display:block !important; 
+      background:var(--yellow) !important; 
+      color:var(--black) !important; 
+      font-family:'DM Sans',sans-serif !important; 
+      font-weight:700 !important; 
+      font-size:11px !important; 
+      letter-spacing:1px !important; 
+      text-transform:uppercase !important; 
+      text-align:center !important; 
+      padding:8px !important; 
+      margin-top:auto !important; 
+      transition:opacity .2s !important; 
     }
-    .produto-btn:hover { opacity:.85; }
+    .produto-btn:hover { opacity:.85 !important; }
     
     .produtos-nav { display:flex; gap:.5rem; align-items:center; max-width:1200px; margin:1.25rem auto 0; padding:0 2rem; justify-content:center; }
     .produtos-nav-btn { background:#1a1a1a; border:1px solid #333; color:#fff; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .2s; }
     .produtos-nav-btn:hover { background:var(--yellow); border-color:var(--yellow); color:var(--black); }
     .produtos-nav-btn:disabled { opacity:.3; cursor:not-allowed; }
     
-    /* Ajustes de responsividade (Mobile e Tablet) */
+    /* Responsividade Forçada (Mobile e Tablet) */
     @media(max-width:768px) { 
-      .produto-card { min-width:160px; height:310px; } /* Altura controlada para tablets */
-      .produto-img-wrap { height:140px; } 
+      .produto-card { 
+        width:160px !important; min-width:160px !important; max-width:160px !important;
+        height:310px !important; min-height:310px !important; max-height:310px !important;
+      } 
+      .produto-img-wrap { height:130px !important; max-height:130px !important; } 
       .produtos-track-wrap { padding:0 1rem; } 
       .produtos-header { padding:0 1rem 1.25rem; } 
       .produtos-nav { padding:0 1rem; } 
     }
     @media(max-width:480px) { 
-      .produto-card { min-width:140px; height:290px; } /* Altura ideal para ecrãs de telemóveis */
-      .produto-img-wrap { height:120px; } 
+      .produto-card { 
+        width:145px !important; min-width:145px !important; max-width:145px !important;
+        height:295px !important; min-height:295px !important; max-height:295px !important;
+      } 
+      .produto-img-wrap { height:115px !important; max-height:115px !important; } 
     }
-
+    
     /* CATEGORIES */
     .categories {
       padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
