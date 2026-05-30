@@ -21,6 +21,7 @@ const BREVO_API_KEY = process.env.BREVO_API_KEY || '';
 const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID || '5');
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
 const YAMPI_API_KEY = process.env.YAMPI_API_KEY || '';
+const YAMPI_TOKEN = process.env.YAMPI_TOKEN || '';
 const YAMPI_ALIAS = process.env.YAMPI_ALIAS || 'a2kf-suplementos2';
 
 app.use(express.json());
@@ -171,7 +172,7 @@ setInterval(checkScheduledPosts, 60 * 1000);
 console.log('[scheduler] Agendamento de posts ativo ✓');
 
 // ─── PRODUTOS DESTAQUE (Yampi) ───────────────────────────────────────────────
-app.get('/api/mais-procurados', async (req, res) => {
+app.get('/api/produtos-destaque', async (req, res) => {
   if (!YAMPI_API_KEY) return res.status(503).json({ error: 'YAMPI_API_KEY não configurada.' });
 
   try {
@@ -179,10 +180,10 @@ app.get('/api/mais-procurados', async (req, res) => {
     const result = await new Promise((resolve, reject) => {
       const opts = {
         hostname: 'api.dooki.com.br',
-        path: `/v2/${YAMPI_ALIAS}/catalog/products?include=images,skus&limit=8&page=1&sort=-total_sold`,
+        path: `/v2/${YAMPI_ALIAS}/catalog/products?include=images,skus&limit=8&page=1&sortBy=total_sold&sortDirection=desc`,
         method: 'GET',
         headers: {
-          'User-Token': YAMPI_API_KEY,
+          'User-Token': YAMPI_TOKEN,
           'User-Secret-Key': YAMPI_API_KEY,
           'Accept': 'application/json',
         },
