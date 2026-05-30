@@ -769,18 +769,22 @@
   function prevSlide() {
     const prev = (carouselIndex - 1 + carouselItems.length) % carouselItems.length;
     goToSlide(prev);
-    // Reinicia o timer ao clicar manualmente
-    clearInterval(carouselTimer);
-    carouselTimer = setInterval(nextSlide, CAROUSEL_INTERVAL);
+    if (carouselTimer !== null) {
+      clearInterval(carouselTimer);
+      carouselTimer = setInterval(autoNext, CAROUSEL_INTERVAL);
+    }
   }
 
   function nextSlide() {
     goToSlide((carouselIndex + 1) % carouselItems.length);
-    // Reinicia o timer ao clicar manualmente (quando chamado pelos botões)
-    if (carouselTimer) {
+    if (carouselTimer !== null) {
       clearInterval(carouselTimer);
-      carouselTimer = setInterval(nextSlide, CAROUSEL_INTERVAL);
+      carouselTimer = setInterval(autoNext, CAROUSEL_INTERVAL);
     }
+  }
+
+  function autoNext() {
+    goToSlide((carouselIndex + 1) % carouselItems.length);
   }
 
   function resetProgress() {
@@ -797,12 +801,23 @@
     if (carouselItems.length <= 1) return;
     resetProgress();
     clearInterval(carouselTimer);
-    carouselTimer = setInterval(nextSlide, CAROUSEL_INTERVAL);
+    carouselTimer = setInterval(autoNext, CAROUSEL_INTERVAL);
 
-    // Pausa ao hover
+    // Pausa ao hover — usa relatedTarget para não pausar ao mover entre filhos
     const el = document.getElementById('carousel');
-    el.addEventListener('mouseenter', () => { clearInterval(carouselTimer); document.getElementById('carouselProgress').style.transition = 'none'; });
-    el.addEventListener('mouseleave', () => { carouselTimer = setInterval(nextSlide, CAROUSEL_INTERVAL); resetProgress(); });
+    el.addEventListener('mouseenter', () => {
+      clearInterval(carouselTimer);
+      carouselTimer = null;
+      const bar = document.getElementById('carouselProgress');
+      bar.style.transition = 'none';
+    });
+    el.addEventListener('mouseleave', (e) => {
+      // Só retoma se o mouse saiu do carrossel de verdade (não para um filho)
+      if (!el.contains(e.relatedTarget)) {
+        carouselTimer = setInterval(autoNext, CAROUSEL_INTERVAL);
+        resetProgress();
+      }
+    });
   }
 
   // ── FIM CARROSSEL ───────────────────────────────────────────────────────────
