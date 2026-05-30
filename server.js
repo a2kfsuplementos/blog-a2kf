@@ -221,6 +221,8 @@ app.get('/api/produtos-destaque', async (req, res) => {
   const image = images.length
     ? (images[0].url || images[0].thumbs?.['1x'] || '')
     : '';
+  console.log('Produto:', p.name);
+  console.log('Imagem JSON:', JSON.stringify(p.images, null, 2));
 
   // Corrige URL duplicada
   const productUrl = p.url?.startsWith('http')
