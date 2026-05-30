@@ -47,11 +47,20 @@
     .btn-new:hover { opacity:.9; }
 
     /* STATS */
-    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-bottom:2.5rem; }
-    .stat-card { background:var(--white); border:1.5px solid var(--border); padding:1.5rem; }
+    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem; margin-bottom:1.5rem; }
+    .stats-row2 { display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem; margin-bottom:2rem; }
+    .stat-card { background:var(--white); border:1.5px solid var(--border); padding:1.25rem 1.5rem; }
     .stat-label { font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:.5rem; }
-    .stat-value { font-family:'Bebas Neue',sans-serif; font-size:2.5rem; letter-spacing:1px; }
+    .stat-value { font-family:'Bebas Neue',sans-serif; font-size:2.2rem; letter-spacing:1px; }
     .stat-value.yellow { color:var(--yellow); }
+    .stat-sub { font-size:11px; color:var(--muted); margin-top:.25rem; }
+
+    /* POST MAIS LIDO */
+    .top-post-card { background:var(--white); border:1.5px solid var(--border); padding:1.25rem 1.5rem; margin-bottom:2rem; display:flex; align-items:center; gap:1rem; }
+    .top-post-badge { background:var(--yellow); color:var(--black); font-family:'Bebas Neue',sans-serif; font-size:1rem; padding:4px 10px; white-space:nowrap; flex-shrink:0; }
+    .top-post-info { flex:1; min-width:0; }
+    .top-post-title { font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .top-post-views { font-size:12px; color:var(--muted); margin-top:.2rem; }
 
     /* TABLE */
     .table-wrap { background:var(--white); border:1.5px solid var(--border); overflow-x:auto; }
@@ -73,6 +82,7 @@
     }
     .badge-published { background:#e6f7ee; color:#256341; }
     .badge-draft { background:#f5f5f5; color:#888; }
+    .badge-scheduled { background:#fff3cd; color:#856404; }
     .badge-cat { background:var(--yellow); color:var(--black); }
 
     .post-title-cell { font-weight:600; max-width:280px; }
@@ -168,7 +178,7 @@
     </a>
   </div>
 
-  <!-- STATS -->
+  <!-- STATS ROW 1 -->
   <div class="stats">
     <div class="stat-card">
       <div class="stat-label">Total de Posts</div>
@@ -184,6 +194,32 @@
     </div>
   </div>
 
+  <!-- STATS ROW 2 -->
+  <div class="stats-row2">
+    <div class="stat-card">
+      <div class="stat-label">Visualizações Totais</div>
+      <div class="stat-value yellow" id="statViews">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Publicados Este Mês</div>
+      <div class="stat-value" id="statThisMonth">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Agendados</div>
+      <div class="stat-value" id="statScheduled">—</div>
+    </div>
+  </div>
+
+  <!-- POST MAIS LIDO -->
+  <div class="top-post-card" id="topPostCard" style="display:none;">
+    <span class="top-post-badge">🏆 Mais lido</span>
+    <div class="top-post-info">
+      <div class="top-post-title" id="topPostTitle">—</div>
+      <div class="top-post-views" id="topPostViews">—</div>
+    </div>
+    <a id="topPostLink" href="#" class="btn-edit" style="padding:6px 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:var(--black);color:#fff;text-decoration:none;flex-shrink:0;">Ver</a>
+  </div>
+
   <!-- TABLE -->
   <div class="table-wrap">
     <div class="table-header">
@@ -195,6 +231,7 @@
         <tr>
           <th>Título</th>
           <th>Categoria</th>
+          <th>Visualizações</th>
           <th>Status</th>
           <th>Data</th>
           <th>Ações</th>
@@ -236,9 +273,29 @@
   }
 
   function updateStats() {
+    const now = new Date();
+    const thisMonth = allPosts.filter(p => {
+      const d = new Date(p.created_at);
+      return p.published && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).length;
+    const totalViews = allPosts.reduce((sum, p) => sum + (p.views || 0), 0);
+    const scheduled = allPosts.filter(p => p.scheduled_at && !p.published).length;
+    const topPost = [...allPosts].filter(p => p.published).sort((a, b) => (b.views || 0) - (a.views || 0))[0];
+
     document.getElementById('statTotal').textContent = allPosts.length;
     document.getElementById('statPublished').textContent = allPosts.filter(p => p.published).length;
-    document.getElementById('statDraft').textContent = allPosts.filter(p => !p.published).length;
+    document.getElementById('statDraft').textContent = allPosts.filter(p => !p.published && !p.scheduled_at).length;
+    document.getElementById('statViews').textContent = totalViews.toLocaleString('pt-BR');
+    document.getElementById('statThisMonth').textContent = thisMonth;
+    document.getElementById('statScheduled').textContent = scheduled;
+
+    if (topPost) {
+      document.getElementById('topPostCard').style.display = 'flex';
+      document.getElementById('topPostTitle').textContent = topPost.title;
+      document.getElementById('topPostViews').textContent = (topPost.views || 0).toLocaleString('pt-BR') + ' visualizações';
+      document.getElementById('topPostLink').href = `/post/${topPost.slug || topPost.id}`;
+      document.getElementById('topPostLink').target = '_blank';
+    }
   }
 
   function filterTable() {
@@ -264,7 +321,8 @@
           <small>${(p.excerpt || '').substring(0, 60)}${p.excerpt && p.excerpt.length > 60 ? '...' : ''}</small>
         </td>
         <td><span class="badge badge-cat">${p.category || '—'}</span></td>
-        <td><span class="badge ${p.published ? 'badge-published' : 'badge-draft'}">${p.published ? 'Publicado' : 'Rascunho'}</span></td>
+        <td style="font-weight:600;">${(p.views || 0).toLocaleString('pt-BR')}</td>
+        <td><span class="badge ${p.published ? 'badge-published' : (p.scheduled_at ? 'badge-scheduled' : 'badge-draft')}">${p.published ? 'Publicado' : (p.scheduled_at ? '⏰ Agendado' : 'Rascunho')}</span></td>
         <td>${formatDate(p.created_at)}</td>
         <td>
           <div class="action-btns">
