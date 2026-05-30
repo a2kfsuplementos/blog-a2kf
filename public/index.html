@@ -83,6 +83,23 @@
     .hero h1 span { color: var(--yellow); }
     .hero p { margin-top: 1.25rem; color: #aaa; font-size: clamp(.9rem, 4vw, 1.1rem); max-width: 480px; margin-left: auto; margin-right: auto; padding: 0 .5rem; }
 
+    /* BOTÕES NAVEGAÇÃO CARROSSEL */
+    .carousel-btn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: rgba(0,0,0,.5); border: none; color: #fff;
+      width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; z-index: 10; transition: background .2s;
+      backdrop-filter: blur(4px);
+    }
+    .carousel-btn:hover { background: rgba(255,212,0,.85); color: #000; }
+    .carousel-btn-prev { left: 1rem; }
+    .carousel-btn-next { right: 1rem; }
+    @media(max-width:480px) {
+      .carousel-btn { width: 36px; height: 36px; }
+      .carousel-btn-prev { left: .5rem; }
+      .carousel-btn-next { right: .5rem; }
+    }
+
     /* CARROSSEL */
     .carousel {
       position: relative; overflow: hidden; background: var(--black);
@@ -375,6 +392,12 @@
 <!-- CARROSSEL -->
 <div class="carousel" id="carousel">
   <div class="carousel-track" id="carouselTrack"></div>
+  <button class="carousel-btn carousel-btn-prev" onclick="prevSlide()" aria-label="Anterior">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <button class="carousel-btn carousel-btn-next" onclick="nextSlide()" aria-label="Próximo">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+  </button>
   <div class="carousel-dots" id="carouselDots"></div>
   <div class="carousel-progress" id="carouselProgress"></div>
 </div>
@@ -743,8 +766,21 @@
     resetProgress();
   }
 
+  function prevSlide() {
+    const prev = (carouselIndex - 1 + carouselItems.length) % carouselItems.length;
+    goToSlide(prev);
+    // Reinicia o timer ao clicar manualmente
+    clearInterval(carouselTimer);
+    carouselTimer = setInterval(nextSlide, CAROUSEL_INTERVAL);
+  }
+
   function nextSlide() {
     goToSlide((carouselIndex + 1) % carouselItems.length);
+    // Reinicia o timer ao clicar manualmente (quando chamado pelos botões)
+    if (carouselTimer) {
+      clearInterval(carouselTimer);
+      carouselTimer = setInterval(nextSlide, CAROUSEL_INTERVAL);
+    }
   }
 
   function resetProgress() {
