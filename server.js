@@ -1157,24 +1157,28 @@ app.get('/admin/banners', (req, res) => res.redirect('/admin/banners.html'));
 
 // ─── 404 ─────────────────────────────────────────────────────────────────────
 app.use(async (req, res) => {
-  // Busca 3 posts recentes para sugerir
-  const { data: posts } = await supabase
-    .from('posts')
-    .select('title, slug, cover_url, category, excerpt')
-    .eq('published', true)
-    .order('created_at', { ascending: false })
-    .limit(3);
+  let suggestions = '';
+  try {
+    const { data: posts } = await supabase
+      .from('posts')
+      .select('title, slug, cover_url, category, excerpt')
+      .eq('published', true)
+      .order('created_at', { ascending: false })
+      .limit(3);
 
-  const suggestions = (posts || []).map(p => `
-    <a href="/post/${p.slug}" class="s-card">
-      ${p.cover_url
-        ? `<img src="${p.cover_url}" alt="${p.title}" class="s-img" />`
-        : `<div class="s-img-placeholder">A2KF</div>`}
-      <div class="s-body">
-        ${p.category ? `<span class="s-cat">${p.category}</span>` : ''}
-        <div class="s-title">${p.title}</div>
-      </div>
-    </a>`).join('');
+    suggestions = (posts || []).map(p => `
+      <a href="/post/${p.slug}" class="s-card">
+        ${p.cover_url
+          ? `<img src="${p.cover_url}" alt="${p.title}" class="s-img" />`
+          : `<div class="s-img-placeholder">A2KF</div>`}
+        <div class="s-body">
+          ${p.category ? `<span class="s-cat">${p.category}</span>` : ''}
+          <div class="s-title">${p.title}</div>
+        </div>
+      </a>`).join('');
+  } catch(e) {
+    console.error('[404] Erro ao buscar posts:', e.message);
+  }
 
   res.status(404).send(`<!DOCTYPE html>
 <html lang="pt-BR">
@@ -1224,9 +1228,5 @@ app.use(async (req, res) => {
 </body>
 </html>`);
 });
-
-function notFoundPage() {
-  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>404 – A2KF Blog</title></head><body><a href="/">Voltar</a></body></html>`;
-}
 
 app.listen(PORT, () => console.log(`A2KF Blog rodando na porta ${PORT}`));
