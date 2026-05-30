@@ -689,7 +689,8 @@ app.get('/post/:slug', async (req, res) => {
 
 ${post.cover_url ? `
 <div class="post-cover-wrap" id="cover-wrap">
-  <img src="${post.cover_url}" class="post-cover" alt="${post.title}" loading="lazy"
+  <img src="${post.cover_url}" class="post-cover" alt="${post.title}" loading="eager"
+    width="1200" height="480"
     onload="this.classList.add('loaded');this.parentElement.classList.add('loaded')"
     onerror="this.parentElement.style.display='none'" />
 </div>` : ''}
@@ -1118,17 +1119,20 @@ ${post.cover_url ? `
 app.get('/sitemap.xml', async (req, res) => {
   const { data: posts } = await supabase
     .from('posts')
-    .select('slug, updated_at')
+    .select('slug, updated_at, created_at')
     .eq('published', true)
-    .order('updated_at', { ascending: false });
+    .order('created_at', { ascending: false });
 
-  const urls = (posts || []).map(p => `
+  const urls = (posts || []).map(p => {
+    const lastmod = new Date(p.updated_at || p.created_at).toISOString().split('T')[0];
+    return `
   <url>
     <loc>${SITE_URL}/post/${p.slug}</loc>
-    <lastmod>${new Date(p.updated_at).toISOString().split('T')[0]}</lastmod>
+    <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>`).join('');
+  </url>`;
+  }).join('');
 
   res.header('Content-Type', 'application/xml');
   res.send(`<?xml version="1.0" encoding="UTF-8"?>
@@ -1152,13 +1156,77 @@ app.get('/admin', (req, res) => res.redirect('/admin/login.html'));
 app.get('/admin/banners', (req, res) => res.redirect('/admin/banners.html'));
 
 // ─── 404 ─────────────────────────────────────────────────────────────────────
-app.use((req, res) => res.status(404).send(notFoundPage()));
+app.use(async (req, res) => {
+  // Busca 3 posts recentes para sugerir
+  const { data: posts } = await supabase
+    .from('posts')
+    .select('title, slug, cover_url, category, excerpt')
+    .eq('published', true)
+    .order('created_at', { ascending: false })
+    .limit(3);
+
+  const suggestions = (posts || []).map(p => `
+    <a href="/post/${p.slug}" class="s-card">
+      ${p.cover_url
+        ? `<img src="${p.cover_url}" alt="${p.title}" class="s-img" />`
+        : `<div class="s-img-placeholder">A2KF</div>`}
+      <div class="s-body">
+        ${p.category ? `<span class="s-cat">${p.category}</span>` : ''}
+        <div class="s-title">${p.title}</div>
+      </div>
+    </a>`).join('');
+
+  res.status(404).send(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Página não encontrada – A2KF Blog</title>
+  <link rel="icon" type="image/png" href="/logo.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'DM Sans',sans-serif;background:#0A0A0A;color:#fff;min-height:100vh;display:flex;flex-direction:column;}
+    nav{background:#0A0A0A;border-bottom:3px solid #FFD400;padding:0 1.5rem;height:64px;display:flex;align-items:center;}
+    nav img{height:44px;width:auto;}
+    .hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:3rem 1.5rem;}
+    .code{font-family:'Bebas Neue',sans-serif;font-size:clamp(6rem,20vw,10rem);color:#FFD400;line-height:1;letter-spacing:4px;}
+    .msg{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.5rem,5vw,2.5rem);letter-spacing:1px;margin:.5rem 0 1rem;}
+    .sub{color:#666;font-size:15px;max-width:420px;line-height:1.6;margin-bottom:2rem;}
+    .btn-home{background:#FFD400;color:#000;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;padding:12px 28px;text-decoration:none;transition:opacity .2s;display:inline-block;}
+    .btn-home:hover{opacity:.85;}
+    .suggestions{background:#111;padding:2.5rem 1.5rem;border-top:1px solid #1a1a1a;}
+    .suggestions h2{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;color:#FFD400;text-align:center;margin-bottom:1.5rem;}
+    .s-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;max-width:900px;margin:0 auto;}
+    .s-card{background:#1a1a1a;border:1px solid #222;text-decoration:none;color:#fff;display:block;transition:border-color .2s;}
+    .s-card:hover{border-color:#FFD400;}
+    .s-img{width:100%;height:140px;object-fit:cover;display:block;}
+    .s-img-placeholder{width:100%;height:140px;background:#222;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:2rem;color:#333;}
+    .s-body{padding:.875rem;}
+    .s-cat{background:#FFD400;color:#000;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:2px 8px;display:inline-block;margin-bottom:.5rem;}
+    .s-title{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;line-height:1.15;letter-spacing:.5px;}
+    @media(max-width:480px){.s-grid{grid-template-columns:1fr;}.code{font-size:7rem;}}
+  </style>
+</head>
+<body>
+  <nav><a href="/"><img src="/logo.png" alt="A2KF Suplementos"/></a></nav>
+  <div class="hero">
+    <div class="code">404</div>
+    <div class="msg">PÁGINA NÃO ENCONTRADA</div>
+    <p class="sub">O conteúdo que você procura não existe ou foi movido. Que tal conferir nossos artigos mais recentes?</p>
+    <a href="/" class="btn-home">← Voltar ao Blog</a>
+  </div>
+  ${suggestions ? `
+  <div class="suggestions">
+    <h2>ARTIGOS RECENTES</h2>
+    <div class="s-grid">${suggestions}</div>
+  </div>` : ''}
+</body>
+</html>`);
+});
 
 function notFoundPage() {
-  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>404 – A2KF Blog</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;700&display=swap" rel="stylesheet"/>
-  <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'DM Sans',sans-serif;background:#0A0A0A;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center}h1{font-family:'Bebas Neue',sans-serif;font-size:8rem;color:#FFD400;line-height:1}p{color:#888;margin:1rem 0 2rem}a{background:#FFD400;color:#000;padding:12px 28px;font-weight:700;text-decoration:none;text-transform:uppercase;letter-spacing:1px}</style>
-  </head><body><div><h1>404</h1><p>Página não encontrada.</p><a href="/">Voltar ao Blog</a></div></body></html>`;
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>404 – A2KF Blog</title></head><body><a href="/">Voltar</a></body></html>`;
 }
 
 app.listen(PORT, () => console.log(`A2KF Blog rodando na porta ${PORT}`));
