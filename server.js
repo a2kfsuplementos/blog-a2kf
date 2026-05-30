@@ -171,7 +171,7 @@ setInterval(checkScheduledPosts, 60 * 1000);
 console.log('[scheduler] Agendamento de posts ativo ✓');
 
 // ─── PRODUTOS DESTAQUE (Yampi) ───────────────────────────────────────────────
-app.get('/api/produtos-destaque', async (req, res) => {
+app.get('/api/mais-procurados', async (req, res) => {
   if (!YAMPI_API_KEY) return res.status(503).json({ error: 'YAMPI_API_KEY não configurada.' });
 
   try {
