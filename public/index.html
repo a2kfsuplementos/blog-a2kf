@@ -216,24 +216,80 @@
     .produtos-ver-mais:hover { opacity:.75; }
     .produtos-track-wrap { overflow:hidden; padding:0 2rem; }
     .produtos-track { display:flex; gap:1rem; transition:transform .5s cubic-bezier(.77,0,.175,1); }
-    .produto-card { background:#111; border:1.5px solid #222; min-width:200px; flex-shrink:0; text-decoration:none; color:var(--white); transition:border-color .2s,transform .2s; display:flex; flex-direction:column; }
+    
+    /* Configuração padrão para Desktop */
+    .produto-card { 
+      background:#111; 
+      border:1.5px solid #222; 
+      min-width:200px; 
+      height:360px; /* Altura fixa garantida para todos os cards no PC */
+      flex-shrink:0; 
+      text-decoration:none; 
+      color:var(--white); 
+      transition:border-color .2s,transform .2s; 
+      display:flex; 
+      flex-direction:column; 
+    }
     .produto-card:hover { border-color:var(--yellow); transform:translateY(-3px); }
     .produto-img-wrap { width:100%; height:180px; background:#1a1a1a; overflow:hidden; }
     .produto-img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .3s; }
     .produto-card:hover .produto-img { transform:scale(1.04); }
     .produto-img-placeholder { width:100%; height:180px; background:#1a1a1a; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:1.5rem; color:#333; }
-    .produto-body { padding:.875rem; flex:1; display:flex; flex-direction:column; }
-    .produto-name { font-size:13px; font-weight:600; line-height:1.4; margin-bottom:.5rem; flex:1; color:#eee; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    
+    .produto-body { 
+      padding:.875rem; 
+      flex:1; 
+      display:flex; 
+      flex-direction:column; 
+    }
+    .produto-name { 
+      font-size:13px; 
+      font-weight:600; 
+      line-height:1.4; 
+      margin-bottom:.5rem; 
+      color:#eee; 
+      /* Limita o texto a 2 linhas e adiciona reticências se for maior */
+      display:-webkit-box; 
+      -webkit-line-clamp:2; 
+      -webkit-box-orient:vertical; 
+      overflow:hidden; 
+    }
     .produto-original { font-size:11px; color:#555; text-decoration:line-through; margin-bottom:.2rem; }
     .produto-price { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; color:var(--yellow); letter-spacing:.5px; }
-    .produto-btn { display:block; background:var(--yellow); color:var(--black); font-family:'DM Sans',sans-serif; font-weight:700; font-size:11px; letter-spacing:1px; text-transform:uppercase; text-align:center; padding:8px; margin-top:.75rem; transition:opacity .2s; }
+    
+    .produto-btn { 
+      display:block; 
+      background:var(--yellow); 
+      color:var(--black); 
+      font-family:'DM Sans',sans-serif; 
+      font-weight:700; 
+      font-size:11px; 
+      letter-spacing:1px; 
+      text-transform:uppercase; 
+      text-align:center; 
+      padding:8px; 
+      margin-top:auto; /* Empurra o botão e alinha perfeitamente no rodapé */
+      transition:opacity .2s; 
+    }
     .produto-btn:hover { opacity:.85; }
+    
     .produtos-nav { display:flex; gap:.5rem; align-items:center; max-width:1200px; margin:1.25rem auto 0; padding:0 2rem; justify-content:center; }
     .produtos-nav-btn { background:#1a1a1a; border:1px solid #333; color:#fff; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .2s; }
     .produtos-nav-btn:hover { background:var(--yellow); border-color:var(--yellow); color:var(--black); }
     .produtos-nav-btn:disabled { opacity:.3; cursor:not-allowed; }
-    @media(max-width:768px) { .produto-card{min-width:160px} .produto-img-wrap{height:140px} .produtos-track-wrap{padding:0 1rem} .produtos-header{padding:0 1rem 1.25rem} .produtos-nav{padding:0 1rem} }
-    @media(max-width:480px) { .produto-card{min-width:140px} .produto-img-wrap{height:120px} }
+    
+    /* Ajustes de responsividade (Mobile e Tablet) */
+    @media(max-width:768px) { 
+      .produto-card { min-width:160px; height:310px; } /* Altura controlada para tablets */
+      .produto-img-wrap { height:140px; } 
+      .produtos-track-wrap { padding:0 1rem; } 
+      .produtos-header { padding:0 1rem 1.25rem; } 
+      .produtos-nav { padding:0 1rem; } 
+    }
+    @media(max-width:480px) { 
+      .produto-card { min-width:140px; height:290px; } /* Altura ideal para ecrãs de telemóveis */
+      .produto-img-wrap { height:120px; } 
+    }
 
     /* CATEGORIES */
     .categories {
