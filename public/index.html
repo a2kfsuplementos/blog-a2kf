@@ -7,6 +7,7 @@
   <link rel="icon" type="image/png" href="/logo.png">
   <title>Blog A2KF Suplementos | Suplementos Para Quem Quer Resultados</title>
 
+  <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="A2KF Suplementos" />
   <meta property="og:title" content="Blog A2KF Suplementos | Suplementos Para Quem Quer Resultados" />
@@ -15,12 +16,14 @@
   <meta property="og:url" content="https://blog.a2kfsuplementos.com.br" />
   <meta property="og:locale" content="pt_BR" />
 
+  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Blog A2KF Suplementos" />
   <meta name="twitter:description" content="Conteúdo especializado em suplementação, treino e alimentação para quem leva o físico a sério." />
   <meta name="twitter:image" content="https://blog.a2kfsuplementos.com.br/logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
   
+  <!-- Google Analytics GA4 -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-TN3RMJHTKX"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -80,7 +83,7 @@
     .hero h1 span { color: var(--yellow); }
     .hero p { margin-top: 1.25rem; color: #aaa; font-size: clamp(.9rem, 4vw, 1.1rem); max-width: 480px; margin-left: auto; margin-right: auto; padding: 0 .5rem; }
 
-    /* BOTÕES NAVEGAÇÃO CARROSSEL ARTIGOS */
+    /* BOTÕES NAVEGAÇÃO CARROSSEL */
     .carousel-btn {
       position: absolute; top: 50%; transform: translateY(-50%);
       background: rgba(0,0,0,.5); border: none; color: #fff;
@@ -97,7 +100,7 @@
       .carousel-btn-next { right: .5rem; }
     }
 
-    /* CARROSSEL PRINCIPAL (ARTIGOS) */
+    /* CARROSSEL */
     .carousel {
       position: relative; overflow: hidden; background: var(--black);
       height: 480px;
@@ -183,6 +186,9 @@
       .carousel-title { font-size: clamp(1.1rem, 5vw, 1.6rem); margin-bottom: .5rem; }
       .carousel-excerpt { display: none; }
       .carousel-read { font-size: 11px; padding: 7px 14px; }
+      .carousel-btn { width: 34px; height: 34px; }
+      .carousel-btn-prev { left: .5rem; }
+      .carousel-btn-next { right: .5rem; }
     }
     @media (max-width: 480px) {
       .carousel { height: 240px; }
@@ -190,8 +196,6 @@
       .carousel-title { font-size: clamp(1rem, 5vw, 1.4rem); }
       .carousel-cat { font-size: 9px; padding: 2px 8px; margin-bottom: .5rem; }
     }
-
-    /* BUSCA */
     .search-bar {
       background: var(--gray); padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
       display: flex; justify-content: center;
@@ -203,7 +207,123 @@
     }
     .search-bar input:focus { border-color: var(--yellow); }
 
-    /* CATEGORIAS */
+    /* CARROSSEL DE PRODUTOS */
+    .produtos-section { background:var(--black); padding:2.5rem 0; border-bottom:3px solid var(--yellow); }
+    .produtos-header { max-width:1200px; margin:0 auto; padding:0 2rem 1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.75rem; }
+    .produtos-header h2 { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; letter-spacing:1px; color:var(--white); }
+    .produtos-header h2 span { color:var(--yellow); }
+    .produtos-ver-mais { color:var(--yellow); font-size:13px; font-weight:700; text-decoration:none; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; gap:6px; transition:opacity .2s; }
+    .produtos-ver-mais:hover { opacity:.75; }
+    
+    .produtos-track-wrap { max-width:1200px; margin:0 auto; overflow:hidden; padding:0 2rem; }
+    .produtos-track { display:flex; gap:1rem; transition:transform .5s cubic-bezier(.77,0,.175,1); align-items:stretch !important; }
+    
+    /* Configuração para Desktop: Exibe exatamente 4 produtos por bloco (considerando o gap de 1rem) */
+    .produto-card { 
+      background:#111 !important; 
+      border:1.5px solid #222 !important; 
+      width: calc((100% - 3rem) / 4) !important; /* Divide o espaço igualmente para 4 cards */
+      min-width: calc((100% - 3rem) / 4) !important; 
+      max-width: calc((100% - 3rem) / 4) !important;
+      height:380px !important; 
+      min-height:380px !important;
+      max-height:380px !important;
+      flex-shrink:0 !important; 
+      text-decoration:none !important; 
+      color:var(--white) !important; 
+      transition:border-color .2s, transform .2s !important; 
+      display:flex !important; 
+      flex-direction:column !important; 
+      overflow:hidden !important;
+    }
+    .produto-card:hover { border-color:var(--yellow) !important; transform:translateY(-3px) !important; }
+    .produto-img-wrap { width:100% !important; height:180px !important; max-height:180px !important; background:#1a1a1a !important; overflow:hidden !important; }
+    .produto-img { width:100% !important; height:100% !important; object-fit:contain !important; display:block !important; transition:transform .3s !important; }
+    .produto-card:hover .produto-img { transform:scale(1.04) !important; }
+    .produto-img-placeholder { width:100% !important; height:180px !important; background:#1a1a1a !important; display:flex !important; align-items:center !important; justify-content:center !important; font-family:'Bebas Neue',sans-serif !important; font-size:1.5rem !important; color:#333 !important; }
+    
+    .produto-body { 
+      padding:.875rem !important; 
+      flex:1 !important; 
+      display:flex !important; 
+      flex-direction:column !important; 
+      justify-content:space-between !important;
+    }
+    .produto-name { 
+      font-size:13px !important; 
+      font-weight:600 !important; 
+      line-height:1.4 !important; 
+      margin-bottom:.5rem !important; 
+      color:#eee !important; 
+      display:-webkit-box !important; 
+      -webkit-line-clamp:2 !important; 
+      -webkit-box-orient:vertical !important; 
+      overflow:hidden !important; 
+      height:36px !important; 
+      min-height:36px !important;
+      max-height:36px !important;
+    }
+    .produto-original { font-size:11px !important; color:#555 !important; text-decoration:line-through !important; margin-bottom:.2rem !important; height:15px !important; }
+    .produto-price { font-family:'Bebas Neue',sans-serif !important; font-size:1.4rem !important; color:var(--yellow) !important; letter-spacing:.5px !important; margin-bottom:.5rem !important; }
+    
+    .produto-btn { 
+      display:block !important; 
+      background:var(--yellow) !important; 
+      color:var(--black) !important; 
+      font-family:'DM Sans',sans-serif !important; 
+      font-weight:700 !important; 
+      font-size:11px !important; 
+      letter-spacing:1px !important; 
+      text-transform:uppercase !important; 
+      text-align:center !important; 
+      padding:8px !important; 
+      margin-top:auto !important; 
+      transition:opacity .2s !important; 
+    }
+    .produto-btn:hover { opacity:.85 !important; }
+    
+    .produtos-nav { display:flex; gap:.5rem; align-items:center; max-width:1200px; margin:1.25rem auto 0; padding:0 2rem; justify-content:center; }
+    .produtos-nav-btn { background:#1a1a1a; border:1px solid #333; color:#fff; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .2s; }
+    .produtos-nav-btn:hover { background:var(--yellow); border-color:var(--yellow); color:var(--black); }
+    .produtos-nav-btn:disabled { opacity:.3; cursor:not-allowed; }
+    
+    /* Configuração para Tablets (3 produtos por bloco) */
+    @media(max-width:992px) {
+      .produto-card { 
+        width: calc((100% - 2rem) / 3) !important; 
+        min-width: calc((100% - 2rem) / 3) !important; 
+        max-width: calc((100% - 2rem) / 3) !important;
+        height:350px !important; min-height:350px !important; max-height:350px !important;
+      }
+      .produto-img-wrap { height:150px !important; max-height:150px !important; }
+    }
+
+    /* Configuração para Celular: Exibe exatamente 2 produtos por bloco e mantém os botões visíveis */
+    @media(max-width:768px) { 
+      .produtos-track-wrap { padding:0 1rem; } 
+      .produtos-header { padding:0 1rem 1.25rem; } 
+      .produtos-nav { padding:0 1rem; display:flex !important; } /* Garante que as setas continuam aparecendo no mobile */
+      
+      .produto-card { 
+        width: calc((100% - 1rem) / 2) !important; /* Divide o espaço igualmente para 2 cards */
+        min-width: calc((100% - 1rem) / 2) !important; 
+        max-width: calc((100% - 1rem) / 2) !important;
+        height:310px !important; min-height:310px !important; max-height:310px !important;
+      } 
+      .produto-img-wrap { height:130px !important; max-height:130px !important; } 
+    }
+    
+    @media(max-width:480px) { 
+      .produto-card { 
+        width: calc((100% - 1rem) / 2) !important;
+        min-width: calc((100% - 1rem) / 2) !important; 
+        max-width: calc((100% - 1rem) / 2) !important;
+        height:295px !important; min-height:295px !important; max-height:295px !important;
+      } 
+      .produto-img-wrap { height:115px !important; max-height:115px !important; } 
+    }
+    
+    /* CATEGORIES */
     .categories {
       padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
       display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center;
@@ -215,17 +335,20 @@
     }
     .cat-btn:hover, .cat-btn.active { background: var(--yellow); border-color: var(--yellow); color: var(--black); }
 
-    /* GRID DE ARTIGOS */
+    /* GRID */
     .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.25rem; }
     .posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
 
-    /* POST CARD */
+    /* CARD */
     .post-card {
       background: var(--white); border: 1.5px solid var(--border);
       transition: transform .2s, border-color .2s; cursor: pointer; text-decoration: none; display: block; color: inherit;
     }
     .post-card:hover { transform: translateY(-4px); border-color: var(--yellow); }
-    .card-img { width: 100%; height: 200px; object-fit: cover; display: block; background: var(--black); }
+    .card-img {
+      width: 100%; height: 200px; object-fit: cover; display: block;
+      background: var(--black);
+    }
     .card-img-placeholder {
       width: 100%; height: 200px; background: var(--black);
       display: flex; align-items: center; justify-content: center;
@@ -233,16 +356,21 @@
     }
     .card-body { padding: 1.5rem; }
     .card-meta { display: flex; align-items: center; gap: .75rem; margin-bottom: .75rem; flex-wrap: wrap; }
-    .card-category { background: var(--yellow); color: var(--black); font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 3px 10px; }
+    .card-category {
+      background: var(--yellow); color: var(--black);
+      font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 3px 10px;
+    }
     .card-date { font-size: 12px; color: var(--text-muted); }
-    .card-read-time { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+    .card-read-time {
+      font-size: 12px; color: var(--text-muted);
+      display: flex; align-items: center; gap: 4px;
+    }
     .card-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; line-height: 1.1; margin-bottom: .75rem; letter-spacing: .5px; }
     .card-excerpt { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
     .card-read { display: inline-flex; align-items: center; gap: 6px; margin-top: 1rem; font-size: 13px; font-weight: 700; color: var(--black); text-transform: uppercase; letter-spacing: 1px; }
     .card-read::after { content: '→'; transition: transform .2s; }
     .post-card:hover .card-read::after { transform: translateX(4px); }
 
-    /* CARD DE DESTAQUE NA GRID */
     .featured-card {
       grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr;
       border: 1.5px solid var(--border); background: var(--black); color: var(--white);
@@ -257,7 +385,7 @@
     .featured-excerpt { color: #aaa; line-height: 1.6; font-size: 14px; }
     .featured-read { margin-top: 1.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--yellow); }
 
-    /* LAZY LOAD SKELETONS */
+    /* LAZY LOAD / SKELETON */
     .card-img-wrap { position: relative; width: 100%; height: 200px; background: #e8e8e4; overflow: hidden; flex-shrink: 0; }
     .card-img-wrap::before {
       content: ''; position: absolute; inset: 0;
@@ -265,10 +393,14 @@
       animation: shimmer 1.4s infinite;
     }
     .card-img-wrap.loaded::before { display: none; }
-    .card-img { width: 100%; height: 200px; object-fit: cover; display: block; opacity: 0; transition: opacity .4s ease; }
+    .card-img {
+      width: 100%; height: 200px; object-fit: cover; display: block;
+      opacity: 0; transition: opacity .4s ease;
+    }
     .card-img.loaded { opacity: 1; }
     @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 
+    .featured-img-wrap { position: relative; background: #1a1a1a; overflow: hidden; min-height: 360px; }
     .featured-img-wrap::before {
       content: ''; position: absolute; inset: 0;
       background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.06) 50%, transparent 100%);
@@ -277,144 +409,103 @@
     .featured-img-wrap.loaded::before { display: none; }
     .featured-img-wrap img { width: 100%; height: 360px; object-fit: cover; display: block; opacity: 0; transition: opacity .4s ease; }
     .featured-img-wrap img.loaded { opacity: 1; }
-
     .empty-state { text-align: center; padding: 5rem 2rem; }
     .empty-state h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; margin-bottom: 1rem; }
     .empty-state p { color: var(--text-muted); }
 
+    /* LOADER */
     .loader { text-align: center; padding: 4rem; }
     .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--yellow); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 1rem; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .post-card, .featured-card { opacity: 0; transform: translateY(24px); transition: opacity .5s ease, transform .5s ease; }
-    .post-card.visible, .featured-card.visible { opacity: 1; transform: translateY(0); }
+    /* ANIMAÇÃO FADE-IN DOS CARDS */
+    .post-card, .featured-card {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity .5s ease, transform .5s ease;
+    }
+    .post-card.visible, .featured-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
 
     /* BOTÃO CARREGAR MAIS */
     .load-more-wrap { text-align: center; margin-top: 2rem; padding-bottom: 1rem; }
     .btn-load-more {
-      background: transparent; color: var(--black); border: 2px solid var(--black); padding: 12px 40px;
-      font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer;
+      background: transparent; color: var(--black);
+      border: 2px solid var(--black); padding: 12px 40px;
+      font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 13px;
+      letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer;
       transition: all .2s; display: inline-flex; align-items: center; gap: 8px;
     }
     .btn-load-more:hover { background: var(--yellow); border-color: var(--yellow); }
     .btn-load-more:disabled { opacity: .4; cursor: not-allowed; }
-    .btn-load-more .load-spinner { width: 14px; height: 14px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin .6s linear infinite; display: none; }
-    .btn-load-more.loading .load-spinner { inline-block; }
+    .btn-load-more .load-spinner {
+      width: 14px; height: 14px; border: 2px solid currentColor;
+      border-top-color: transparent; border-radius: 50%;
+      animation: spin .6s linear infinite; display: none;
+    }
+    .btn-load-more.loading .load-spinner { display: inline-block; }
     .btn-load-more.loading .load-text { display: none; }
 
-    /* NOVO LAYOUT DO CARROSSEL DE PRODUTOS */
-    .produtos-section { background: var(--black); padding: 2.5rem 0; border-bottom: 3px solid var(--yellow); border-top: 3px solid var(--yellow); }
-    .produtos-header { max-width: 1200px; margin: 0 auto; padding: 0 2rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; }
-    .produtos-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 1px; color: var(--white); }
-    .produtos-header h2 span { color: var(--yellow); }
-    .produtos-ver-mais { color: var(--yellow); font-size: 13px; font-weight: 700; text-decoration: none; letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; transition: opacity .2s; }
-    .produtos-ver-mais:hover { opacity: .75; }
-    
-    .produtos-track-wrap { max-width: 1200px; margin: 0 auto; overflow: hidden !important; padding: 0 2rem; }
-    .produtos-track { display: flex; gap: 1rem !important; transition: transform .6s cubic-bezier(0.25, 1, 0.5, 1) !important; align-items: stretch !important; width: 100%; }
-    
-    .produto-card { 
-      background: #111 !important; border: 1.5px solid #222 !important; 
-      width: calc((100% - 3rem) / 4) !important; min-width: calc((100% - 3rem) / 4) !important; max-width: calc((100% - 3rem) / 4) !important;
-      height: 380px !important; min-height: 380px !important; max-height: 380px !important;
-      flex-shrink: 0 !important; text-decoration: none !important; color: var(--white) !important; 
-      transition: border-color .2s, transform .2s !important; display: flex !important; flex-direction: column !important; overflow: hidden !important;
+    /* FOOTER */
+    footer { background: var(--black); border-top: 3px solid var(--yellow); }
+    .footer-inner { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+    .footer-brand { display: flex; flex-direction: column; align-items: center; gap: .5rem; }
+    .footer-tagline { color: #555; font-size: 13px; letter-spacing: 1px; }
+    .footer-social { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+    .footer-social-icon {
+      display: flex; align-items: center; gap: 8px;
+      color: #666; text-decoration: none; font-size: 13px; font-weight: 500;
+      padding: 8px 16px; border: 1px solid #222; transition: all .2s;
     }
-    .produto-card:hover { border-color: var(--yellow) !important; transform: translateY(-3px) !important; }
-    .produto-img-wrap { width: 100% !important; height: 180px !important; max-height: 180px !important; background: #1a1a1a !important; overflow: hidden !important; }
-    .produto-img { width: 100% !important; height: 100% !important; object-fit: contain !important; display: block !important; transition: transform .3s !important; }
-    .produto-card:hover .produto-img { transform: scale(1.04) !important; }
-    .produto-img-placeholder { width: 100% !important; height: 180px !important; background: #1a1a1a !important; display: flex !important; align-items: center !important; justify-content: center !important; font-family: 'Bebas Neue', sans-serif !important; font-size: 1.5rem !important; color: #333 !important; }
-    
-    .produto-body { padding: .875rem !important; flex: 1 !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; }
-    .produto-name { font-size: 13px !important; font-weight: 600 !important; line-height: 1.4 !important; margin-bottom: .5rem !important; color: #eee !important; display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; overflow: hidden !important; height: 36px !important; min-height: 36px !important; max-height: 36px !important; }
-    .produto-original { font-size: 11px !important; color: #555 !important; text-decoration: line-through !important; margin-bottom: .2rem !important; height: 15px !important; }
-    .produto-price { font-family: 'Bebas Neue', sans-serif !important; font-size: 1.4rem !important; color: var(--yellow) !important; letter-spacing: .5px !important; margin-bottom: .5rem !important; }
-    .produto-btn { display: block !important; background: var(--yellow) !important; color: var(--black) !important; font-family: 'DM Sans', sans-serif !important; font-weight: 700 !important; font-size: 11px !important; letter-spacing: 1px !important; text-transform: uppercase !important; text-align: center !important; padding: 8px !important; margin-top: auto !important; transition: opacity .2s !important; }
-    .produto-btn:hover { opacity: .85 !important; }
-    
-    .produtos-nav { display: flex; gap: .5rem; align-items: center; max-width: 1200px; margin: 1.25rem auto 0; padding: 0 2rem; justify-content: center; }
-    .produtos-nav-btn { background: #1a1a1a; border: 1px solid #333; color: #fff; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .2s; }
-    .produtos-nav-btn:hover { background: var(--yellow); border-color: var(--yellow); color: var(--black); }
-    .produtos-nav-btn:disabled { opacity: .3; cursor: not-allowed; }
-    
-    @media(max-width:992px) {
-      .produto-card { 
-        width: calc((100% - 2rem) / 3) !important; min-width: calc((100% - 2rem) / 3) !important; max-width: calc((100% - 2rem) / 3) !important;
-        height: 350px !important; min-height: 350px !important; max-height: 350px !important;
-      }
-      .produto-img-wrap { height: 150px !important; max-height: 150px !important; }
-    }
-    @media(max-width:768px) { 
-      .produtos-track-wrap { padding: 0 1rem; } 
-      .produtos-header { padding: 0 1rem 1.25rem; } 
-      .produtos-nav { padding: 0 1rem; display: flex !important; } 
-      .produto-card { 
-        width: calc((100% - 1rem) / 2) !important; min-width: calc((100% - 1rem) / 2) !important; max-width: calc((100% - 1rem) / 2) !important;
-        height: 310px !important; min-height: 310px !important; max-height: 310px !important;
-      } 
-      .produto-img-wrap { height: 130px !important; max-height: 130px !important; } 
-    }
-    @media(max-width:480px) { 
-      .produto-card { 
-        width: calc((100% - 1rem) / 2) !important; min-width: calc((100% - 1rem) / 2) !important; max-width: calc((100% - 1rem) / 2) !important;
-        height: 295px !important; min-height: 295px !important; max-height: 295px !important;
-      } 
-      .produto-img-wrap { height: 115px !important; max-height: 115px !important; } 
-    }
+    .footer-social-icon:hover { color: var(--yellow); border-color: var(--yellow); background: #111; }
+    .footer-copy { color: #444; font-size: 12px; }
+    .footer-copy span { color: var(--yellow); }
 
-    /* NEWSLETTER */
-    .newsletter-section { background: #0A0A0A; color: #fff; padding: 3rem 2rem; text-align: center; border-top: 4px solid #FFD400; }
-    .news-container { max-width: 500px; margin: 0 auto; }
-    .news-title { font-family: 'Bebas Neue',sans-serif; font-size: 2.2rem; letter-spacing: 1px; margin-bottom: .5rem; }
-    .news-title span { color: #FFD400; }
-    .news-text { color: #aaa; font-size: 14px; margin-bottom: 1.5rem; line-height: 1.5; }
-    .news-form { display: flex; flex-direction: column; gap: .75rem; }
-    .news-input { width: 100%; padding: 12px 16px; background: #111; border: 1.5px solid #222; color: #fff; font-family: 'DM Sans',sans-serif; font-size: 14px; outline: none; transition: border-color .2s; }
-    .news-input:focus { border-color: #FFD400; }
-    .news-btn { width: 100%; background: #FFD400; color: #000; border: none; padding: 12px; font-family: 'DM Sans',sans-serif; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: opacity .2s; }
-    .news-btn:hover { opacity: .9; }
-    .news-btn:disabled { opacity: .4; cursor: not-allowed; }
-    .news-msg { margin-top: .75rem; font-size: 13px; display: none; }
-    .news-msg.success { color: #2ec4b6; display: block; }
-    .news-msg.error { color: #e71d36; display: block; }
-
-    /* EXIT POPUP */
-    .exit-popup { position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 1.25rem; backdrop-filter: blur(4px); }
-    .exit-content { background: #000; border: 2px solid #FFD400; width: 100%; max-width: 440px; padding: 2.5rem 2rem; text-align: center; position: relative; }
-    .exit-close { position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; color: #666; cursor: pointer; transition: color .2s; padding: 4px; display: flex; align-items: center; justify-content: center; }
-    .exit-close:hover { color: #fff; }
-    .exit-title { font-family: 'Bebas Neue',sans-serif; font-size: 2.8rem; line-height: 1; color: #fff; margin-bottom: .5rem; }
-    .exit-title span { color: #FFD400; }
-    .exit-p { color: #ccc; font-size: 14px; line-height: 1.5; margin-bottom: 1.5rem; }
-    .exit-box { background: #111; border: 1px dashed #FFD400; padding: 1rem; margin-bottom: 1.5rem; }
-    .exit-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: .25rem; }
-    .exit-coupon { font-family: 'Bebas Neue',sans-serif; font-size: 2rem; color: #FFD400; letter-spacing: 1px; }
-    .exit-btn { display: block; width: 100%; background: #FFD400; color: #000; text-decoration: none; font-family: 'DM Sans',sans-serif; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; text-align: center; padding: 12px; cursor: pointer; border: none; transition: background .2s; }
-    .exit-btn:hover { background: #fff; }
-    .exit-btn.copied { background: #2ec4b6 !important; color: #fff !important; }
-    .exit-link { display: inline-block; margin-top: 1rem; color: #888; font-size: 12px; text-decoration: none; }
-    .exit-link:hover { color: #FFD400; }
+    @media (max-width: 768px) {
+      .featured-card { grid-template-columns: 1fr; }
+      .featured-img-wrap { height: 200px; }
+      .featured-img-wrap img { height: 200px; }
+      .featured-body { padding: 1.25rem; }
+      .hero h1 { font-size: clamp(2rem, 12vw, 3.5rem); }
+      .nav-social { display: none; }
+      .posts-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      nav { height: 56px; padding: 0 1rem; }
+      .nav-logo img, .nav-logo-img { height: 44px; }
+      .nav-links { gap: .75rem; }
+      .nav-links a { font-size: 13px; }
+      .hero { padding: 2rem 1rem 2rem; }
+      .container { padding: 1.25rem 1rem; }
+      .categories { padding: .75rem 1rem; }
+      .search-bar { padding: .75rem 1rem; }
+      .card-title { font-size: 1.35rem; }
+      .featured-title { font-size: 1.6rem; }
+    }
   </style>
 </head>
 <body>
 
 <nav>
+  
   <a href="index.html" class="nav-logo">
     <img src="logo.png" alt="A2KF Suplementos" class="nav-logo-img" />
   </a>
   <div class="nav-links">
     <a href="index.html">Blog</a>
     <a href="https://a2kfsuplementos.com.br" id="lojaLink">Loja</a>
-    <a href="https://www.instagram.com/a2kfsuplementos" target="_blank" rel="noopener" aria-label="Instagram" class="nav-social-icon">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
-    </a>
-    <a href="https://wa.me/5521977377802" target="_blank" rel="noopener" aria-label="WhatsApp" class="nav-social-icon">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.134.558 4.133 1.535 5.865L.057 23.535a.75.75 0 00.908.908l5.67-1.478A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.92 0-3.72-.504-5.27-1.385l-.378-.219-3.924 1.022 1.022-3.924-.219-.378A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg> 
-    </a>
-    <a href="https://www.youtube.com/@A2KFSuplementos" target="_blank" rel="noopener" aria-label="YouTube" class="nav-social-icon">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-    </a>
+      <a href="https://www.instagram.com/a2kfsuplementos" target="_blank" rel="noopener" aria-label="Instagram" class="nav-social-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+      </a>
+      <a href="https://wa.me/5521977377802" target="_blank" rel="noopener" aria-label="WhatsApp" class="nav-social-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.134.558 4.133 1.535 5.865L.057 23.535a.75.75 0 00.908.908l5.67-1.478A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.92 0-3.72-.504-5.27-1.385l-.378-.219-3.924 1.022 1.022-3.924-.219-.378A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+      </a>
+      <a href="https://www.youtube.com/@A2KFSuplementos" target="_blank" rel="noopener" aria-label="YouTube" class="nav-social-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+      </a>
+    </div>
   </div>
 </nav>
 
@@ -424,43 +515,42 @@
   <p>Conteúdo especializado em suplementação, treino e alimentação para quem leva o físico a sério.</p>
 </section>
 
-<div class="carousel" id="topCarousel" style="display:none;">
-  <button class="carousel-btn carousel-btn-prev" onclick="moveSlide(-1)" aria-label="Slide Anterior">
-    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-  </button>
-  <button class="carousel-btn carousel-btn-next" onclick="moveSlide(1)" aria-label="Próximo Slide">
-    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-  </button>
+<!-- CARROSSEL -->
+<div class="carousel" id="carousel">
   <div class="carousel-track" id="carouselTrack"></div>
+  <button class="carousel-btn carousel-btn-prev" onclick="prevSlide()" aria-label="Anterior">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <button class="carousel-btn carousel-btn-next" onclick="nextSlide()" aria-label="Próximo">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+  </button>
   <div class="carousel-dots" id="carouselDots"></div>
   <div class="carousel-progress" id="carouselProgress"></div>
 </div>
 
+
+
 <div class="search-bar">
-  <input type="text" id="searchInput" placeholder="Pesquisar artigos por título ou tags..." />
+  <input type="text" id="searchInput" placeholder="Buscar artigos..." />
 </div>
 
-<div class="categories" id="categoriesWrap">
-  <button class="cat-btn active" onclick="filterCategory('TODOS')">Todos</button>
+<div class="categories" id="categoriesBar">
+  <button class="cat-btn active" data-cat="">Todos</button>
 </div>
 
-<main class="container">
-  <div id="loader" class="loader">
-    <div class="spinner"></div>
-    <p style="color: var(--text-muted); font-size: 14px;">Carregando conteúdos...</p>
+<div class="container">
+  <div id="postsGrid" class="posts-grid">
+    <div class="loader"><div class="spinner"></div><p>Carregando artigos...</p></div>
   </div>
-  
-  <div class="posts-grid" id="postsGrid">
-    </div>
-
   <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
     <button class="btn-load-more" id="btnLoadMore" onclick="loadMore()">
+      <span class="load-spinner"></span>
       <span class="load-text">Carregar mais artigos</span>
-      <div class="load-spinner"></div>
     </button>
   </div>
-</main>
-
+</div>
+  
+<!-- PRODUTOS DESTAQUE -->
 <section class="produtos-section" id="produtosSection" style="display:none;">
   <div class="produtos-header">
     <h2>MAIS <span>VENDIDOS</span></h2>
@@ -472,524 +562,490 @@
     <div class="produtos-track" id="produtosTrack"></div>
   </div>
   <div class="produtos-nav">
-    <button class="produtos-nav-btn" id="prodPrev" onclick="prodSlide(-1)" aria-label="Anterior" disabled>←</button>
-    <button class="produtos-nav-btn" id="prodNext" onclick="prodSlide(1)" aria-label="Próximo">→</button>
+    <button class="produtos-nav-btn" id="prodPrev" onclick="prodSlide(-1)" aria-label="Anterior">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <button class="produtos-nav-btn" id="prodNext" onclick="prodSlide(1)" aria-label="Próximo">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
   </div>
 </section>
-
-<section class="newsletter-section">
-  <div class="news-container">
-    <h2 class="news-title">FIQUE POR <span>DENTRO</span></h2>
-    <p class="news-text">Receba conteúdos exclusivos sobre treinos, dieta e cupons especiais direto no seu e-mail.</p>
-    <form class="news-form" id="newsForm" onsubmit="handleNewsletter(event)">
-      <input type="email" id="newsEmail" class="news-input" placeholder="Seu e-mail principal" required />
-      <button type="submit" id="newsBtn" class="news-btn">Inscrever-se</button>
-    </form>
-    <div id="newsMsg" class="news-msg"></div>
+  
+<!-- NEWSLETTER -->
+<section style="background:#0A0A0A;color:#fff;padding:3rem 2rem;text-align:center;border-top:4px solid #FFD400;">
+  <div style="max-width:560px;margin:0 auto;">
+    <div style="background:#FFD400;color:#000;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;padding:4px 14px;display:inline-block;margin-bottom:1rem;">Newsletter</div>
+    <h2 style="font-family:'Bebas Neue',sans-serif;font-size:2.5rem;letter-spacing:1px;margin-bottom:.5rem;">FIQUE POR DENTRO DE TUDO</h2>
+    <p style="color:#aaa;font-size:15px;margin-bottom:1.5rem;">Receba artigos sobre treino, nutrição e suplementação diretamente no seu email.</p>
+    <div style="display:flex;gap:0;max-width:460px;margin:0 auto;">
+      <input type="email" id="homeNewsletterEmail" placeholder="seu@email.com"
+        onkeydown="if(event.key==='Enter') homeSubscribe()"
+        style="flex:1;padding:13px 18px;border:none;font-family:'DM Sans',sans-serif;font-size:15px;outline:none;background:#1a1a1a;color:#fff;border:2px solid #333;" />
+      <button onclick="homeSubscribe()"
+        style="background:#FFD400;color:#000;border:none;padding:13px 22px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;white-space:nowrap;">
+        Quero receber
+      </button>
+    </div>
+    <div id="homeNewsletterMsg" style="margin-top:1rem;font-size:13px;min-height:20px;color:#aaa;"></div>
   </div>
 </section>
 
 <footer>
   <div class="footer-inner">
     <div class="footer-brand">
-      <a href="index.html" class="nav-logo">
-        <img src="logo.png" alt="A2KF Suplementos" class="nav-logo-img" />
-      </a>
-      <p class="footer-tagline">SUBLIME SEUS LIMITES.</p>
+      <img src="logo.png" alt="A2KF Suplementos" style="height:60px;width:auto;filter:brightness(0) invert(1);opacity:.7;" />
+      <p class="footer-tagline">Suplementos para quem quer resultados.</p>
     </div>
     <div class="footer-social">
-      <a href="https://a2kfsuplementos.com.br" class="footer-social-icon" target="_blank" rel="noopener">Acesse nossa loja virtual</a>
-      <a href="https://www.instagram.com/a2kfsuplementos" class="footer-social-icon" target="_blank" rel="noopener">Instagram</a>
-      <a href="https://wa.me/5521977377802" class="footer-social-icon" target="_blank" rel="noopener">Suporte via WhatsApp</a>
+      <a href="https://www.instagram.com/a2kfsuplementos" target="_blank" rel="noopener" aria-label="Instagram" class="footer-social-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+        <span>Instagram</span>
+      </a>
+      <a href="https://wa.me/5521977377802" target="_blank" rel="noopener" aria-label="WhatsApp" class="footer-social-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.134.558 4.133 1.535 5.865L.057 23.535a.75.75 0 00.908.908l5.67-1.478A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.92 0-3.72-.504-5.27-1.385l-.378-.219-3.924 1.022 1.022-3.924-.219-.378A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        <span>WhatsApp</span>
+      </a>
+      <a href="https://www.youtube.com/@A2KFSuplementos" target="_blank" rel="noopener" aria-label="YouTube" class="footer-social-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        <span>YouTube</span>
+      </a>
+      <a href="https://a2kfsuplementos.com.br" target="_blank" rel="noopener" aria-label="Loja" class="footer-social-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        <span>Loja</span>
+      </a>
     </div>
-    <p class="footer-copy">&copy; 2026 <span>A2KF Suplementos</span>. Todos os direitos reservados.</p>
+    <p class="footer-copy">© 2026 <span>A2KF Suplementos</span> · Todos os direitos reservados</p>
   </div>
 </footer>
 
-<div class="exit-popup" id="exitPopup">
-  <div class="exit-content">
-    <button class="exit-close" onclick="closeExitPopup()" aria-label="Fechar">
-      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
-    <h2 class="exit-title">NÃO VÁ <span>EMBORA!</span></h2>
-    <p class="exit-p">Garante 10% de desconto extra na sua primeira compra de suplementos na nossa loja oficial.</p>
-    <div class="exit-box">
-      <div class="exit-label">Seu cupom é:</div>
-      <div class="exit-coupon">PRIMEIRACOMPRA</div>
-    </div>
-    <button class="exit-btn" id="exitCopyBtn" onclick="copyCoupon()">Copiar Cupom e Ir para a Loja</button>
-    <a href="#" class="exit-link" onclick="closeExitPopup(); return false;">Continuar lendo o blog</a>
-  </div>
-</div>
+
 
 <script>
+  // =============================================
+  // CONFIGURAÇÃO SUPABASE — SUBSTITUA ESTES VALORES
+  // =============================================
+  const SUPABASE_URL = 'https://cducpjclmtzktncqhjoa.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkdWNwamNsbXR6a3RuY3Foam9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMDY4OTEsImV4cCI6MjA5NDg4Mjg5MX0.ReDmQFqXEWzOKW2akPrOnLMuf7wBo4ZY5Oh_8ocfZZg';
+  // =============================================
+
+  const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
   let allPosts = [];
-  let filteredPosts = [];
-  let carouselPosts = [];
-  let currentCategory = 'TODOS';
-  let currentPage = 1;
-  const postsPerPage = 7; 
+  let activeCategory = '';
+  let searchQuery = '';
 
-  // Variáveis do carrossel superior (artigos)
-  let currentSlideIdx = 0;
-  let carouselTimer = null;
-  const SLIDE_DURATION = 6000; 
-  let slideStartTime = 0;
-  let slidePausedTime = 0;
-  let slideRemaining = SLIDE_DURATION;
-
-  // SUPABASE CONFIG (Preenchido em tempo de execução via Server)
-  const SUPABASE_URL = "___SUPABASE_URL___";
-  const SUPABASE_ANON_KEY = "___SUPABASE_ANON_KEY___";
-  let _supabaseClient = null;
-
-  function getSupabase() {
-    if (!_supabaseClient) {
-      _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    }
-    return _supabaseClient;
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    initBlog();
-    initProductsCarousel();
-    initExitPopup();
-  });
-
-  async function initBlog() {
-    try {
-      const res = await fetch('/api/posts');
-      if (!res.ok) throw new Error('Falha ao buscar posts');
-      allPosts = await res.json();
-      
-      allPosts.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-      document.getElementById('loader').style.display = 'none';
-
-      if (allPosts.length === 0) {
-        renderEmptyState();
-        return;
-      }
-
-      // Filtra os posts marcados para o carrossel superior
-      carouselPosts = allPosts.filter(p => p.is_carousel === true);
-      if (carouselPosts.length > 0) {
-        buildTopCarousel();
-      }
-
-      buildCategoriesMenu();
-      applyFilters();
-
-      document.getElementById('searchInput').addEventListener('input', () => {
-        currentPage = 1;
-        applyFilters();
-      });
-
-    } catch (err) {
-      console.error(err);
-      document.getElementById('loader').style.display = 'none';
-      renderEmptyState("Ops! Ocorreu um erro ao carregar os dados. Tente novamente mais tarde.");
-    }
-  }
-
-  // CARROSSEL SUPERIOR (ARTIGOS)
-  function buildTopCarousel() {
-    const track = document.getElementById('carouselTrack');
-    const dotsWrap = document.getElementById('carouselDots');
-    track.innerHTML = '';
-    dotsWrap.innerHTML = '';
-
-    carouselPosts.forEach((post, idx) => {
-      const slide = document.createElement('div');
-      slide.className = 'carousel-slide';
-      slide.onclick = () => window.location.href = `post.html?id=${post.id}`;
-      
-      slide.innerHTML = `
-        ${post.image_url ? `<img data-src="${post.image_url}" alt="${post.title}" />` : `<div class="carousel-placeholder">A2KF</div>`}
-        <div class="carousel-slide-overlay"></div>
-        <div class="carousel-slide-body">
-          ${post.category ? `<span class="carousel-cat">${post.category}</span>` : ''}
-          <h2 class="carousel-title">${post.title}</h2>
-          <p class="carousel-excerpt">${post.excerpt || ''}</p>
-          <div class="carousel-read">Ler Artigo</div>
-        </div>
-      `;
-      track.appendChild(slide);
-
-      const dot = document.createElement('button');
-      dot.className = `carousel-dot ${idx === 0 ? 'active' : ''}`;
-      dot.setAttribute('aria-label', `Ir para slide ${idx + 1}`);
-      dot.onclick = (e) => { e.stopPropagation(); gotoSlide(idx); };
-      dotsWrap.appendChild(dot);
-    });
-
-    document.getElementById('topCarousel').style.display = 'block';
-    
-    // Lazy load das imagens do carrossel superior
-    const carouselImgs = track.querySelectorAll('img[data-src]');
-    carouselImgs.forEach(img => {
-      img.src = img.getAttribute('data-src');
-      img.onload = () => img.classList.add('loaded');
-    });
-
-    // Eventos para pausar o carrossel ao passar o mouse
-    const topCarouselEl = document.getElementById('topCarousel');
-    topCarouselEl.addEventListener('mouseenter', pauseCarousel);
-    topCarouselEl.addEventListener('mouseleave', resumeCarousel);
-
-    startCarouselTimer(SLIDE_DURATION);
-  }
-
-  function startCarouselTimer(duration) {
-    clearTimeout(carouselTimer);
-    const progressEl = document.getElementById('carouselProgress');
-    progressEl.style.transition = 'none';
-    progressEl.style.width = '0%';
-    
-    setTimeout(() => {
-      progressEl.style.transition = `width ${duration}ms linear`;
-      progressEl.style.width = '100%';
-    }, 10);
-
-    slideStartTime = Date.now();
-    slideRemaining = duration;
-
-    carouselTimer = setTimeout(() => {
-      moveSlide(1);
-    }, duration);
-  }
-
-  function pauseCarousel() {
-    clearTimeout(carouselTimer);
-    const progressEl = document.getElementById('carouselProgress');
-    const computedStyle = window.getComputedStyle(progressEl);
-    const width = computedStyle.getPropertyValue('width');
-    const parentWidth = window.getComputedStyle(progressEl.parentElement).getPropertyValue('width');
-    const percent = (parseFloat(width) / parseFloat(parentWidth)) * 100;
-    
-    progressEl.style.transition = 'none';
-    progressEl.style.width = percent + '%';
-    
-    slidePausedTime = Date.now();
-    slideRemaining -= (slidePausedTime - slideStartTime);
-  }
-
-  function resumeCarousel() {
-    if (slideRemaining <= 0) slideRemaining = SLIDE_DURATION;
-    startCarouselTimer(slideRemaining);
-  }
-
-  function moveSlide(direction) {
-    if (carouselPosts.length === 0) return;
-    currentSlideIdx += direction;
-    if (currentSlideIdx >= carouselPosts.length) currentSlideIdx = 0;
-    if (currentSlideIdx < 0) currentSlideIdx = carouselPosts.length - 1;
-    
-    updateCarouselPosition();
-    startCarouselTimer(SLIDE_DURATION);
-  }
-
-  function gotoSlide(idx) {
-    currentSlideIdx = idx;
-    updateCarouselPosition();
-    startCarouselTimer(SLIDE_DURATION);
-  }
-
-  function updateCarouselPosition() {
-    const track = document.getElementById('carouselTrack');
-    track.style.transform = `translateX(-${currentSlideIdx * 100}%)`;
-    
-    const dots = document.querySelectorAll('.carousel-dot');
-    dots.forEach((dot, idx) => {
-      if (idx === currentSlideIdx) dot.classList.add('active');
-      else dot.classList.remove('active');
+  // Pegar query da URL (vindo da busca no post)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('q')) {
+    searchQuery = urlParams.get('q').toLowerCase();
+    document.addEventListener('DOMContentLoaded', () => {
+      const si = document.getElementById('searchInput');
+      if (si) si.value = urlParams.get('q');
     });
   }
 
-  function buildCategoriesMenu() {
-    const wrap = document.getElementById('categoriesWrap');
-    const cats = new Set();
-    allPosts.forEach(p => { if(p.category) cats.add(p.category.trim().toUpperCase()); });
-    
-    cats.forEach(c => {
+  const CATEGORIES = ['Suplementação', 'Treino', 'Nutrição', 'Saúde', 'Receitas', 'Dicas'];
+
+  function buildCategories() {
+    const bar = document.getElementById('categoriesBar');
+    bar.innerHTML = '<button class="cat-btn active" data-cat="" onclick="filterCat(this, \'\')">Todos</button>';
+    CATEGORIES.forEach(c => {
       const btn = document.createElement('button');
       btn.className = 'cat-btn';
-      btn.textContent = c.toLowerCase();
-      btn.onclick = () => filterCategory(c);
-      wrap.appendChild(btn);
+      btn.dataset.cat = c;
+      btn.textContent = c;
+      btn.onclick = () => filterCat(btn, c);
+      bar.appendChild(btn);
     });
   }
 
-  function filterCategory(cat) {
-    currentCategory = cat;
-    currentPage = 1;
-    
-    document.querySelectorAll('.cat-btn').forEach(b => {
-      if(b.textContent.toUpperCase() === cat.toUpperCase() || (cat === 'TODOS' && b.textContent.toLowerCase() === 'todos')) {
-        b.classList.add('active');
-      } else {
-        b.classList.remove('active');
+  function filterCat(btn, cat) {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeCategory = cat;
+    renderPosts();
+    document.getElementById('postsGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  document.getElementById('searchInput').addEventListener('input', e => {
+    searchQuery = e.target.value.toLowerCase();
+    renderPosts();
+  });
+
+  function readingTime(content) {
+    // Remove tags HTML e conta palavras (média 200 palavras/min em pt-BR)
+    const text = (content || '').replace(/<[^>]*>/g, '').trim();
+    const words = text.split(/\s+/).filter(Boolean).length;
+    const mins = Math.max(1, Math.round(words / 200));
+    return mins === 1 ? '1 min de leitura' : `${mins} min de leitura`;
+  }
+
+  function formatDate(d) {
+    return new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  const POSTS_PER_PAGE = 6;
+  let currentPage = 0;
+  let filteredPosts = [];
+
+  // Intersection Observer para fade-in
+  const fadeObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        fadeObserver.unobserve(entry.target);
       }
     });
+  }, { threshold: 0.08 });
 
-    applyFilters();
-  }
-
-  function applyFilters() {
-    const search = document.getElementById('searchInput').value.toLowerCase().trim();
-    
-    filteredPosts = allPosts.filter(p => {
-      const matchCat = (currentCategory === 'TODOS' || (p.category && p.category.trim().toUpperCase() === currentCategory));
-      
-      let matchSearch = true;
-      if (search) {
-        const title = (p.title || '').toLowerCase();
-        const excerpt = (p.excerpt || '').toLowerCase();
-        const tags = Array.isArray(p.tags) ? p.tags.join(' ').toLowerCase() : (p.tags || '').toLowerCase();
-        matchSearch = title.includes(search) || excerpt.includes(search) || tags.includes(search);
-      }
-      return matchCat && matchSearch;
+  function observeCards() {
+    document.querySelectorAll('.post-card:not(.visible), .featured-card:not(.visible)').forEach(el => {
+      fadeObserver.observe(el);
     });
-
-    renderGrid();
   }
 
-  function renderGrid() {
+  function renderPosts() {
+    currentPage = 0;
+    filteredPosts = allPosts.filter(p => p.published);
+    if (activeCategory) filteredPosts = filteredPosts.filter(p => p.category === activeCategory);
+    if (searchQuery) filteredPosts = filteredPosts.filter(p =>
+      p.title.toLowerCase().includes(searchQuery) ||
+      (p.excerpt || '').toLowerCase().includes(searchQuery) ||
+      (p.category || '').toLowerCase().includes(searchQuery) ||
+      (p.tags || []).some(t => t.toLowerCase().includes(searchQuery))
+    );
+
     const grid = document.getElementById('postsGrid');
-    grid.innerHTML = '';
-
-    if (filteredPosts.length === 0) {
-      renderEmptyState("Nenhum artigo encontrado para os filtros selecionados.");
+    if (!filteredPosts.length) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><h2>NENHUM ARTIGO ENCONTRADO</h2><p>Tente outro termo ou categoria.</p></div>';
       document.getElementById('loadMoreWrap').style.display = 'none';
       return;
     }
 
-    const totalToRender = currentPage * postsPerPage;
-    const chunk = filteredPosts.slice(0, totalToRender);
-    const hasDestaque = (currentCategory === 'TODOS' && !document.getElementById('searchInput').value.trim());
+    grid.innerHTML = '';
+    renderPage();
+  }
 
-    chunk.forEach((post, idx) => {
-      if (idx === 0 && hasDestaque) {
-        grid.appendChild(createFeaturedCard(post));
-      } else {
-        grid.appendChild(createStandardCard(post));
-      }
+  function renderPage() {
+    const grid = document.getElementById('postsGrid');
+    const start = currentPage * POSTS_PER_PAGE;
+    const end = start + POSTS_PER_PAGE;
+    const slice = filteredPosts.slice(start, end);
+
+    slice.forEach((post, i) => {
+      const isFirst = currentPage === 0 && i === 0;
+      grid.insertAdjacentHTML('beforeend', isFirst ? featuredCardHTML(post) : cardHTML(post));
     });
 
-    setTimeout(() => {
-      document.querySelectorAll('.post-card, .featured-card').forEach(el => el.classList.add('visible'));
-    }, 50);
+    currentPage++;
 
-    if (filteredPosts.length > totalToRender) {
-      document.getElementById('loadMoreWrap').style.display = 'block';
-    } else {
-      document.getElementById('loadMoreWrap').style.display = 'none';
-    }
+    // Botão carregar mais
+    const wrap = document.getElementById('loadMoreWrap');
+    const hasMore = currentPage * POSTS_PER_PAGE < filteredPosts.length;
+    wrap.style.display = hasMore ? 'block' : 'none';
 
-    lazyLoadImages();
+    // Ativa fade-in nos novos cards
+    setTimeout(observeCards, 50);
   }
 
   function loadMore() {
     const btn = document.getElementById('btnLoadMore');
     btn.classList.add('loading');
     btn.disabled = true;
-
+    // Pequeno delay para dar feedback visual
     setTimeout(() => {
-      currentPage++;
-      renderGrid();
+      renderPage();
       btn.classList.remove('loading');
       btn.disabled = false;
-    }, 400);
+    }, 300);
   }
 
-  function createFeaturedCard(p) {
-    const a = document.createElement('a');
-    a.className = 'featured-card';
-    a.href = `post.html?id=${p.id}`;
-    
-    a.innerHTML = `
-      <div class="featured-img-wrap">
-        ${p.image_url ? `<img data-src="${p.image_url}" alt="${p.title}" />` : `<div class="carousel-placeholder">A2KF</div>`}
-      </div>
-      <div class="featured-body">
-        ${p.category ? `<span class="featured-label">${p.category}</span>` : ''}
-        <h2 class="featured-title">${p.title}</h2>
-        <p class="featured-excerpt">${p.excerpt || ''}</p>
-        <div class="featured-read">Ler artigo completo</div>
-      </div>
-    `;
-    return a;
-  }
-
-  function createStandardCard(p) {
-    const a = document.createElement('a');
-    a.className = 'post-card';
-    a.href = `post.html?id=${p.id}`;
-
-    const formattedDate = p.created_at ? new Date(p.created_at).toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric'}) : '';
-    const readTime = p.read_time || '3 min';
-
-    a.innerHTML = `
-      <div class="card-img-wrap">
-        ${p.image_url ? `<img class="card-img" data-src="${p.image_url}" alt="${p.title}" />` : `<div class="card-img-placeholder">A2KF</div>`}
-      </div>
-      <div class="card-body">
-        <div class="card-meta">
-          ${p.category ? `<span class="card-category">${p.category}</span>` : ''}
-          <span class="card-date">${formattedDate}</span>
-          <span class="card-read-time">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            ${readTime}
-          </span>
+  function featuredCardHTML(p) {
+    const img = p.cover_url
+      ? `<div class="featured-img-wrap" id="fw-${p.id}">
+           <img src="${p.cover_url}" alt="${p.title}" loading="lazy"
+             width="800" height="360"
+             onload="this.classList.add('loaded');this.parentElement.classList.add('loaded')"
+             onerror="this.parentElement.innerHTML='<div style=height:360px;background:#111;display:flex;align-items:center;justify-content:center;font-family:Bebas Neue,sans-serif;font-size:5rem;color:#FFD400>A2KF</div>'" />
+         </div>`
+      : `<div style="height:360px;background:#111;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:5rem;color:#FFD400;">A2KF</div>`;
+    const views = p.views ? `<span style="color:#aaa;font-size:12px;display:flex;align-items:center;gap:4px;margin-top:.5rem;"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>${p.views.toLocaleString('pt-BR')} visualizações</span>` : '';
+    return `
+      <div class="featured-card" onclick="window.location.href=this.dataset.url" data-url="/post/${p.slug||p.id}">
+        ${img}
+        <div class="featured-body">
+          <span class="featured-label">${p.category || 'Destaque'}</span>
+          <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;flex-wrap:wrap;">
+            <span style="font-size:12px;color:#888;">${formatDate(p.created_at)}</span>
+            <span style="font-size:12px;color:#888;display:flex;align-items:center;gap:4px;">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              ${readingTime(p.content)}
+            </span>
+          </div>
+          <h2 class="featured-title">${p.title}</h2>
+          <p class="featured-excerpt">${p.excerpt || ''}</p>
+          ${views}
+          <p class="featured-read">Ler artigo →</p>
         </div>
-        <h3 class="card-title">${p.title}</h3>
-        <p class="card-excerpt">${p.excerpt ? p.excerpt.substring(0, 95) + '...' : ''}</p>
-        <div class="card-read">Ler post</div>
-      </div>
-    `;
-    return a;
+      </div>`;
   }
 
-  function renderEmptyState(msg = "Nenhum artigo publicado no momento.") {
+  function cardHTML(p) {
+    const img = p.cover_url
+      ? `<div class="card-img-wrap">
+           <img src="${p.cover_url}" class="card-img" alt="${p.title}" loading="lazy"
+             width="400" height="200"
+             onload="this.classList.add('loaded');this.parentElement.classList.add('loaded')"
+             onerror="this.parentElement.outerHTML='<div class=card-img-placeholder>A2KF</div>'" />
+         </div>`
+      : `<div class="card-img-placeholder">A2KF</div>`;
+    const views = p.views ? `<span style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:4px;margin-top:.5rem;"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>${p.views.toLocaleString('pt-BR')} visualizações</span>` : '';
+    return `
+      <div class="post-card" onclick="window.location.href=this.dataset.url" data-url="/post/${p.slug||p.id}">
+        ${img}
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="card-category">${p.category || 'Geral'}</span>
+            <span class="card-date">${formatDate(p.created_at)}</span>
+            <span class="card-read-time">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              ${readingTime(p.content)}
+            </span>
+          </div>
+          <h2 class="card-title">${p.title}</h2>
+          <p class="card-excerpt">${p.excerpt || ''}</p>
+          ${p.tags && p.tags.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:.5rem;">${p.tags.map(t => `<span style="background:#f4f4f2;color:#555;font-size:10px;font-weight:700;padding:2px 8px;letter-spacing:.5px;text-transform:uppercase;">#${t}</span>`).join('')}</div>` : ''}
+          ${views}
+          <span class="card-read">Ler artigo</span>
+        </div>
+      </div>`;
+  }
+
+
+  async function loadPosts() {
+    const { data, error } = await _sb
+      .from('posts')
+      .select('*')
+      .order('created_at', { ascending: false });
+
     const grid = document.getElementById('postsGrid');
-    grid.innerHTML = `
-      <div class="empty-state" style="grid-column: 1/-1;">
-        <h2>Fique Conectado</h2>
-        <p>${msg}</p>
-      </div>
-    `;
+    if (error) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+        <h2>CONFIGURE O SUPABASE</h2>
+        <p>Edite <strong>SUPABASE_URL</strong> e <strong>SUPABASE_ANON_KEY</strong> no arquivo index.html para conectar ao banco de dados.</p>
+      </div>`;
+      return;
+    }
+    allPosts = data || [];
+    buildCategories();
+    buildCarousel(allPosts);
+    renderPosts();
   }
 
-  function lazyLoadImages() {
-    const imgs = document.querySelectorAll('img[data-src]');
-    const observer = new IntersectionObserver((entries, obs) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const img = entry.target;
-          img.src = img.getAttribute('data-src');
-          img.onload = () => {
-            img.classList.add('loaded');
-            if(img.parentElement) img.parentElement.classList.add('loaded');
-          };
-          obs.unobserve(img);
-        }
-      });
+  // ── CARROSSEL ──────────────────────────────────────────────────────────────
+  const CAROUSEL_INTERVAL = 5000;
+  const CAROUSEL_MAX = 4;
+  let carouselIndex = 0;
+  let carouselTimer = null;
+  let carouselItems = [];
+
+  async function buildCarousel(posts) {
+    // Busca banners ativos
+    const { data: banners } = await _sb.from('banners').select('*').eq('active', true).order('ordem').limit(4);
+
+    // Monta slides: intercala posts e banners
+    const postSlides = posts.filter(p => p.published).slice(0, 3).map(p => ({ type: 'post', ...p }));
+    const bannerSlides = (banners || []).map(b => ({ type: 'banner', ...b }));
+
+    // Intercala: post, banner, post, banner...
+    const mixed = [];
+    const maxLen = Math.max(postSlides.length, bannerSlides.length);
+    for (let i = 0; i < maxLen && mixed.length < CAROUSEL_MAX; i++) {
+      if (i < postSlides.length) mixed.push(postSlides[i]);
+      if (mixed.length < CAROUSEL_MAX && i < bannerSlides.length) mixed.push(bannerSlides[i]);
+    }
+    carouselItems = mixed.slice(0, CAROUSEL_MAX);
+
+    if (!carouselItems.length) { document.getElementById('carousel').style.display = 'none'; return; }
+
+    const track = document.getElementById('carouselTrack');
+    const dots = document.getElementById('carouselDots');
+
+    track.innerHTML = carouselItems.map((item, i) => {
+      if (item.type === 'post') {
+        const img = item.cover_url
+          ? `<img src="${item.cover_url}" alt="${item.title}" loading="${i === 0 ? 'eager' : 'lazy'}" onload="this.classList.add('loaded')" onerror="this.style.display='none'" />`
+          : `<div class="carousel-placeholder">A2KF</div>`;
+        return `
+          <div class="carousel-slide" onclick="window.location.href='/post/${item.slug || item.id}'">
+            ${img}
+            <div class="carousel-slide-overlay"></div>
+            <div class="carousel-slide-body">
+              ${item.category ? `<span class="carousel-cat">${item.category}</span>` : ''}
+              <h2 class="carousel-title">${item.title}</h2>
+              ${item.excerpt ? `<p class="carousel-excerpt">${item.excerpt}</p>` : ''}
+              <span class="carousel-read">Ler artigo →</span>
+            </div>
+          </div>`;
+      } else {
+        // Banner de produto
+        return `
+          <div class="carousel-slide" onclick="window.open('${item.link}','_blank')">
+            <img src="${item.image_url}" alt="${item.title}" loading="${i === 0 ? 'eager' : 'lazy'}" onload="this.classList.add('loaded')" onerror="this.style.display='none'" />
+            <div class="carousel-slide-overlay"></div>
+            <div class="carousel-slide-body">
+              <span class="carousel-cat">Loja A2KF</span>
+              <h2 class="carousel-title">${item.title}</h2>
+              ${item.subtitle ? `<p class="carousel-excerpt">${item.subtitle}</p>` : ''}
+              <span class="carousel-read">Ver na loja →</span>
+            </div>
+          </div>`;
+      }
+    }).join('');
+
+    dots.innerHTML = carouselItems.map((_, i) =>
+      `<button class="carousel-dot ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})"></button>`
+    ).join('');
+
+    const firstImg = track.querySelector('.carousel-slide img');
+    if (firstImg && firstImg.complete) firstImg.classList.add('loaded');
+
+    startCarousel();
+  }
+
+  function goToSlide(index) {
+    carouselIndex = index;
+    document.getElementById('carouselTrack').style.transform = `translateX(-${index * 100}%)`;
+    document.querySelectorAll('.carousel-dot').forEach((d, i) => d.classList.toggle('active', i === index));
+    resetProgress();
+  }
+
+  function prevSlide() {
+    const prev = (carouselIndex - 1 + carouselItems.length) % carouselItems.length;
+    goToSlide(prev);
+    if (carouselTimer !== null) {
+      clearInterval(carouselTimer);
+      carouselTimer = setInterval(autoNext, CAROUSEL_INTERVAL);
+    }
+  }
+
+  function nextSlide() {
+    goToSlide((carouselIndex + 1) % carouselItems.length);
+    if (carouselTimer !== null) {
+      clearInterval(carouselTimer);
+      carouselTimer = setInterval(autoNext, CAROUSEL_INTERVAL);
+    }
+  }
+
+  function autoNext() {
+    goToSlide((carouselIndex + 1) % carouselItems.length);
+  }
+
+  function resetProgress() {
+    const bar = document.getElementById('carouselProgress');
+    bar.style.transition = 'none';
+    bar.style.width = '0%';
+    setTimeout(() => {
+      bar.style.transition = `width ${CAROUSEL_INTERVAL}ms linear`;
+      bar.style.width = '100%';
+    }, 30);
+  }
+
+  function startCarousel() {
+    if (carouselItems.length <= 1) return;
+    resetProgress();
+    clearInterval(carouselTimer);
+    carouselTimer = setInterval(autoNext, CAROUSEL_INTERVAL);
+
+    // Pausa ao hover — usa relatedTarget para não pausar ao mover entre filhos
+    const el = document.getElementById('carousel');
+    el.addEventListener('mouseenter', () => {
+      clearInterval(carouselTimer);
+      carouselTimer = null;
+      const bar = document.getElementById('carouselProgress');
+      bar.style.transition = 'none';
     });
-    imgs.forEach(i => observer.observe(i));
+    el.addEventListener('mouseleave', (e) => {
+      // Só retoma se o mouse saiu do carrossel de verdade (não para um filho)
+      if (!el.contains(e.relatedTarget)) {
+        carouselTimer = setInterval(autoNext, CAROUSEL_INTERVAL);
+        resetProgress();
+      }
+    });
   }
 
-  // CARROSSEL DE PRODUTOS — LOGA YAMPI COM PAGINAÇÃO POR BLOCO COMPLETO
-  let currentProdslide = 0; 
+  // ── FIM CARROSSEL ───────────────────────────────────────────────────────────
 
-  async function initProductsCarousel() {
+  // ── PRODUTOS DESTAQUE ────────────────────────────────────────────────────
+  let prodOffset = 0;
+  let prodCardWidth = 216; // 200px + 16px gap
+
+  async function loadProdutos() {
     try {
-      const res = await fetch('/api/yampi-products');
+      const res = await fetch('/api/produtos-destaque');
       if (!res.ok) return;
-      const products = await res.json();
-
-      if (!products || products.length === 0) return;
+      const data = await res.json();
+      if (!data.success || !data.products.length) return;
 
       const track = document.getElementById('produtosTrack');
-      track.innerHTML = '';
-
-      products.forEach(p => {
-        const card = document.createElement('a');
-        card.className = 'produto-card';
-        card.href = p.url;
-        card.target = '_blank';
-        card.rel = 'noopener';
-
-        card.innerHTML = `
+      track.innerHTML = data.products.map(p => `
+        <a href="${p.url}" target="_blank" rel="noopener" class="produto-card">
           <div class="produto-img-wrap">
-            ${p.image ? `<img src="${p.image}" class="produto-img" alt="${p.name}" loading="lazy" />` : `<div class="produto-img-placeholder">A2KF</div>`}
+            ${p.image
+              ? `<img src="${p.image}" class="produto-img" alt="${p.name}" loading="lazy" width="200" height="180" onerror="this.parentElement.outerHTML='<div class=produto-img-placeholder>A2KF</div>'" />`
+              : `<div class="produto-img-placeholder">A2KF</div>`}
           </div>
           <div class="produto-body">
-            <h3 class="produto-name">${p.name}</h3>
-            <div>
-              <div class="produto-original">${p.prices.original ? p.prices.original : ''}</div>
-              <div class="produto-price">${p.prices.current}</div>
-            </div>
-            <div class="produto-btn">Garantir Compra</div>
+            <div class="produto-name">${p.name}</div>
+            ${p.originalPrice > p.price ? `<div class="produto-original">R$ ${p.originalPrice.toFixed(2).replace('.',',')}</div>` : ''}
+            <div class="produto-price">R$ ${p.price.toFixed(2).replace('.',',')}</div>
+            <span class="produto-btn">Comprar →</span>
           </div>
-        `;
-        track.appendChild(card);
-      });
+        </a>
+      `).join('');
 
       document.getElementById('produtosSection').style.display = 'block';
-      
-      setTimeout(() => {
-        updateProdCarousel();
-      }, 100);
 
-    } catch (e) {
-      console.error('Erro na carga dos produtos Yampi:', e);
+      // Calcula largura do card para navegação
+      const firstCard = track.querySelector('.produto-card');
+      if (firstCard) prodCardWidth = firstCard.offsetWidth + 16;
+
+      updateProdNav(data.products.length);
+    } catch(e) {
+      console.log('[produtos] Não foi possível carregar:', e.message);
     }
   }
 
-  function prodSlide(direction) {
+  function prodSlide(dir) {
     const track = document.getElementById('produtosTrack');
-    if (!track) return;
+    const wrap = track.parentElement;
     const cards = track.querySelectorAll('.produto-card');
-    if (cards.length === 0) return;
+    const visivel = Math.floor(wrap.offsetWidth / prodCardWidth);
+    const maxOffset = Math.max(0, cards.length - visivel);
 
-    let itemsPerPage = 4; 
-    if (window.innerWidth <= 768) {
-      itemsPerPage = 2; 
-    } else if (window.innerWidth <= 992) {
-      itemsPerPage = 3; 
-    }
-
-    const totalPages = Math.ceil(cards.length / itemsPerPage);
-    currentProdslide += direction;
-
-    if (currentProdslide < 0) currentProdslide = 0;
-    if (currentProdslide >= totalPages) currentProdslide = totalPages - 1;
-
-    updateProdCarousel(itemsPerPage);
+    prodOffset = Math.min(Math.max(0, prodOffset + dir), maxOffset);
+    track.style.transform = `translateX(-${prodOffset * prodCardWidth}px)`;
+    updateProdNav(cards.length);
   }
 
-  function updateProdCarousel(itemsPerPage) {
-    const track = document.getElementById('produtosTrack');
-    if (!track) return;
-    const cards = track.querySelectorAll('.produto-card');
-    
-    if (!itemsPerPage) {
-      itemsPerPage = window.innerWidth <= 768 ? 2 : (window.innerWidth <= 992 ? 3 : 4);
-    }
-
-    if (currentProdslide === 0) {
-      track.style.transform = `translateX(0px)`;
-    } else {
-      track.style.transform = `translateX(calc(-${currentProdslide * 100}% - ${currentProdslide}rem))`;
-    }
-
-    const totalPages = Math.ceil(cards.length / itemsPerPage);
-    const prevBtn = document.getElementById('prodPrev');
-    const nextBtn = document.getElementById('prodNext');
-    
-    if (prevBtn) prevBtn.disabled = (currentProdslide === 0);
-    if (nextBtn) nextBtn.disabled = (currentProdslide >= totalPages - 1 || totalPages <= 1);
+  function updateProdNav(total) {
+    const wrap = document.getElementById('produtosTrack').parentElement;
+    const visivel = Math.floor(wrap.offsetWidth / prodCardWidth);
+    document.getElementById('prodPrev').disabled = prodOffset === 0;
+    document.getElementById('prodNext').disabled = prodOffset >= total - visivel;
   }
 
-  window.addEventListener('resize', () => {
-    currentProdslide = 0; 
-    updateProdCarousel();
-  });
+  loadProdutos();
 
-  // CADASTRO NEWSLETTER
-  async function handleNewsletter(e) {
-    e.preventDefault();
-    const emailInput = document.getElementById('newsEmail');
-    const btn = document.getElementById('newsBtn');
-    const msg = document.getElementById('newsMsg');
-    
-    const email = emailInput.value.trim();
-    if(!email) return;
+  // ── FIM PRODUTOS ──────────────────────────────────────────────────────────
 
-    btn.disabled = true;
-    btn.textContent = 'Enviando...';
-    msg.className = 'news-msg';
-    msg.style.display = 'none';
+  loadPosts();
 
+  async function homeSubscribe() {
+    const email = document.getElementById('homeNewsletterEmail').value.trim();
+    const msg = document.getElementById('homeNewsletterMsg');
+    if (!email) { msg.style.color = '#ff8888'; msg.textContent = 'Digite seu email.'; return; }
+    msg.style.color = '#aaa'; msg.textContent = 'Enviando...';
     try {
       const res = await fetch('/api/newsletter', {
         method: 'POST',
@@ -997,30 +1053,332 @@
         body: JSON.stringify({ email })
       });
       const data = await res.json();
-      
-      if(res.ok) {
-        msg.textContent = data.message || 'Inscrição realizada com sucesso!';
-        msg.classList.add('success');
-        emailInput.value = '';
+      if (data.success) {
+        msg.style.color = '#FFD400';
+        msg.textContent = data.already ? '✓ Você já está cadastrado!' : '✓ Cadastrado! Bem-vindo à família A2KF!';
+        document.getElementById('homeNewsletterEmail').value = '';
       } else {
-        msg.textContent = data.error || 'Erro ao realizar inscrição.';
-        msg.classList.add('error');
+        msg.style.color = '#ff8888'; msg.textContent = 'Erro ao cadastrar. Tente novamente.';
       }
-    } catch(err) {
-      console.error(err);
-      msg.textContent = 'Erro de conexão com o servidor.';
-      msg.classList.add('error');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Inscrever-se';
+    } catch { msg.style.color = '#ff8888'; msg.textContent = 'Erro de conexão.'; }
+  }
+</script>
+
+<!-- ============================================================
+  BANNER DE COOKIES — A2KF Suplementos
+  Cole este bloco antes de </body> em: index.html e server.js
+  ============================================================ -->
+
+<!-- COOKIE BANNER HTML -->
+<div id="cookieBanner" style="display:none;" aria-live="polite" role="dialog" aria-label="Aviso de cookies">
+  <div class="cookie-inner">
+    <div class="cookie-text">
+      <span class="cookie-icon">🍪</span>
+      <div>
+        <strong>Usamos cookies</strong>
+        <p>Este site usa cookies essenciais para funcionar corretamente e para enviar a newsletter. Nenhum dado é vendido a terceiros. <a href="/privacidade.html" target="_blank">Saiba mais</a></p>
+      </div>
+    </div>
+    <div class="cookie-actions">
+      <a href="/privacidade.html" target="_blank" class="cookie-btn-link">Política completa</a>
+      <button onclick="rejectCookies()" class="cookie-btn-reject">Recusar</button>
+      <button onclick="acceptCookies()" class="cookie-btn-accept">Aceitar</button>
+    </div>
+  </div>
+</div>
+
+<!-- COOKIE BANNER CSS -->
+<style>
+  #cookieBanner {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
+    background: #111;
+    border-top: 3px solid #FFD400;
+    padding: 1.25rem 2rem;
+    box-shadow: 0 -4px 24px rgba(0,0,0,.4);
+    animation: slideUp .35s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+  .cookie-inner {
+    max-width: 1100px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1.5rem; flex-wrap: wrap;
+  }
+  .cookie-text {
+    display: flex; align-items: flex-start; gap: 1rem; flex: 1; min-width: 260px;
+  }
+  .cookie-icon { font-size: 1.6rem; line-height: 1; flex-shrink: 0; margin-top: 2px; }
+  .cookie-text strong { display: block; color: #FFD400; font-size: 14px; font-weight: 700; letter-spacing: .5px; margin-bottom: .25rem; }
+  .cookie-text p { color: #999; font-size: 13px; line-height: 1.5; margin: 0; }
+  .cookie-text a { color: #FFD400; font-weight: 600; text-decoration: none; border-bottom: 1px solid rgba(255,212,0,.3); }
+  .cookie-text a:hover { border-color: #FFD400; }
+  .cookie-actions {
+    display: flex; align-items: center; gap: .75rem; flex-shrink: 0; flex-wrap: wrap;
+  }
+  .cookie-btn-link {
+    color: #666; font-size: 12px; font-family: 'DM Sans', sans-serif;
+    text-decoration: none; white-space: nowrap; padding: 8px 0;
+    border-bottom: 1px solid #333; transition: color .2s, border-color .2s;
+  }
+  .cookie-btn-link:hover { color: #aaa; border-color: #666; }
+  .cookie-btn-reject {
+    background: transparent; color: #888; border: 1px solid #333;
+    font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 12px;
+    letter-spacing: 1px; text-transform: uppercase; padding: 9px 18px;
+    cursor: pointer; transition: all .2s; white-space: nowrap;
+  }
+  .cookie-btn-reject:hover { border-color: #888; color: #ccc; }
+  .cookie-btn-accept {
+    background: #FFD400; color: #0A0A0A; border: none;
+    font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 12px;
+    letter-spacing: 1px; text-transform: uppercase; padding: 10px 22px;
+    cursor: pointer; transition: opacity .2s; white-space: nowrap;
+  }
+  .cookie-btn-accept:hover { opacity: .9; }
+
+  @media (max-width: 600px) {
+    #cookieBanner { padding: 1.25rem; }
+    .cookie-actions { width: 100%; justify-content: flex-end; }
+    .cookie-btn-link { display: none; }
+  }
+</style>
+
+<!-- COOKIE BANNER JS -->
+<script>
+  (function() {
+    var consent = localStorage.getItem('a2kf_cookie_consent');
+    if (!consent) {
+      document.getElementById('cookieBanner').style.display = 'block';
     }
+  })();
+
+  function acceptCookies() {
+    localStorage.setItem('a2kf_cookie_consent', 'accepted');
+    hideBanner();
   }
 
-  // EXIT POPUP LOGIC
-  function initExitPopup() {
+  function rejectCookies() {
+    localStorage.setItem('a2kf_cookie_consent', 'rejected');
+    hideBanner();
+  }
+
+  function hideBanner() {
+    var b = document.getElementById('cookieBanner');
+    b.style.transition = 'transform .3s ease, opacity .3s ease';
+    b.style.transform = 'translateY(100%)';
+    b.style.opacity = '0';
+    setTimeout(function() { b.style.display = 'none'; }, 320);
+  }
+</script>
+  
+<!-- BOTÃO VOLTAR AO TOPO -->
+<button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Voltar ao topo" title="Voltar ao topo">
+  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+<style>
+  #backToTop {
+    position: fixed; bottom: 2rem; right: 2rem; z-index: 998;
+    width: 48px; height: 48px;
+    background: #FFD400; color: #0A0A0A; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,.25);
+    opacity: 0; visibility: hidden;
+    transform: translateY(12px);
+    transition: opacity .3s ease, transform .3s ease, visibility .3s ease, background .2s;
+  }
+  #backToTop.visible { opacity: 1; visibility: visible; transform: translateY(0); }
+  #backToTop:hover { background: #e6be00; }
+  #backToTop:active { transform: translateY(2px); }
+  @media (max-width: 600px) {
+    #backToTop { bottom: 1.25rem; right: 1.25rem; width: 42px; height: 42px; }
+  }
+</style>
+<script>
+  (function() {
+    var btn = document.getElementById('backToTop');
+    window.addEventListener('scroll', function() {
+      btn.classList.toggle('visible', window.scrollY > 320);
+    }, { passive: true });
+  })();
+</script>
+
+<!-- Brevo Conversations {literal} -->
+<script>
+    (function(d, w, c) {
+        // Horário de atendimento: Seg–Sex, 9h–18h (horário de Brasília)
+        var now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+        var day = now.getDay();   // 0=Dom, 1=Seg ... 6=Sáb
+        var hour = now.getHours();
+        var isOpen = day >= 1 && day <= 5 && hour >= 9 && hour < 18;
+        if (!isOpen) return; // fora do horário: não carrega o widget
+
+        w.BrevoConversationsID = '6a0a4ded00173bc1510e7e11';
+        w[c] = w[c] || function() {
+            (w[c].q = w[c].q || []).push(arguments);
+        };
+        var s = d.createElement('script');
+        s.async = true;
+        s.src = 'https://conversations-widget.brevo.com/brevo-conversations.js';
+        if (d.head) d.head.appendChild(s);
+    })(document, window, 'BrevoConversations');
+</script>
+<!-- /Brevo Conversations {/literal} -->
+
+<!-- EXIT INTENT POPUP -->
+<div id="exitPopup" aria-modal="true" role="dialog" aria-label="Oferta especial" style="display:none;">
+  <div class="exit-overlay" onclick="closeExitPopup()"></div>
+  <div class="exit-box">
+    <button class="exit-close" onclick="closeExitPopup()" aria-label="Fechar">&times;</button>
+
+    <div class="exit-badge">OFERTA EXCLUSIVA</div>
+
+    <div class="exit-top">
+      <img src="logo.png" alt="A2KF Suplementos" class="exit-logo" />
+    </div>
+
+    <h2 class="exit-title">ESPERA!<br/>NÃO VÁ EMBORA<br/><span>SEM ESSE DESCONTO</span></h2>
+
+    <p class="exit-sub">Na sua primeira compra na loja A2KF Suplementos, use o cupom abaixo e ganhe:</p>
+
+    <div class="exit-discount">10% OFF</div>
+
+    <div class="exit-coupon-wrap">
+      <span class="exit-coupon-label">SEU CUPOM</span>
+      <div class="exit-coupon-row">
+        <span class="exit-coupon-code" id="exitCouponCode">PRIMEIRACOMPRA</span>
+        <button class="exit-copy-btn" onclick="copyCoupon()" id="exitCopyBtn">COPIAR</button>
+      </div>
+    </div>
+
+    <a href="https://a2kfsuplementos.com.br" target="_blank" rel="noopener" class="exit-cta" onclick="closeExitPopup()">
+      IR PARA A LOJA →
+    </a>
+
+    <button class="exit-skip" onclick="closeExitPopup()">Não, obrigado</button>
+  </div>
+</div>
+
+<style>
+  /* OVERLAY */
+  #exitPopup {
+    position: fixed; inset: 0; z-index: 99999;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  .exit-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,.75); backdrop-filter: blur(3px);
+  }
+
+  /* BOX */
+  .exit-box {
+    position: relative; z-index: 1;
+    background: #0A0A0A; border: 2px solid #FFD400;
+    max-width: 380px; width: 100%;
+    padding: 1.75rem 1.5rem 1.5rem;
+    text-align: center;
+    animation: exitPop .35s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes exitPop {
+    from { transform: scale(.85); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+
+  /* FECHAR */
+  .exit-close {
+    position: absolute; top: .5rem; right: .75rem;
+    background: none; border: none; color: #555;
+    font-size: 1.5rem; line-height: 1; cursor: pointer;
+    transition: color .2s;
+  }
+  .exit-close:hover { color: #FFD400; }
+
+  /* BADGE */
+  .exit-badge {
+    display: inline-block; background: #FFD400; color: #000;
+    font-size: 9px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; padding: 3px 10px; margin-bottom: .875rem;
+  }
+
+  /* LOGO */
+  .exit-top { margin-bottom: .75rem; }
+  .exit-logo { height: 36px; width: auto; filter: brightness(0) invert(1); opacity: .85; }
+
+  /* TÍTULO */
+  .exit-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.5rem, 6vw, 2rem);
+    line-height: 1; letter-spacing: 1px; color: #fff;
+    margin-bottom: .75rem;
+  }
+  .exit-title span { color: #FFD400; }
+
+  /* SUBTÍTULO */
+  .exit-sub { color: #888; font-size: 12px; line-height: 1.5; margin-bottom: .875rem; }
+
+  /* DESCONTO */
+  .exit-discount {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8rem; color: #FFD400; line-height: 1;
+    letter-spacing: 2px; margin-bottom: .875rem;
+  }
+
+  /* CUPOM */
+  .exit-coupon-wrap {
+    background: #111; border: 1.5px dashed #FFD400;
+    padding: .75rem 1rem; margin-bottom: 1rem;
+  }
+  .exit-coupon-label {
+    display: block; font-size: 9px; font-weight: 700;
+    letter-spacing: 2px; color: #555; margin-bottom: .4rem;
+  }
+  .exit-coupon-row { display: flex; align-items: center; justify-content: center; gap: .625rem; }
+  .exit-coupon-code {
+    font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem;
+    letter-spacing: 2px; color: #FFD400;
+  }
+  .exit-copy-btn {
+    background: #FFD400; color: #000; border: none;
+    font-family: 'DM Sans', sans-serif; font-weight: 700;
+    font-size: 10px; letter-spacing: 1px; padding: 5px 11px;
+    cursor: pointer; transition: opacity .2s; white-space: nowrap;
+  }
+  .exit-copy-btn:hover { opacity: .85; }
+  .exit-copy-btn.copied { background: #38A169; color: #fff; }
+
+  /* CTA */
+  .exit-cta {
+    display: block; background: #FFD400; color: #000;
+    font-family: 'DM Sans', sans-serif; font-weight: 700;
+    font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 11px; text-decoration: none; margin-bottom: .625rem;
+    transition: opacity .2s;
+  }
+  .exit-cta:hover { opacity: .9; }
+
+  /* SKIP */
+  .exit-skip {
+    background: none; border: none; color: #444;
+    font-family: 'DM Sans', sans-serif; font-size: 11px;
+    cursor: pointer; text-decoration: underline; transition: color .2s;
+  }
+  .exit-skip:hover { color: #888; }
+
+  @media (max-width: 480px) {
+    .exit-box { padding: 1.5rem 1.1rem 1.25rem; max-width: 320px; }
+    .exit-discount { font-size: 2.2rem; }
+    .exit-coupon-code { font-size: 1.2rem; }
+  }
+</style>
+
+<script>
+  (function() {
     var POPUP_KEY = 'a2kf_exit_popup_shown';
     var shown = false;
 
+    // Não mostra se já foi exibido nessa sessão
     if (sessionStorage.getItem(POPUP_KEY)) return;
 
     function showPopup() {
@@ -1031,14 +1389,17 @@
       document.body.style.overflow = 'hidden';
     }
 
+    // Desktop: detecta mouse saindo para fora do topo da janela
     document.addEventListener('mouseleave', function(e) {
       if (e.clientY <= 10) showPopup();
     });
 
+    // Mobile: mostra após 40 segundos de permanência na página
     var mobileTimer = setTimeout(function() {
       if (/Mobi|Android/i.test(navigator.userAgent)) showPopup();
     }, 40000);
 
+    // Também cancela o timer se o usuário já fechou
     window.closeExitPopup = function() {
       document.getElementById('exitPopup').style.display = 'none';
       document.body.style.overflow = '';
@@ -1053,16 +1414,15 @@
         setTimeout(function() {
           btn.textContent = 'COPIAR';
           btn.classList.remove('copied');
-          window.open('https://a2kfsuplementos.com.br', '_blank');
-          closeExitPopup();
-        }, 1500);
+        }, 2500);
       });
     };
 
+    // Fecha com ESC
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') closeExitPopup();
     });
-  }
+  })();
 </script>
 
 </body>
