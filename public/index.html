@@ -64,10 +64,11 @@
     }
     .nav-social-icon:hover { color: var(--yellow); border-color: var(--yellow); background: #111; }
 
-    /* HERO */
+    /* HERO — aparece abaixo do carrossel */
     .hero {
       background: var(--black); color: var(--white);
-      padding: 3rem 1.25rem 2.5rem; text-align: center; position: relative; overflow: hidden;
+      padding: 2.25rem 1.25rem 2rem; text-align: center; position: relative; overflow: hidden;
+      border-bottom: 3px solid var(--yellow);
     }
     .hero::before {
       content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -521,7 +522,7 @@
       .nav-logo img, .nav-logo-img { height: 44px; }
       .nav-links { gap: .75rem; }
       .nav-links a { font-size: 13px; }
-      .hero { padding: 2rem 1rem; }
+      .hero { padding: 1.75rem 1rem; }
       .container { padding: 1.25rem 1rem; }
       .categories { padding: .75rem 1rem; }
       .search-bar { padding: .75rem 1rem; }
@@ -551,12 +552,6 @@
   </div>
 </nav>
 
-<section class="hero">
-  <div class="hero-label">Blog Oficial</div>
-  <h1>TREINO.<br/><span>NUTRIÇÃO.</span><br/>RESULTADOS.</h1>
-  <p>Conteúdo especializado em suplementação, treino e alimentação para quem leva o físico a sério.</p>
-</section>
-
 <!-- CARROSSEL HERO -->
 <div class="carousel" id="carousel">
   <div class="carousel-track" id="carouselTrack"></div>
@@ -569,6 +564,12 @@
   <div class="carousel-dots" id="carouselDots"></div>
   <div class="carousel-progress" id="carouselProgress"></div>
 </div>
+
+<section class="hero">
+  <div class="hero-label">Blog Oficial</div>
+  <h1>TREINO.<br/><span>NUTRIÇÃO.</span><br/>RESULTADOS.</h1>
+  <p>Conteúdo especializado em suplementação, treino e alimentação para quem leva o físico a sério.</p>
+</section>
 
 <div class="search-bar">
   <input type="text" id="searchInput" placeholder="Buscar artigos..." />
