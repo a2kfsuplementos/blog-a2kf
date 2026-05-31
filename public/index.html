@@ -80,7 +80,7 @@
     .hero h1 span { color: var(--yellow); }
     .hero p { margin-top: 1.25rem; color: #aaa; font-size: clamp(.9rem, 4vw, 1.1rem); max-width: 480px; margin-left: auto; margin-right: auto; padding: 0 .5rem; }
 
-    /* BOTÕES NAVEGAÇÃO CARROSSEL */
+    /* BOTÕES NAVEGAÇÃO CARROSSEL ARTIGOS */
     .carousel-btn {
       position: absolute; top: 50%; transform: translateY(-50%);
       background: rgba(0,0,0,.5); border: none; color: #fff;
@@ -97,7 +97,7 @@
       .carousel-btn-next { right: .5rem; }
     }
 
-    /* CARROSSEL */
+    /* CARROSSEL PRINCIPAL (ARTIGOS) */
     .carousel {
       position: relative; overflow: hidden; background: var(--black);
       height: 480px;
@@ -183,9 +183,6 @@
       .carousel-title { font-size: clamp(1.1rem, 5vw, 1.6rem); margin-bottom: .5rem; }
       .carousel-excerpt { display: none; }
       .carousel-read { font-size: 11px; padding: 7px 14px; }
-      .carousel-btn { width: 34px; height: 34px; }
-      .carousel-btn-prev { left: .5rem; }
-      .carousel-btn-next { right: .5rem; }
     }
     @media (max-width: 480px) {
       .carousel { height: 240px; }
@@ -193,6 +190,8 @@
       .carousel-title { font-size: clamp(1rem, 5vw, 1.4rem); }
       .carousel-cat { font-size: 9px; padding: 2px 8px; margin-bottom: .5rem; }
     }
+
+    /* BUSCA */
     .search-bar {
       background: var(--gray); padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
       display: flex; justify-content: center;
@@ -204,123 +203,7 @@
     }
     .search-bar input:focus { border-color: var(--yellow); }
 
-    /* CARROSSEL DE PRODUTOS */
-    .produtos-section { background:var(--black); padding:2.5rem 0; border-bottom:3px solid var(--yellow); }
-    .produtos-header { max-width:1200px; margin:0 auto; padding:0 2rem 1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.75rem; }
-    .produtos-header h2 { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; letter-spacing:1px; color:var(--white); }
-    .produtos-header h2 span { color:var(--yellow); }
-    .produtos-ver-mais { color:var(--yellow); font-size:13px; font-weight:700; text-decoration:none; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; gap:6px; transition:opacity .2s; }
-    .produtos-ver-mais:hover { opacity:.75; }
-    
-    .produtos-track-wrap { max-width:1200px; margin:0 auto; overflow:hidden !important; padding:0 2rem; }
-    .produtos-track { display:flex; gap:1rem !important; transition:transform .6s cubic-bezier(0.25, 1, 0.5, 1) !important; align-items:stretch !important; width: 100%; }
-    
-    /* Configuração para Desktop: Exibe exatamente 4 produtos por bloco (considerando o gap de 1rem) */
-    .produto-card { 
-      background:#111 !important; 
-      border:1.5px solid #222 !important; 
-      width: calc((100% - 3rem) / 4) !important; /* Divide o espaço igualmente para 4 cards */
-      min-width: calc((100% - 3rem) / 4) !important; 
-      max-width: calc((100% - 3rem) / 4) !important;
-      height:380px !important; 
-      min-height:380px !important;
-      max-height:380px !important;
-      flex-shrink:0 !important; 
-      text-decoration:none !important; 
-      color:var(--white) !important; 
-      transition:border-color .2s, transform .2s !important; 
-      display:flex !important; 
-      flex-direction:column !important; 
-      overflow:hidden !important;
-    }
-    .produto-card:hover { border-color:var(--yellow) !important; transform:translateY(-3px) !important; }
-    .produto-img-wrap { width:100% !important; height:180px !important; max-height:180px !important; background:#1a1a1a !important; overflow:hidden !important; }
-    .produto-img { width:100% !important; height:100% !important; object-fit:contain !important; display:block !important; transition:transform .3s !important; }
-    .produto-card:hover .produto-img { transform:scale(1.04) !important; }
-    .produto-img-placeholder { width:100% !important; height:180px !important; background:#1a1a1a !important; display:flex !important; align-items:center !important; justify-content:center !important; font-family:'Bebas Neue',sans-serif !important; font-size:1.5rem !important; color:#333 !important; }
-    
-    .produto-body { 
-      padding:.875rem !important; 
-      flex:1 !important; 
-      display:flex !important; 
-      flex-direction:column !important; 
-      justify-content:space-between !important;
-    }
-    .produto-name { 
-      font-size:13px !important; 
-      font-weight:600 !important; 
-      line-height:1.4 !important; 
-      margin-bottom:.5rem !important; 
-      color:#eee !important; 
-      display:-webkit-box !important; 
-      -webkit-line-clamp:2 !important; 
-      -webkit-box-orient:vertical !important; 
-      overflow:hidden !important; 
-      height:36px !important; 
-      min-height:36px !important;
-      max-height:36px !important;
-    }
-    .produto-original { font-size:11px !important; color:#555 !important; text-decoration:line-through !important; margin-bottom:.2rem !important; height:15px !important; }
-    .produto-price { font-family:'Bebas Neue',sans-serif !important; font-size:1.4rem !important; color:var(--yellow) !important; letter-spacing:.5px !important; margin-bottom:.5rem !important; }
-    
-    .produto-btn { 
-      display:block !important; 
-      background:var(--yellow) !important; 
-      color:var(--black) !important; 
-      font-family:'DM Sans',sans-serif !important; 
-      font-weight:700 !important; 
-      font-size:11px !important; 
-      letter-spacing:1px !important; 
-      text-transform:uppercase !important; 
-      text-align:center !important; 
-      padding:8px !important; 
-      margin-top:auto !important; 
-      transition:opacity .2s !important; 
-    }
-    .produto-btn:hover { opacity:.85 !important; }
-    
-    .produtos-nav { display:flex; gap:.5rem; align-items:center; max-width:1200px; margin:1.25rem auto 0; padding:0 2rem; justify-content:center; }
-    .produtos-nav-btn { background:#1a1a1a; border:1px solid #333; color:#fff; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .2s; }
-    .produtos-nav-btn:hover { background:var(--yellow); border-color:var(--yellow); color:var(--black); }
-    .produtos-nav-btn:disabled { opacity:.3; cursor:not-allowed; }
-    
-    /* Configuração para Tablets (3 produtos por bloco) */
-    @media(max-width:992px) {
-      .produto-card { 
-        width: calc((100% - 2rem) / 3) !important; 
-        min-width: calc((100% - 2rem) / 3) !important; 
-        max-width: calc((100% - 2rem) / 3) !important;
-        height:350px !important; min-height:350px !important; max-height:350px !important;
-      }
-      .produto-img-wrap { height:150px !important; max-height:150px !important; }
-    }
-
-    /* Configuração para Celular: Exibe exatamente 2 produtos por bloco e mantém os botões visíveis */
-    @media(max-width:768px) { 
-      .produtos-track-wrap { padding:0 1rem; } 
-      .produtos-header { padding:0 1rem 1.25rem; } 
-      .produtos-nav { padding:0 1rem; display:flex !important; } /* Garante que as setas continuam aparecendo no mobile */
-      
-      .produto-card { 
-        width: calc((100% - 1rem) / 2) !important; /* Divide o espaço igualmente para 2 cards */
-        min-width: calc((100% - 1rem) / 2) !important; 
-        max-width: calc((100% - 1rem) / 2) !important;
-        height:310px !important; min-height:310px !important; max-height:310px !important;
-      } 
-      .produto-img-wrap { height:130px !important; max-height:130px !important; } 
-    }
-    
-    @media(max-width:480px) { 
-      .produto-card { 
-        width: calc((100% - 1rem) / 2) !important;
-        min-width: calc((100% - 1rem) / 2) !important; 
-        max-width: calc((100% - 1rem) / 2) !important;
-        height:295px !important; min-height:295px !important; max-height:295px !important;
-      } 
-      .produto-img-wrap { height:115px !important; max-height:115px !important; } 
-    }
-    
-    /* CATEGORIES */
+    /* CATEGORIAS */
     .categories {
       padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
       display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center;
@@ -332,20 +215,17 @@
     }
     .cat-btn:hover, .cat-btn.active { background: var(--yellow); border-color: var(--yellow); color: var(--black); }
 
-    /* GRID */
+    /* GRID DE ARTIGOS */
     .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.25rem; }
     .posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
 
-    /* CARD */
+    /* POST CARD */
     .post-card {
       background: var(--white); border: 1.5px solid var(--border);
       transition: transform .2s, border-color .2s; cursor: pointer; text-decoration: none; display: block; color: inherit;
     }
     .post-card:hover { transform: translateY(-4px); border-color: var(--yellow); }
-    .card-img {
-      width: 100%; height: 200px; object-fit: cover; display: block;
-      background: var(--black);
-    }
+    .card-img { width: 100%; height: 200px; object-fit: cover; display: block; background: var(--black); }
     .card-img-placeholder {
       width: 100%; height: 200px; background: var(--black);
       display: flex; align-items: center; justify-content: center;
@@ -353,21 +233,16 @@
     }
     .card-body { padding: 1.5rem; }
     .card-meta { display: flex; align-items: center; gap: .75rem; margin-bottom: .75rem; flex-wrap: wrap; }
-    .card-category {
-      background: var(--yellow); color: var(--black);
-      font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 3px 10px;
-    }
+    .card-category { background: var(--yellow); color: var(--black); font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 3px 10px; }
     .card-date { font-size: 12px; color: var(--text-muted); }
-    .card-read-time {
-      font-size: 12px; color: var(--text-muted);
-      display: flex; align-items: center; gap: 4px;
-    }
+    .card-read-time { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
     .card-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; line-height: 1.1; margin-bottom: .75rem; letter-spacing: .5px; }
     .card-excerpt { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
     .card-read { display: inline-flex; align-items: center; gap: 6px; margin-top: 1rem; font-size: 13px; font-weight: 700; color: var(--black); text-transform: uppercase; letter-spacing: 1px; }
     .card-read::after { content: '→'; transition: transform .2s; }
     .post-card:hover .card-read::after { transform: translateX(4px); }
 
+    /* CARD DE DESTAQUE NA GRID */
     .featured-card {
       grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr;
       border: 1.5px solid var(--border); background: var(--black); color: var(--white);
@@ -382,7 +257,7 @@
     .featured-excerpt { color: #aaa; line-height: 1.6; font-size: 14px; }
     .featured-read { margin-top: 1.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--yellow); }
 
-    /* LAZY LOAD / SKELETON */
+    /* LAZY LOAD SKELETONS */
     .card-img-wrap { position: relative; width: 100%; height: 200px; background: #e8e8e4; overflow: hidden; flex-shrink: 0; }
     .card-img-wrap::before {
       content: ''; position: absolute; inset: 0;
@@ -390,14 +265,10 @@
       animation: shimmer 1.4s infinite;
     }
     .card-img-wrap.loaded::before { display: none; }
-    .card-img {
-      width: 100%; height: 200px; object-fit: cover; display: block;
-      opacity: 0; transition: opacity .4s ease;
-    }
+    .card-img { width: 100%; height: 200px; object-fit: cover; display: block; opacity: 0; transition: opacity .4s ease; }
     .card-img.loaded { opacity: 1; }
     @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 
-    .featured-img-wrap { position: relative; background: #1a1a1a; overflow: hidden; min-height: 360px; }
     .featured-img-wrap::before {
       content: ''; position: absolute; inset: 0;
       background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.06) 50%, transparent 100%);
@@ -406,81 +277,124 @@
     .featured-img-wrap.loaded::before { display: none; }
     .featured-img-wrap img { width: 100%; height: 360px; object-fit: cover; display: block; opacity: 0; transition: opacity .4s ease; }
     .featured-img-wrap img.loaded { opacity: 1; }
+
     .empty-state { text-align: center; padding: 5rem 2rem; }
     .empty-state h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; margin-bottom: 1rem; }
     .empty-state p { color: var(--text-muted); }
 
-    /* LOADER */
     .loader { text-align: center; padding: 4rem; }
     .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--yellow); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 1rem; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ANIMAÇÃO FADE-IN DOS CARDS */
-    .post-card, .featured-card {
-      opacity: 0;
-      transform: translateY(24px);
-      transition: opacity .5s ease, transform .5s ease;
-    }
-    .post-card.visible, .featured-card.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    .post-card, .featured-card { opacity: 0; transform: translateY(24px); transition: opacity .5s ease, transform .5s ease; }
+    .post-card.visible, .featured-card.visible { opacity: 1; transform: translateY(0); }
 
     /* BOTÃO CARREGAR MAIS */
     .load-more-wrap { text-align: center; margin-top: 2rem; padding-bottom: 1rem; }
     .btn-load-more {
-      background: transparent; color: var(--black);
-      border: 2px solid var(--black); padding: 12px 40px;
-      font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 13px;
-      letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer;
+      background: transparent; color: var(--black); border: 2px solid var(--black); padding: 12px 40px;
+      font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer;
       transition: all .2s; display: inline-flex; align-items: center; gap: 8px;
     }
     .btn-load-more:hover { background: var(--yellow); border-color: var(--yellow); }
     .btn-load-more:disabled { opacity: .4; cursor: not-allowed; }
-    .btn-load-more .load-spinner {
-      width: 14px; height: 14px; border: 2px solid currentColor;
-      border-top-color: transparent; border-radius: 50%;
-      animation: spin .6s linear infinite; display: none;
-    }
-    .btn-load-more.loading .load-spinner { display: inline-block; }
+    .btn-load-more .load-spinner { width: 14px; height: 14px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin .6s linear infinite; display: none; }
+    .btn-load-more.loading .load-spinner { inline-block; }
     .btn-load-more.loading .load-text { display: none; }
 
-    /* FOOTER */
-    footer { background: var(--black); border-top: 3px solid var(--yellow); }
-    .footer-inner { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
-    .footer-brand { display: flex; flex-direction: column; align-items: center; gap: .5rem; }
-    .footer-tagline { color: #555; font-size: 13px; letter-spacing: 1px; }
-    .footer-social { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
-    .footer-social-icon {
-      display: flex; align-items: center; gap: 8px;
-      color: #666; text-decoration: none; font-size: 13px; font-weight: 500;
-      padding: 8px 16px; border: 1px solid #222; transition: all .2s;
+    /* NOVO LAYOUT DO CARROSSEL DE PRODUTOS */
+    .produtos-section { background: var(--black); padding: 2.5rem 0; border-bottom: 3px solid var(--yellow); border-top: 3px solid var(--yellow); }
+    .produtos-header { max-width: 1200px; margin: 0 auto; padding: 0 2rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; }
+    .produtos-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 1px; color: var(--white); }
+    .produtos-header h2 span { color: var(--yellow); }
+    .produtos-ver-mais { color: var(--yellow); font-size: 13px; font-weight: 700; text-decoration: none; letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; transition: opacity .2s; }
+    .produtos-ver-mais:hover { opacity: .75; }
+    
+    .produtos-track-wrap { max-width: 1200px; margin: 0 auto; overflow: hidden !important; padding: 0 2rem; }
+    .produtos-track { display: flex; gap: 1rem !important; transition: transform .6s cubic-bezier(0.25, 1, 0.5, 1) !important; align-items: stretch !important; width: 100%; }
+    
+    .produto-card { 
+      background: #111 !important; border: 1.5px solid #222 !important; 
+      width: calc((100% - 3rem) / 4) !important; min-width: calc((100% - 3rem) / 4) !important; max-width: calc((100% - 3rem) / 4) !important;
+      height: 380px !important; min-height: 380px !important; max-height: 380px !important;
+      flex-shrink: 0 !important; text-decoration: none !important; color: var(--white) !important; 
+      transition: border-color .2s, transform .2s !important; display: flex !important; flex-direction: column !important; overflow: hidden !important;
     }
-    .footer-social-icon:hover { color: var(--yellow); border-color: var(--yellow); background: #111; }
-    .footer-copy { color: #444; font-size: 12px; }
-    .footer-copy span { color: var(--yellow); }
+    .produto-card:hover { border-color: var(--yellow) !important; transform: translateY(-3px) !important; }
+    .produto-img-wrap { width: 100% !important; height: 180px !important; max-height: 180px !important; background: #1a1a1a !important; overflow: hidden !important; }
+    .produto-img { width: 100% !important; height: 100% !important; object-fit: contain !important; display: block !important; transition: transform .3s !important; }
+    .produto-card:hover .produto-img { transform: scale(1.04) !important; }
+    .produto-img-placeholder { width: 100% !important; height: 180px !important; background: #1a1a1a !important; display: flex !important; align-items: center !important; justify-content: center !important; font-family: 'Bebas Neue', sans-serif !important; font-size: 1.5rem !important; color: #333 !important; }
+    
+    .produto-body { padding: .875rem !important; flex: 1 !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; }
+    .produto-name { font-size: 13px !important; font-weight: 600 !important; line-height: 1.4 !important; margin-bottom: .5rem !important; color: #eee !important; display: -webkit-box !important; -webkit-line-clamp: 2 !important; -webkit-box-orient: vertical !important; overflow: hidden !important; height: 36px !important; min-height: 36px !important; max-height: 36px !important; }
+    .produto-original { font-size: 11px !important; color: #555 !important; text-decoration: line-through !important; margin-bottom: .2rem !important; height: 15px !important; }
+    .produto-price { font-family: 'Bebas Neue', sans-serif !important; font-size: 1.4rem !important; color: var(--yellow) !important; letter-spacing: .5px !important; margin-bottom: .5rem !important; }
+    .produto-btn { display: block !important; background: var(--yellow) !important; color: var(--black) !important; font-family: 'DM Sans', sans-serif !important; font-weight: 700 !important; font-size: 11px !important; letter-spacing: 1px !important; text-transform: uppercase !important; text-align: center !important; padding: 8px !important; margin-top: auto !important; transition: opacity .2s !important; }
+    .produto-btn:hover { opacity: .85 !important; }
+    
+    .produtos-nav { display: flex; gap: .5rem; align-items: center; max-width: 1200px; margin: 1.25rem auto 0; padding: 0 2rem; justify-content: center; }
+    .produtos-nav-btn { background: #1a1a1a; border: 1px solid #333; color: #fff; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .2s; }
+    .produtos-nav-btn:hover { background: var(--yellow); border-color: var(--yellow); color: var(--black); }
+    .produtos-nav-btn:disabled { opacity: .3; cursor: not-allowed; }
+    
+    @media(max-width:992px) {
+      .produto-card { 
+        width: calc((100% - 2rem) / 3) !important; min-width: calc((100% - 2rem) / 3) !important; max-width: calc((100% - 2rem) / 3) !important;
+        height: 350px !important; min-height: 350px !important; max-height: 350px !important;
+      }
+      .produto-img-wrap { height: 150px !important; max-height: 150px !important; }
+    }
+    @media(max-width:768px) { 
+      .produtos-track-wrap { padding: 0 1rem; } 
+      .produtos-header { padding: 0 1rem 1.25rem; } 
+      .produtos-nav { padding: 0 1rem; display: flex !important; } 
+      .produto-card { 
+        width: calc((100% - 1rem) / 2) !important; min-width: calc((100% - 1rem) / 2) !important; max-width: calc((100% - 1rem) / 2) !important;
+        height: 310px !important; min-height: 310px !important; max-height: 310px !important;
+      } 
+      .produto-img-wrap { height: 130px !important; max-height: 130px !important; } 
+    }
+    @media(max-width:480px) { 
+      .produto-card { 
+        width: calc((100% - 1rem) / 2) !important; min-width: calc((100% - 1rem) / 2) !important; max-width: calc((100% - 1rem) / 2) !important;
+        height: 295px !important; min-height: 295px !important; max-height: 295px !important;
+      } 
+      .produto-img-wrap { height: 115px !important; max-height: 115px !important; } 
+    }
 
-    @media (max-width: 768px) {
-      .featured-card { grid-template-columns: 1fr; }
-      .featured-img-wrap { height: 200px; }
-      .featured-img-wrap img { height: 200px; }
-      .featured-body { padding: 1.25rem; }
-      .hero h1 { font-size: clamp(2rem, 12vw, 3.5rem); }
-      .nav-social { display: none; }
-      .posts-grid { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 480px) {
-      nav { height: 56px; padding: 0 1rem; }
-      .nav-logo img, .nav-logo-img { height: 44px; }
-      .nav-links { gap: .75rem; }
-      .nav-links a { font-size: 13px; }
-      .hero { padding: 2rem 1rem 2rem; }
-      .container { padding: 1.25rem 1rem; }
-      .categories { padding: .75rem 1rem; }
-      .search-bar { padding: .75rem 1rem; }
-      .card-title { font-size: 1.35rem; }
-      .featured-title { font-size: 1.6rem; }
-    }
+    /* NEWSLETTER */
+    .newsletter-section { background: #0A0A0A; color: #fff; padding: 3rem 2rem; text-align: center; border-top: 4px solid #FFD400; }
+    .news-container { max-width: 500px; margin: 0 auto; }
+    .news-title { font-family: 'Bebas Neue',sans-serif; font-size: 2.2rem; letter-spacing: 1px; margin-bottom: .5rem; }
+    .news-title span { color: #FFD400; }
+    .news-text { color: #aaa; font-size: 14px; margin-bottom: 1.5rem; line-height: 1.5; }
+    .news-form { display: flex; flex-direction: column; gap: .75rem; }
+    .news-input { width: 100%; padding: 12px 16px; background: #111; border: 1.5px solid #222; color: #fff; font-family: 'DM Sans',sans-serif; font-size: 14px; outline: none; transition: border-color .2s; }
+    .news-input:focus { border-color: #FFD400; }
+    .news-btn { width: 100%; background: #FFD400; color: #000; border: none; padding: 12px; font-family: 'DM Sans',sans-serif; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: opacity .2s; }
+    .news-btn:hover { opacity: .9; }
+    .news-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .news-msg { margin-top: .75rem; font-size: 13px; display: none; }
+    .news-msg.success { color: #2ec4b6; display: block; }
+    .news-msg.error { color: #e71d36; display: block; }
+
+    /* EXIT POPUP */
+    .exit-popup { position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 1.25rem; backdrop-filter: blur(4px); }
+    .exit-content { background: #000; border: 2px solid #FFD400; width: 100%; max-width: 440px; padding: 2.5rem 2rem; text-align: center; position: relative; }
+    .exit-close { position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; color: #666; cursor: pointer; transition: color .2s; padding: 4px; display: flex; align-items: center; justify-content: center; }
+    .exit-close:hover { color: #fff; }
+    .exit-title { font-family: 'Bebas Neue',sans-serif; font-size: 2.8rem; line-height: 1; color: #fff; margin-bottom: .5rem; }
+    .exit-title span { color: #FFD400; }
+    .exit-p { color: #ccc; font-size: 14px; line-height: 1.5; margin-bottom: 1.5rem; }
+    .exit-box { background: #111; border: 1px dashed #FFD400; padding: 1rem; margin-bottom: 1.5rem; }
+    .exit-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: .25rem; }
+    .exit-coupon { font-family: 'Bebas Neue',sans-serif; font-size: 2rem; color: #FFD400; letter-spacing: 1px; }
+    .exit-btn { display: block; width: 100%; background: #FFD400; color: #000; text-decoration: none; font-family: 'DM Sans',sans-serif; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; text-align: center; padding: 12px; cursor: pointer; border: none; transition: background .2s; }
+    .exit-btn:hover { background: #fff; }
+    .exit-btn.copied { background: #2ec4b6 !important; color: #fff !important; }
+    .exit-link { display: inline-block; margin-top: 1rem; color: #888; font-size: 12px; text-decoration: none; }
+    .exit-link:hover { color: #FFD400; }
   </style>
 </head>
 <body>
@@ -510,22 +424,17 @@
   <p>Conteúdo especializado em suplementação, treino e alimentação para quem leva o físico a sério.</p>
 </section>
 
-<section class="produtos-section" id="produtosSec" style="display:none;">
-  <div class="produtos-header">
-    <h2>PRODUTOS EM <span>DESTAQUE</span></h2>
-    <a href="https://a2kfsuplementos.com.br" class="produtos-ver-mais" id="headerVerMais" target="_blank" rel="noopener">
-      Ver todos os produtos →
-    </a>
-  </div>
-  <div class="produtos-track-wrap">
-    <div class="produtos-track" id="produtosTrack">
-      </div>
-  </div>
-  <div class="produtos-nav" id="produtosNav">
-    <button class="produtos-nav-btn" id="prodPrev" onclick="prodSlide(-1)" aria-label="Anterior" disabled>←</button>
-    <button class="produtos-nav-btn" id="prodNext" onclick="prodSlide(1)" aria-label="Próximo">→</button>
-  </div>
-</section>
+<div class="carousel" id="topCarousel" style="display:none;">
+  <button class="carousel-btn carousel-btn-prev" onclick="moveSlide(-1)" aria-label="Slide Anterior">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <button class="carousel-btn carousel-btn-next" onclick="moveSlide(1)" aria-label="Próximo Slide">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+  </button>
+  <div class="carousel-track" id="carouselTrack"></div>
+  <div class="carousel-dots" id="carouselDots"></div>
+  <div class="carousel-progress" id="carouselProgress"></div>
+</div>
 
 <div class="search-bar">
   <input type="text" id="searchInput" placeholder="Pesquisar artigos por título ou tags..." />
@@ -546,11 +455,39 @@
 
   <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
     <button class="btn-load-more" id="btnLoadMore" onclick="loadMore()">
-      <span class="load-text">Carregar mais posts</span>
+      <span class="load-text">Carregar mais artigos</span>
       <div class="load-spinner"></div>
     </button>
   </div>
 </main>
+
+<section class="produtos-section" id="produtosSection" style="display:none;">
+  <div class="produtos-header">
+    <h2>MAIS <span>VENDIDOS</span></h2>
+    <a href="https://www.a2kfsuplementos.com.br" target="_blank" rel="noopener" class="produtos-ver-mais">
+      Ver todos os produtos →
+    </a>
+  </div>
+  <div class="produtos-track-wrap">
+    <div class="produtos-track" id="produtosTrack"></div>
+  </div>
+  <div class="produtos-nav">
+    <button class="produtos-nav-btn" id="prodPrev" onclick="prodSlide(-1)" aria-label="Anterior" disabled>←</button>
+    <button class="produtos-nav-btn" id="prodNext" onclick="prodSlide(1)" aria-label="Próximo">→</button>
+  </div>
+</section>
+
+<section class="newsletter-section">
+  <div class="news-container">
+    <h2 class="news-title">FIQUE POR <span>DENTRO</span></h2>
+    <p class="news-text">Receba conteúdos exclusivos sobre treinos, dieta e cupons especiais direto no seu e-mail.</p>
+    <form class="news-form" id="newsForm" onsubmit="handleNewsletter(event)">
+      <input type="email" id="newsEmail" class="news-input" placeholder="Seu e-mail principal" required />
+      <button type="submit" id="newsBtn" class="news-btn">Inscrever-se</button>
+    </form>
+    <div id="newsMsg" class="news-msg"></div>
+  </div>
+</section>
 
 <footer>
   <div class="footer-inner">
@@ -569,13 +506,37 @@
   </div>
 </footer>
 
+<div class="exit-popup" id="exitPopup">
+  <div class="exit-content">
+    <button class="exit-close" onclick="closeExitPopup()" aria-label="Fechar">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <h2 class="exit-title">NÃO VÁ <span>EMBORA!</span></h2>
+    <p class="exit-p">Garante 10% de desconto extra na sua primeira compra de suplementos na nossa loja oficial.</p>
+    <div class="exit-box">
+      <div class="exit-label">Seu cupom é:</div>
+      <div class="exit-coupon">PRIMEIRACOMPRA</div>
+    </div>
+    <button class="exit-btn" id="exitCopyBtn" onclick="copyCoupon()">Copiar Cupom e Ir para a Loja</button>
+    <a href="#" class="exit-link" onclick="closeExitPopup(); return false;">Continuar lendo o blog</a>
+  </div>
+</div>
+
 <script>
-  // Variáveis Globais de Controle de Postagens
   let allPosts = [];
   let filteredPosts = [];
+  let carouselPosts = [];
   let currentCategory = 'TODOS';
   let currentPage = 1;
   const postsPerPage = 7; 
+
+  // Variáveis do carrossel superior (artigos)
+  let currentSlideIdx = 0;
+  let carouselTimer = null;
+  const SLIDE_DURATION = 6000; 
+  let slideStartTime = 0;
+  let slidePausedTime = 0;
+  let slideRemaining = SLIDE_DURATION;
 
   // SUPABASE CONFIG (Preenchido em tempo de execução via Server)
   const SUPABASE_URL = "___SUPABASE_URL___";
@@ -592,6 +553,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     initBlog();
     initProductsCarousel();
+    initExitPopup();
   });
 
   async function initBlog() {
@@ -600,9 +562,7 @@
       if (!res.ok) throw new Error('Falha ao buscar posts');
       allPosts = await res.json();
       
-      // Ordenação cronológica descrescente
       allPosts.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-
       document.getElementById('loader').style.display = 'none';
 
       if (allPosts.length === 0) {
@@ -610,10 +570,15 @@
         return;
       }
 
+      // Filtra os posts marcados para o carrossel superior
+      carouselPosts = allPosts.filter(p => p.is_carousel === true);
+      if (carouselPosts.length > 0) {
+        buildTopCarousel();
+      }
+
       buildCategoriesMenu();
       applyFilters();
 
-      // Setup do buscador em tempo real
       document.getElementById('searchInput').addEventListener('input', () => {
         currentPage = 1;
         applyFilters();
@@ -624,6 +589,120 @@
       document.getElementById('loader').style.display = 'none';
       renderEmptyState("Ops! Ocorreu um erro ao carregar os dados. Tente novamente mais tarde.");
     }
+  }
+
+  // CARROSSEL SUPERIOR (ARTIGOS)
+  function buildTopCarousel() {
+    const track = document.getElementById('carouselTrack');
+    const dotsWrap = document.getElementById('carouselDots');
+    track.innerHTML = '';
+    dotsWrap.innerHTML = '';
+
+    carouselPosts.forEach((post, idx) => {
+      const slide = document.createElement('div');
+      slide.className = 'carousel-slide';
+      slide.onclick = () => window.location.href = `post.html?id=${post.id}`;
+      
+      slide.innerHTML = `
+        ${post.image_url ? `<img data-src="${post.image_url}" alt="${post.title}" />` : `<div class="carousel-placeholder">A2KF</div>`}
+        <div class="carousel-slide-overlay"></div>
+        <div class="carousel-slide-body">
+          ${post.category ? `<span class="carousel-cat">${post.category}</span>` : ''}
+          <h2 class="carousel-title">${post.title}</h2>
+          <p class="carousel-excerpt">${post.excerpt || ''}</p>
+          <div class="carousel-read">Ler Artigo</div>
+        </div>
+      `;
+      track.appendChild(slide);
+
+      const dot = document.createElement('button');
+      dot.className = `carousel-dot ${idx === 0 ? 'active' : ''}`;
+      dot.setAttribute('aria-label', `Ir para slide ${idx + 1}`);
+      dot.onclick = (e) => { e.stopPropagation(); gotoSlide(idx); };
+      dotsWrap.appendChild(dot);
+    });
+
+    document.getElementById('topCarousel').style.display = 'block';
+    
+    // Lazy load das imagens do carrossel superior
+    const carouselImgs = track.querySelectorAll('img[data-src]');
+    carouselImgs.forEach(img => {
+      img.src = img.getAttribute('data-src');
+      img.onload = () => img.classList.add('loaded');
+    });
+
+    // Eventos para pausar o carrossel ao passar o mouse
+    const topCarouselEl = document.getElementById('topCarousel');
+    topCarouselEl.addEventListener('mouseenter', pauseCarousel);
+    topCarouselEl.addEventListener('mouseleave', resumeCarousel);
+
+    startCarouselTimer(SLIDE_DURATION);
+  }
+
+  function startCarouselTimer(duration) {
+    clearTimeout(carouselTimer);
+    const progressEl = document.getElementById('carouselProgress');
+    progressEl.style.transition = 'none';
+    progressEl.style.width = '0%';
+    
+    setTimeout(() => {
+      progressEl.style.transition = `width ${duration}ms linear`;
+      progressEl.style.width = '100%';
+    }, 10);
+
+    slideStartTime = Date.now();
+    slideRemaining = duration;
+
+    carouselTimer = setTimeout(() => {
+      moveSlide(1);
+    }, duration);
+  }
+
+  function pauseCarousel() {
+    clearTimeout(carouselTimer);
+    const progressEl = document.getElementById('carouselProgress');
+    const computedStyle = window.getComputedStyle(progressEl);
+    const width = computedStyle.getPropertyValue('width');
+    const parentWidth = window.getComputedStyle(progressEl.parentElement).getPropertyValue('width');
+    const percent = (parseFloat(width) / parseFloat(parentWidth)) * 100;
+    
+    progressEl.style.transition = 'none';
+    progressEl.style.width = percent + '%';
+    
+    slidePausedTime = Date.now();
+    slideRemaining -= (slidePausedTime - slideStartTime);
+  }
+
+  function resumeCarousel() {
+    if (slideRemaining <= 0) slideRemaining = SLIDE_DURATION;
+    startCarouselTimer(slideRemaining);
+  }
+
+  function moveSlide(direction) {
+    if (carouselPosts.length === 0) return;
+    currentSlideIdx += direction;
+    if (currentSlideIdx >= carouselPosts.length) currentSlideIdx = 0;
+    if (currentSlideIdx < 0) currentSlideIdx = carouselPosts.length - 1;
+    
+    updateCarouselPosition();
+    startCarouselTimer(SLIDE_DURATION);
+  }
+
+  function gotoSlide(idx) {
+    currentSlideIdx = idx;
+    updateCarouselPosition();
+    startCarouselTimer(SLIDE_DURATION);
+  }
+
+  function updateCarouselPosition() {
+    const track = document.getElementById('carouselTrack');
+    track.style.transform = `translateX(-${currentSlideIdx * 100}%)`;
+    
+    const dots = document.querySelectorAll('.carousel-dot');
+    dots.forEach((dot, idx) => {
+      if (idx === currentSlideIdx) dot.classList.add('active');
+      else dot.classList.remove('active');
+    });
   }
 
   function buildCategoriesMenu() {
@@ -686,8 +765,6 @@
 
     const totalToRender = currentPage * postsPerPage;
     const chunk = filteredPosts.slice(0, totalToRender);
-
-    // Se houver postagens, a primeira vira destaque (Destaque apenas na primeira página sem buscas ativas)
     const hasDestaque = (currentCategory === 'TODOS' && !document.getElementById('searchInput').value.trim());
 
     chunk.forEach((post, idx) => {
@@ -698,19 +775,16 @@
       }
     });
 
-    // Animação controlada de entrada visual (Fade-in)
     setTimeout(() => {
       document.querySelectorAll('.post-card, .featured-card').forEach(el => el.classList.add('visible'));
     }, 50);
 
-    // Controle do botão de Paginação (Carregar Mais)
     if (filteredPosts.length > totalToRender) {
       document.getElementById('loadMoreWrap').style.display = 'block';
     } else {
       document.getElementById('loadMoreWrap').style.display = 'none';
     }
 
-    // Lazy load das imagens renderizadas no bloco atual
     lazyLoadImages();
   }
 
@@ -732,8 +806,6 @@
     a.className = 'featured-card';
     a.href = `post.html?id=${p.id}`;
     
-    const formattedDate = p.created_at ? new Date(p.created_at).toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric'}) : '';
-
     a.innerHTML = `
       <div class="featured-img-wrap">
         ${p.image_url ? `<img data-src="${p.image_url}" alt="${p.title}" />` : `<div class="carousel-placeholder">A2KF</div>`}
@@ -805,8 +877,8 @@
     imgs.forEach(i => observer.observe(i));
   }
 
-  // CARROSSEL DE PRODUTOS — INTEGRAÇÃO YAMPI COM PAGINAÇÃO POR BLOCO COMPLETO
-  let currentProdslide = 0; // Controla o bloco de produtos atual
+  // CARROSSEL DE PRODUTOS — LOGA YAMPI COM PAGINAÇÃO POR BLOCO COMPLETO
+  let currentProdslide = 0; 
 
   async function initProductsCarousel() {
     try {
@@ -842,9 +914,8 @@
         track.appendChild(card);
       });
 
-      document.getElementById('produtosSec').style.display = 'block';
+      document.getElementById('produtosSection').style.display = 'block';
       
-      // Sincroniza e inicializa os estados das setas e do container baseado na largura da tela
       setTimeout(() => {
         updateProdCarousel();
       }, 100);
@@ -860,21 +931,16 @@
     const cards = track.querySelectorAll('.produto-card');
     if (cards.length === 0) return;
 
-    // Define dinamicamente quantos produtos cabem inteiramente na tela do usuário
-    let itemsPerPage = 4; // Padrão Desktop
+    let itemsPerPage = 4; 
     if (window.innerWidth <= 768) {
-      itemsPerPage = 2; // Celulares e tablets pequenos mostram 2 itens por bloco
+      itemsPerPage = 2; 
     } else if (window.innerWidth <= 992) {
-      itemsPerPage = 3; // Tablets horizontais ou telas médias mostram 3 por bloco
+      itemsPerPage = 3; 
     }
 
-    // Calcula o total de blocos/páginas necessários para agrupar todos os cards
     const totalPages = Math.ceil(cards.length / itemsPerPage);
-
-    // Altera o índice avançando ou recuando o bloco inteiro de uma vez só
     currentProdslide += direction;
 
-    // Trava os limites geométricos para impedir rolagem vazia
     if (currentProdslide < 0) currentProdslide = 0;
     if (currentProdslide >= totalPages) currentProdslide = totalPages - 1;
 
@@ -890,14 +956,12 @@
       itemsPerPage = window.innerWidth <= 768 ? 2 : (window.innerWidth <= 992 ? 3 : 4);
     }
 
-    // Aplica o deslocamento matemático de 100% por bloco ajustando a proporção do gap estrutural
     if (currentProdslide === 0) {
       track.style.transform = `translateX(0px)`;
     } else {
       track.style.transform = `translateX(calc(-${currentProdslide * 100}% - ${currentProdslide}rem))`;
     }
 
-    // Desativa e altera a opacidade das setas de navegação nos limites do carrossel
     const totalPages = Math.ceil(cards.length / itemsPerPage);
     const prevBtn = document.getElementById('prodPrev');
     const nextBtn = document.getElementById('prodNext');
@@ -906,11 +970,99 @@
     if (nextBtn) nextBtn.disabled = (currentProdslide >= totalPages - 1 || totalPages <= 1);
   }
 
-  // Monitora redimensionamento de janela ou giro de celular para realinhar as posições dos blocos
   window.addEventListener('resize', () => {
     currentProdslide = 0; 
     updateProdCarousel();
   });
+
+  // CADASTRO NEWSLETTER
+  async function handleNewsletter(e) {
+    e.preventDefault();
+    const emailInput = document.getElementById('newsEmail');
+    const btn = document.getElementById('newsBtn');
+    const msg = document.getElementById('newsMsg');
+    
+    const email = emailInput.value.trim();
+    if(!email) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+    msg.className = 'news-msg';
+    msg.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      
+      if(res.ok) {
+        msg.textContent = data.message || 'Inscrição realizada com sucesso!';
+        msg.classList.add('success');
+        emailInput.value = '';
+      } else {
+        msg.textContent = data.error || 'Erro ao realizar inscrição.';
+        msg.classList.add('error');
+      }
+    } catch(err) {
+      console.error(err);
+      msg.textContent = 'Erro de conexão com o servidor.';
+      msg.classList.add('error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Inscrever-se';
+    }
+  }
+
+  // EXIT POPUP LOGIC
+  function initExitPopup() {
+    var POPUP_KEY = 'a2kf_exit_popup_shown';
+    var shown = false;
+
+    if (sessionStorage.getItem(POPUP_KEY)) return;
+
+    function showPopup() {
+      if (shown) return;
+      shown = true;
+      sessionStorage.setItem(POPUP_KEY, '1');
+      document.getElementById('exitPopup').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    document.addEventListener('mouseleave', function(e) {
+      if (e.clientY <= 10) showPopup();
+    });
+
+    var mobileTimer = setTimeout(function() {
+      if (/Mobi|Android/i.test(navigator.userAgent)) showPopup();
+    }, 40000);
+
+    window.closeExitPopup = function() {
+      document.getElementById('exitPopup').style.display = 'none';
+      document.body.style.overflow = '';
+      clearTimeout(mobileTimer);
+    };
+
+    window.copyCoupon = function() {
+      navigator.clipboard.writeText('PRIMEIRACOMPRA').then(function() {
+        var btn = document.getElementById('exitCopyBtn');
+        btn.textContent = '✓ COPIADO';
+        btn.classList.add('copied');
+        setTimeout(function() {
+          btn.textContent = 'COPIAR';
+          btn.classList.remove('copied');
+          window.open('https://a2kfsuplementos.com.br', '_blank');
+          closeExitPopup();
+        }, 1500);
+      });
+    };
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeExitPopup();
+    });
+  }
 </script>
 
 </body>
