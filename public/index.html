@@ -98,16 +98,29 @@
 
     /* CARROSSEL HERO */
     .carousel {
-      position: relative; overflow: hidden; background: var(--black);
+      position: relative;
+      overflow: hidden;
+      background: var(--black);
       height: 480px;
+      max-width: 100%;
+      width: 100%;
     }
     .carousel-track {
-      display: flex; height: 100%;
+      display: flex;
+      height: 100%;
+      width: 100%;
+      gap: 0;
       transition: transform .7s cubic-bezier(.77,0,.175,1);
+      will-change: transform;
     }
     .carousel-slide {
-      min-width: 100%; height: 100%; position: relative;
-      cursor: pointer; flex-shrink: 0;
+      flex: 0 0 100%;
+      width: 100%;
+      min-width: 0;
+      height: 100%;
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
     }
     .carousel-slide img {
       width: 100%; height: 100%; object-fit: cover; display: block;
@@ -930,7 +943,8 @@
 
   function goToSlide(index) {
     carouselIndex = index;
-    document.getElementById('carouselTrack').style.transform = `translateX(-${index * 100}%)`;
+    const slideW = document.getElementById('carousel').offsetWidth;
+    document.getElementById('carouselTrack').style.transform = `translateX(-${index * slideW}px)`;
     document.querySelectorAll('.carousel-dot').forEach((d, i) => d.classList.toggle('active', i === index));
     resetProgress();
   }
@@ -959,6 +973,8 @@
     const el = document.getElementById('carousel');
     el.addEventListener('mouseenter', () => { clearInterval(carouselTimer); carouselTimer = null; document.getElementById('carouselProgress').style.transition = 'none'; });
     el.addEventListener('mouseleave', (e) => { if (!el.contains(e.relatedTarget)) { restartTimer(); resetProgress(); } });
+    // Recalcula posição ao redimensionar (evita slide cortado no mobile)
+    window.addEventListener('resize', () => goToSlide(carouselIndex), { passive: true });
   }
 
   // ─── CARROSSEL DE PRODUTOS — BLOCOS ───────────────────────────────────────
