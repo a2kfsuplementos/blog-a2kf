@@ -241,15 +241,17 @@
     }
     .produtos-ver-mais:hover { opacity: .75; }
 
-    /* Viewport — mascara o overflow horizontal */
+    /* Viewport: overflow:hidden corta o 5o card que vazava */
     .produtos-viewport {
       max-width: 1200px;
       margin: 0 auto;
       padding: 0 1.5rem;
-      overflow: hidden;          /* ← esconde cards que saem do bloco */
+      overflow: hidden;
+      /* impede reflow pelo track */
+      isolation: isolate;
     }
 
-    /* Track — flex sem wrap para permitir slide */
+    /* Track */
     .produtos-track {
       display: flex;
       gap: 1rem;
@@ -257,11 +259,11 @@
       will-change: transform;
     }
 
-    /* Card — largura EXATA para 4 por bloco no desktop */
+    /* Card: largura definida via JS com CSS custom property --prod-card-w */
     .produto-card {
-      /* (100% - 3 gaps de 1rem) / 4 */
-      flex: 0 0 calc((100% - 3rem) / 4);
-      width: calc((100% - 3rem) / 4);
+      flex: 0 0 var(--prod-card-w, 23%);
+      width: var(--prod-card-w, 23%);
+      min-width: 0;
       background: #111;
       border: 1.5px solid #222;
       text-decoration: none;
@@ -971,10 +973,42 @@
     clearInterval(carouselTimer);
     carouselTimer = setInterval(() => goToSlide((carouselIndex + 1) % carouselItems.length), CAROUSEL_INTERVAL);
     const el = document.getElementById('carousel');
-    el.addEventListener('mouseenter', () => { clearInterval(carouselTimer); carouselTimer = null; document.getElementById('carouselProgress').style.transition = 'none'; });
-    el.addEventListener('mouseleave', (e) => { if (!el.contains(e.relatedTarget)) { restartTimer(); resetProgress(); } });
-    // Recalcula posição ao redimensionar (evita slide cortado no mobile)
+
+    // Pausa ao hover (desktop)
+    el.addEventListener('mouseenter', () => {
+      clearInterval(carouselTimer); carouselTimer = null;
+      document.getElementById('carouselProgress').style.transition = 'none';
+    });
+    el.addEventListener('mouseleave', (e) => {
+      if (!el.contains(e.relatedTarget)) { restartTimer(); resetProgress(); }
+    });
+
+    // Recalcula posição ao redimensionar
     window.addEventListener('resize', () => goToSlide(carouselIndex), { passive: true });
+
+    // ── SWIPE TOUCH — carrossel hero ────────────────────────────────────────
+    let _tx = 0, _ty = 0, _dragging = false;
+    const MIN_SWIPE = 40;
+
+    el.addEventListener('touchstart', (e) => {
+      _tx = e.touches[0].clientX;
+      _ty = e.touches[0].clientY;
+      _dragging = true;
+      // pausa o timer durante o toque
+      clearInterval(carouselTimer); carouselTimer = null;
+    }, { passive: true });
+
+    el.addEventListener('touchend', (e) => {
+      if (!_dragging) return;
+      _dragging = false;
+      const dx = e.changedTouches[0].clientX - _tx;
+      const dy = e.changedTouches[0].clientY - _ty;
+      if (Math.abs(dx) >= MIN_SWIPE && Math.abs(dx) > Math.abs(dy)) {
+        if (dx < 0) goToSlide((carouselIndex + 1) % carouselItems.length); // swipe left
+        else        goToSlide((carouselIndex - 1 + carouselItems.length) % carouselItems.length); // swipe right
+      }
+      restartTimer();
+    }, { passive: true });
   }
 
   // ─── CARROSSEL DE PRODUTOS — BLOCOS ───────────────────────────────────────
@@ -1048,14 +1082,24 @@
   }
 
   function applyProdSlide() {
-    const track = document.getElementById('produtosTrack');
-    const cards = track.querySelectorAll('.produto-card');
-    if (!cards.length) return;
+    const viewport = document.querySelector('.produtos-viewport');
+    const track    = document.getElementById('produtosTrack');
+    const cards    = track.querySelectorAll('.produto-card');
+    if (!cards.length || !viewport) return;
 
-    // Largura de um card + gap (1rem = 16px)
-    const cardW = cards[0].offsetWidth + 16;
-    const offset = prodCurrentPage * prodPerPage * cardW;
+    const GAP = 16; // 1rem
+    // Largura disponível no viewport (sem padding)
+    const vpW  = viewport.clientWidth - parseFloat(getComputedStyle(viewport).paddingLeft) * 2;
+    // Largura exata de cada card: (viewport - gaps entre os visíveis) / qtd por página
+    const cardW = (vpW - GAP * (prodPerPage - 1)) / prodPerPage;
 
+    // Aplica a largura como CSS custom property em todos os cards
+    cards.forEach(c => c.style.setProperty('--prod-card-w', cardW + 'px'));
+    // Força flex também
+    cards.forEach(c => { c.style.flex = `0 0 ${cardW}px`; c.style.width = cardW + 'px'; });
+
+    // Offset = página * cards por página * (largura do card + gap)
+    const offset = prodCurrentPage * prodPerPage * (cardW + GAP);
     track.style.transform = `translateX(-${offset}px)`;
 
     // Atualiza dots
@@ -1067,6 +1111,34 @@
     document.getElementById('prodPrev').disabled = prodCurrentPage === 0;
     document.getElementById('prodNext').disabled = prodCurrentPage >= prodTotalPages - 1;
   }
+
+  // ─── SWIPE TOUCH — carrossel de produtos ─────────────────────────────────
+  (function() {
+    let startX = 0, startY = 0, isDragging = false;
+    const MIN_SWIPE = 40; // px mínimos para considerar swipe
+
+    function onTouchStart(e) {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      isDragging = true;
+    }
+    function onTouchEnd(e) {
+      if (!isDragging) return;
+      isDragging = false;
+      const dx = e.changedTouches[0].clientX - startX;
+      const dy = e.changedTouches[0].clientY - startY;
+      // só processa se o movimento horizontal foi dominante
+      if (Math.abs(dx) < MIN_SWIPE || Math.abs(dy) > Math.abs(dx)) return;
+      if (dx < 0) prodSlide(1);   // swipe left → próximo
+      else        prodSlide(-1);  // swipe right → anterior
+    }
+
+    const vp = document.querySelector('.produtos-viewport');
+    if (vp) {
+      vp.addEventListener('touchstart', onTouchStart, { passive: true });
+      vp.addEventListener('touchend',   onTouchEnd,   { passive: true });
+    }
+  })();
 
   loadProdutos();
 
