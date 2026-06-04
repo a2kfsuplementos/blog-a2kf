@@ -577,11 +577,10 @@
     const title = document.getElementById('postTitle').value.trim();
     const scheduleCheck = document.getElementById('scheduleCheck').checked;
     const scheduledAtVal = document.getElementById('scheduledAt').value;
-
-    // scheduled_at só vai quando o checkbox estiver marcado, tiver data e não for publicação imediata
+ 
     const isScheduled = scheduleCheck && scheduledAtVal && publish !== true;
-
-    return {
+ 
+    const data = {
       title,
       slug: generateSlug(title),
       content: quill.root.innerHTML,
@@ -592,6 +591,13 @@
       scheduled_at: isScheduled ? new Date(scheduledAtVal).toISOString() : null,
       tags: currentTags.length ? currentTags : [],
     };
+ 
+    // Ao publicar imediatamente (não agendado), registra created_at como agora
+    if (publish === true && !isScheduled) {
+      data.created_at = new Date().toISOString(); // ← data de publicação real
+    }
+ 
+    return data;
   }
 
   async function savePost(publish) {
