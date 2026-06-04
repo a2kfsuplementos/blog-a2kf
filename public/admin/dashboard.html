@@ -336,16 +336,26 @@
   }
 
   async function togglePublish(id, current) {
-    const { error } = await _sb.from('posts').update({ published: !current }).eq('id', id);
+    // Ao publicar (current=false → nowPublished=true), define created_at como agora
+    const updateData = { published: !current };
+    if (!current) {
+      updateData.created_at = new Date().toISOString(); // ← data de publicação real
+    }
+ 
+    const { error } = await _sb.from('posts').update(updateData).eq('id', id);
     if (error) { showToast('Erro ao atualizar post.', 'error'); return; }
+ 
     const p = allPosts.find(x => x.id === id);
-    if (p) p.published = !current;
+    if (p) {
+      p.published = !current;
+      if (!current) p.created_at = updateData.created_at; // atualiza local também
+    }
     updateStats();
     renderTable(allPosts);
+ 
     const nowPublished = !current;
     showToast(current ? 'Post despublicado.' : 'Post publicado!', 'success');
-
-    // Notifica inscritos somente quando muda de rascunho → publicado
+ 
     if (nowPublished && p) {
       notifySubscribers(p);
     }
