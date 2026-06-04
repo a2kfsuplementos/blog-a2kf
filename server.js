@@ -121,33 +121,40 @@ async function checkScheduledPosts() {
   try {
     const now = new Date().toISOString();
     console.log(`[scheduler] Verificando posts agendados... (${now})`);
-
+ 
     const { data: posts, error } = await supabase
       .from('posts')
       .select('*')
       .eq('published', false)
       .not('scheduled_at', 'is', null)
       .lte('scheduled_at', now);
-
+ 
     if (error) { console.error('[scheduler] Erro na query:', error.message); return; }
     if (!posts || !posts.length) { console.log('[scheduler] Nenhum post para publicar.'); return; }
-
+ 
     console.log(`[scheduler] ${posts.length} post(s) para publicar.`);
-
+ 
     for (const post of posts) {
+      // Data de publicação = agora (momento em que o scheduler roda)
+      const publishedAt = new Date().toISOString();
+ 
       const { error: updateError } = await supabase
         .from('posts')
-        .update({ published: true, scheduled_at: null })
+        .update({
+          published: true,
+          scheduled_at: null,
+          created_at: publishedAt   // ← corrige a data exibida no post
+        })
         .eq('id', post.id);
-
+ 
       if (updateError) {
         console.error(`[scheduler] Erro ao publicar "${post.title}":`, updateError.message);
         continue;
       }
-
-      console.log(`[scheduler] ✓ Post publicado: "${post.title}"`);
-
-      // Notifica inscritos diretamente (sem fetch interno)
+ 
+      console.log(`[scheduler] ✓ Post publicado: "${post.title}" em ${publishedAt}`);
+ 
+      // Notifica inscritos
       try {
         await sendNewsletterNotification({
           postTitle: post.title,
