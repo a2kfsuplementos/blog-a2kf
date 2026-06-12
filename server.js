@@ -549,21 +549,17 @@ app.get('/post/:slug', async (req, res) => {
     .share-box{border-top:2px solid var(--border);margin-top:3rem;padding-top:2rem;}
     .share-box h4{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;margin-bottom:1rem;}
     /* REAÇÕES */
-    .reactions-box{border-top:2px solid var(--border);margin-top:3rem;padding-top:2rem;display:flex;flex-direction:column;align-items:center;gap:1rem;text-align:center;}
-    .reactions-label{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
-    .reactions-btns{display:flex;gap:1rem;}
-    .rx-btn{display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--gray);border:2px solid var(--border);border-radius:0;padding:14px 32px;cursor:pointer;transition:all .2s;min-width:110px;font-family:'DM Sans',sans-serif;}
-    .rx-btn:hover{border-color:#aaa;background:#eee;}
-    .rx-btn.voted-like{background:#fff8e1;border-color:var(--yellow);}
-    .rx-btn.voted-dislike{background:#fff0f0;border-color:#e53e3e;}
+    .reactions-box{border-top:1px solid var(--border);margin-top:2.5rem;padding-top:1.25rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+    .reactions-label{font-size:13px;color:var(--muted);white-space:nowrap;}
+    .reactions-btns{display:flex;gap:6px;}
+    .rx-btn{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border:1px solid var(--border);background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);border-radius:4px;transition:all .15s;}
+    .rx-btn:hover{border-color:#aaa;color:var(--black);background:var(--gray);}
+    .rx-btn.voted-like{border-color:#B8960A;background:#fffbe6;color:#7a6000;}
+    .rx-btn.voted-dislike{border-color:#c0392b;background:#fff5f5;color:#922b21;}
     .rx-btn:disabled{cursor:default;}
-    .rx-icon{font-size:26px;line-height:1;}
-    .rx-count{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;line-height:1;color:var(--black);}
-    .rx-text{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
-    .rx-bar-wrap{width:100%;max-width:240px;background:var(--border);height:5px;border-radius:99px;overflow:hidden;}
-    .rx-bar{height:100%;background:var(--yellow);border-radius:99px;transition:width .4s ease;}
+    .rx-num{font-size:13px;font-weight:700;}
+    .rx-divider{width:1px;height:14px;background:var(--border);}
     .rx-pct{font-size:12px;color:var(--muted);}
-    @media(max-width:480px){.rx-btn{padding:12px 22px;min-width:90px;}.reactions-btns{gap:.75rem;}}
     .share-btns{display:flex;gap:.75rem;flex-wrap:wrap;}
     .share-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;border:none;text-decoration:none;transition:opacity .2s;flex:1;min-width:110px;justify-content:center;}
     .share-btn:hover{opacity:.85;}
@@ -665,21 +661,17 @@ ${post.cover_url ? `
 
   <!-- REAÇÕES -->
   <div class="reactions-box" id="reactionsBox">
-    <p class="reactions-label">Este artigo foi útil?</p>
+    <span class="reactions-label">Foi útil?</span>
     <div class="reactions-btns">
       <button class="rx-btn" id="btnLike" onclick="sendReaction('like')" aria-label="Gostei">
-        <span class="rx-icon">👍</span>
-        <span class="rx-count" id="rxLikeCount">—</span>
-        <span class="rx-text">Gostei</span>
+        👍 <span class="rx-num" id="rxLikeCount">—</span>
       </button>
       <button class="rx-btn" id="btnDislike" onclick="sendReaction('dislike')" aria-label="Não gostei">
-        <span class="rx-icon">👎</span>
-        <span class="rx-count" id="rxDislikeCount">—</span>
-        <span class="rx-text">Não gostei</span>
+        👎 <span class="rx-num" id="rxDislikeCount">—</span>
       </button>
     </div>
-    <div class="rx-bar-wrap"><div class="rx-bar" id="rxBar" style="width:0%"></div></div>
-    <p class="rx-pct" id="rxPct"></p>
+    <span class="rx-divider"></span>
+    <span class="rx-pct" id="rxPct"></span>
   </div>
 
   <div class="share-box">
@@ -825,7 +817,6 @@ ${post.cover_url ? `
     document.getElementById('rxDislikeCount').textContent = dislikes;
     const total = likes + dislikes;
     const pct = total > 0 ? Math.round((likes / total) * 100) : 0;
-    document.getElementById('rxBar').style.width = pct + '%';
     document.getElementById('rxPct').textContent = total > 0 ? pct + '% acharam útil' : 'Seja o primeiro a avaliar!';
   }
 
