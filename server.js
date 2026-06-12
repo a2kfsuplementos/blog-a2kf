@@ -206,12 +206,23 @@ app.get('/api/produtos-destaque', async (req, res) => {
 
     const products = (parsed.data || []).map(p => {
       const skus = p.skus?.data || [];
-      const price = skus.length
-        ? Math.min(...skus.map(s => parseFloat(s.price_sale || s.price || 0)))
-        : 0;
+
+      // Preço original = price (sem desconto)
+      // Preço com desconto = price_sale (quando > 0), senão cai para price
       const originalPrice = skus.length
-        ? Math.min(...skus.map(s => parseFloat(s.price || 0)))
+        ? Math.min(...skus.map(s => parseFloat(s.price || 0)).filter(v => v > 0))
         : 0;
+
+      const salePrice = skus.length
+        ? Math.min(...skus.map(s => {
+            const sale = parseFloat(s.price_sale);
+            return (sale && sale > 0) ? sale : parseFloat(s.price || 0);
+          }).filter(v => v > 0))
+        : 0;
+
+      // Se price_sale existe e é menor que o original, mostra ambos
+      const hasDiscount = salePrice > 0 && salePrice < originalPrice;
+
       const images = p.images?.data || [];
       const image = images.length
         ? (images[0].thumb?.url || images[0].small?.url || images[0].large?.url || images[0].url || '')
@@ -219,10 +230,20 @@ app.get('/api/produtos-destaque', async (req, res) => {
       const productUrl = p.url?.startsWith('http')
         ? p.url
         : `https://www.a2kfsuplementos.com.br/${p.url || p.slug || p.id}`;
-      return { id: p.id, name: p.name, slug: p.slug || '', image, price, originalPrice, url: productUrl };
+
+      return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug || '',
+        image,
+        price: salePrice || originalPrice,         // preço exibido (com desconto se houver)
+        originalPrice: hasDiscount ? originalPrice : 0, // riscado só se há desconto real
+        url: productUrl,
+      };
     }).filter(p => p.name && p.price > 0);
 
-    res.set('Cache-Control', 'public, max-age=600');
+    // Cache curto (2 min) para preços sempre atualizados
+    res.set('Cache-Control', 'public, max-age=120');
     res.json({ success: true, products });
   } catch (e) {
     console.error('[yampi] Erro:', e.message);
