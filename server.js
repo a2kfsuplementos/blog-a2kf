@@ -1,5 +1,7 @@
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
+const sanitizeHtml = require('sanitize-html');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 const https = require('https');
 
@@ -19,8 +21,96 @@ const YAMPI_API_KEY = process.env.YAMPI_API_KEY || '';
 const YAMPI_TOKEN = process.env.YAMPI_TOKEN || '';
 const YAMPI_ALIAS = process.env.YAMPI_ALIAS || 'a2kf-suplementos2';
 
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ─── CRÍTICO 2: Escape HTML para interpolação segura no template ──────────────
+// Usado em todos os campos de post interpolados no HTML gerado pelo servidor.
+function esc(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+// ─── CRÍTICO 2: Sanitização do conteúdo HTML do Quill ────────────────────────
+// Permite apenas tags seguras; remove qualquer <script>, event handlers, etc.
+const ALLOWED_POST_TAGS = [
+  'h2', 'h3', 'h4', 'p', 'br',
+  'ul', 'ol', 'li',
+  'strong', 'em', 'u', 's', 'blockquote', 'pre', 'code',
+  'a', 'img',
+];
+const ALLOWED_POST_ATTRS = {
+  'a':   ['href', 'target', 'rel'],
+  'img': ['src', 'alt', 'width', 'height', 'loading'],
+};
+
+function sanitizePostContent(html) {
+  return sanitizeHtml(html, {
+    allowedTags: ALLOWED_POST_TAGS,
+    allowedAttributes: ALLOWED_POST_ATTRS,
+    allowedSchemes: ['https', 'http'],
+    // Força rel="noopener noreferrer" em todos os links externos
+    transformTags: {
+      'a': (tagName, attribs) => ({
+        tagName: 'a',
+        attribs: {
+          ...attribs,
+          rel: 'noopener noreferrer',
+          target: attribs.target || '_blank',
+        },
+      }),
+    },
+  });
+}
+
+// ─── CRÍTICO 3: Verifica sessão Supabase em rotas admin ──────────────────────
+// Extrai o Bearer token do header Authorization e valida no Supabase.
+async function requireAuth(req, res, next) {
+  const auth = req.headers['authorization'] || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Não autenticado.' });
+  }
+
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) {
+    return res.status(401).json({ error: 'Sessão inválida ou expirada.' });
+  }
+
+  req.user = user;
+  next();
+}
+
+// ─── RATE LIMITING ────────────────────────────────────────────────────────────
+const newsletterLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  message: { error: 'Muitas tentativas. Aguarde 1 minuto.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const notifyLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 10,
+  message: { error: 'Limite de notificações atingido.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const reactionLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  message: { error: 'Muitas requisições.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // ─── FUNÇÃO REUTILIZÁVEL DE NOTIFICAÇÃO ──────────────────────────────────────
 async function sendNewsletterNotification({ postTitle, postSlug, postExcerpt, postCategory, coverUrl }) {
@@ -114,39 +204,33 @@ async function sendNewsletterNotification({ postTitle, postSlug, postExcerpt, po
 async function checkScheduledPosts() {
   try {
     const now = new Date().toISOString();
-    console.log(`[scheduler] Verificando posts agendados... (${now})`);
 
     const { data: posts, error } = await supabase
       .from('posts')
-      .select('*')
+      .select('id,title,slug,excerpt,category,cover_url')
       .eq('published', false)
       .not('scheduled_at', 'is', null)
       .lte('scheduled_at', now);
 
     if (error) { console.error('[scheduler] Erro na query:', error.message); return; }
-    if (!posts || !posts.length) { console.log('[scheduler] Nenhum post para publicar.'); return; }
+    if (!posts || !posts.length) return;
 
     console.log(`[scheduler] ${posts.length} post(s) para publicar.`);
 
     for (const post of posts) {
-      // ── CORREÇÃO: created_at recebe a data/hora real de publicação ──
       const publishedAt = new Date().toISOString();
 
       const { error: updateError } = await supabase
         .from('posts')
-        .update({
-          published: true,
-          scheduled_at: null,
-          created_at: publishedAt   // ← data exibida no post = data de publicação
-        })
+        .update({ published: true, scheduled_at: null, created_at: publishedAt })
         .eq('id', post.id);
 
       if (updateError) {
-        console.error(`[scheduler] Erro ao publicar "${post.title}":`, updateError.message);
+        console.error(`[scheduler] Erro ao publicar post id=${post.id}:`, updateError.message);
         continue;
       }
 
-      console.log(`[scheduler] ✓ Post publicado: "${post.title}" em ${publishedAt}`);
+      console.log(`[scheduler] ✓ Post publicado id=${post.id}`);
 
       try {
         await sendNewsletterNotification({
@@ -156,7 +240,6 @@ async function checkScheduledPosts() {
           postCategory: post.category || '',
           coverUrl: post.cover_url || '',
         });
-        console.log(`[scheduler] ✓ Inscritos notificados para: "${post.title}"`);
       } catch (e) {
         console.error(`[scheduler] Erro ao notificar inscritos:`, e.message);
       }
@@ -195,10 +278,7 @@ app.get('/api/produtos-destaque', async (req, res) => {
       r.end();
     });
 
-    console.log(`[yampi] Status: ${result.status}`);
-
     if (result.status !== 200) {
-      console.error('[yampi] Erro:', result.body.substring(0, 300));
       return res.status(502).json({ error: 'Erro ao buscar produtos.' });
     }
 
@@ -206,23 +286,16 @@ app.get('/api/produtos-destaque', async (req, res) => {
 
     const products = (parsed.data || []).map(p => {
       const skus = p.skus?.data || [];
-
-      // Preço original = price (sem desconto)
-      // Preço com desconto = price_sale (quando > 0), senão cai para price
       const originalPrice = skus.length
         ? Math.min(...skus.map(s => parseFloat(s.price || 0)).filter(v => v > 0))
         : 0;
-
       const salePrice = skus.length
         ? Math.min(...skus.map(s => {
             const sale = parseFloat(s.price_sale);
             return (sale && sale > 0) ? sale : parseFloat(s.price || 0);
           }).filter(v => v > 0))
         : 0;
-
-      // Se price_sale existe e é menor que o original, mostra ambos
       const hasDiscount = salePrice > 0 && salePrice < originalPrice;
-
       const images = p.images?.data || [];
       const image = images.length
         ? (images[0].thumb?.url || images[0].small?.url || images[0].large?.url || images[0].url || '')
@@ -236,13 +309,12 @@ app.get('/api/produtos-destaque', async (req, res) => {
         name: p.name,
         slug: p.slug || '',
         image,
-        price: salePrice || originalPrice,         // preço exibido (com desconto se houver)
-        originalPrice: hasDiscount ? originalPrice : 0, // riscado só se há desconto real
+        price: salePrice || originalPrice,
+        originalPrice: hasDiscount ? originalPrice : 0,
         url: productUrl,
       };
     }).filter(p => p.name && p.price > 0);
 
-    // Cache curto (2 min) para preços sempre atualizados
     res.set('Cache-Control', 'public, max-age=120');
     res.json({ success: true, products });
   } catch (e) {
@@ -251,16 +323,67 @@ app.get('/api/produtos-destaque', async (req, res) => {
   }
 });
 
-// ─── GROQ KEY ────────────────────────────────────────────────────────────────
-app.get('/api/groq-key', (req, res) => {
+// ─── CRÍTICO 1: Groq — proxy autenticado (chave NUNCA vai ao cliente) ────────
+// O frontend envia o Bearer token do Supabase; o servidor valida a sessão
+// e faz a chamada à Groq internamente, devolvendo apenas o resultado.
+app.post('/api/groq-generate', requireAuth, async (req, res) => {
   if (!GROQ_API_KEY) return res.status(503).json({ error: 'GROQ_API_KEY não configurada.' });
-  res.json({ key: GROQ_API_KEY });
+
+  const { prompt } = req.body;
+  if (!prompt || typeof prompt !== 'string' || prompt.length > 4000) {
+    return res.status(400).json({ error: 'Prompt inválido.' });
+  }
+
+  try {
+    const payload = JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+      max_tokens: 4096,
+    });
+
+    const result = await new Promise((resolve, reject) => {
+      const opts = {
+        hostname: 'api.groq.com',
+        path: '/openai/v1/chat/completions',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${GROQ_API_KEY}`,
+          'Content-Length': Buffer.byteLength(payload),
+        },
+      };
+      const r = https.request(opts, (response) => {
+        let data = '';
+        response.on('data', chunk => data += chunk);
+        response.on('end', () => resolve({ status: response.statusCode, body: data }));
+      });
+      r.on('error', reject);
+      r.write(payload);
+      r.end();
+    });
+
+    if (result.status !== 200) {
+      const err = JSON.parse(result.body || '{}');
+      return res.status(502).json({ error: err.error?.message || 'Erro na API Groq.' });
+    }
+
+    const data = JSON.parse(result.body);
+    // Devolve apenas o conteúdo gerado, nunca a chave ou metadados internos
+    res.json({ success: true, content: data.choices[0].message.content });
+  } catch (e) {
+    console.error('[groq] Erro:', e.message);
+    res.status(500).json({ error: 'Erro interno.' });
+  }
 });
 
+// Rota legada removida — /api/groq-key não existe mais.
+// Qualquer chamada para ela retorna 404 padrão.
+
 // ─── NEWSLETTER (Brevo) ──────────────────────────────────────────────────────
-app.post('/api/newsletter', async (req, res) => {
+app.post('/api/newsletter', newsletterLimiter, async (req, res) => {
   const { email } = req.body;
-  if (!email || !email.includes('@')) {
+  if (!email || typeof email !== 'string' || !email.includes('@') || email.length > 254) {
     return res.status(400).json({ error: 'Email inválido.' });
   }
 
@@ -300,119 +423,49 @@ app.post('/api/newsletter', async (req, res) => {
     if (parsed.code === 'duplicate_parameter') {
       return res.json({ success: true, already: true });
     }
-    console.error('Brevo error:', result.status, result.body);
     return res.status(500).json({ error: 'Erro ao cadastrar.' });
   } catch (e) {
-    console.error('Newsletter error:', e);
+    console.error('[newsletter] Erro:', e.message);
     return res.status(500).json({ error: 'Erro interno.' });
   }
 });
 
-// ─── NOTIFICAR INSCRITOS ─────────────────────────────────────────────────────
-app.post('/api/notify-subscribers', async (req, res) => {
+// ─── CRÍTICO 3: Notificar inscritos — requer autenticação ────────────────────
+app.post('/api/notify-subscribers', requireAuth, notifyLimiter, async (req, res) => {
   const { postTitle, postSlug, postExcerpt, postCategory, coverUrl } = req.body;
 
   if (!postTitle || !postSlug) {
     return res.status(400).json({ error: 'postTitle e postSlug são obrigatórios.' });
   }
 
-  const postUrl = `${SITE_URL}/post/${postSlug}`;
-  const categoryLabel = postCategory ? `<span style="background:#FFD400;color:#000;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:3px 10px;font-family:sans-serif;">${postCategory}</span>` : '';
-  const coverHtml = coverUrl ? `<img src="${coverUrl}" alt="${postTitle}" style="width:100%;max-height:300px;object-fit:cover;display:block;margin-bottom:0;" />` : '';
-  const excerptHtml = postExcerpt ? `<p style="color:#555;font-size:15px;line-height:1.7;margin:0 0 1.5rem;">${postExcerpt}</p>` : '';
+  // Valida que o post realmente existe e pertence ao banco (evita notificações fantasmas)
+  const { data: post, error: postError } = await supabase
+    .from('posts')
+    .select('id')
+    .eq('slug', postSlug)
+    .eq('published', true)
+    .single();
 
-  const htmlContent = `
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/></head>
-<body style="margin:0;padding:0;background:#f4f4f2;font-family:Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f2;padding:32px 16px;">
-    <tr><td align="center">
-      <table width="100%" style="max-width:600px;background:#fff;border-top:4px solid #FFD400;">
-        <tr><td style="background:#0A0A0A;padding:20px 32px;border-bottom:3px solid #FFD400;text-align:center;">
-          <img src="https://blog.a2kfsuplementos.com.br/logo.png" alt="A2KF Suplementos" style="height:60px;width:auto;" />
-        </td></tr>
-        ${coverHtml ? `<tr><td style="padding:0;">${coverHtml}</td></tr>` : ''}
-        <tr><td style="padding:32px;">
-          <p style="color:#888;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;">Novo artigo publicado</p>
-          ${categoryLabel ? `<div style="margin-bottom:16px;">${categoryLabel}</div>` : ''}
-          <h1 style="font-family:Arial,sans-serif;font-size:28px;font-weight:900;color:#0A0A0A;line-height:1.1;margin:0 0 16px;">${postTitle}</h1>
-          ${excerptHtml}
-          <a href="${postUrl}" style="display:inline-block;background:#FFD400;color:#000;font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;padding:14px 28px;text-decoration:none;margin-bottom:32px;">Ler artigo completo →</a>
-          <hr style="border:none;border-top:1px solid #e5e5e0;margin:24px 0;" />
-          <p style="color:#aaa;font-size:12px;line-height:1.6;margin:0;">Você está recebendo este email porque se inscreveu na newsletter da A2KF Suplementos.</p>
-        </td></tr>
-        <tr><td style="background:#0A0A0A;padding:20px 32px;text-align:center;">
-          <p style="color:#444;font-size:11px;margin:0;">© 2026 <span style="color:#FFD400;">A2KF Suplementos</span> · Todos os direitos reservados</p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body></html>`;
+  if (postError || !post) {
+    return res.status(404).json({ error: 'Post não encontrado ou não publicado.' });
+  }
 
-  let contacts = [];
   try {
-    const listRes = await new Promise((resolve, reject) => {
-      const opts = {
-        hostname: 'api.brevo.com',
-        path: `/v3/contacts/lists/${BREVO_LIST_ID}/contacts?limit=500&offset=0`,
-        method: 'GET',
-        headers: { 'api-key': BREVO_API_KEY, 'Accept': 'application/json' },
-      };
-      const r = https.request(opts, (response) => {
-        let data = '';
-        response.on('data', chunk => data += chunk);
-        response.on('end', () => resolve({ status: response.statusCode, body: data }));
-      });
-      r.on('error', reject);
-      r.end();
-    });
-    const parsed = JSON.parse(listRes.body || '{}');
-    contacts = (parsed.contacts || []).filter(c => c.email && !c.emailBlacklisted);
+    const result = await sendNewsletterNotification({ postTitle, postSlug, postExcerpt, postCategory, coverUrl });
+    return res.json({ success: true, ...result });
   } catch (e) {
-    return res.status(500).json({ error: 'Erro ao buscar inscritos.' });
+    console.error('[notify] Erro:', e.message);
+    return res.status(500).json({ error: 'Erro ao notificar inscritos.' });
   }
-
-  if (!contacts.length) return res.json({ success: true, sent: 0 });
-
-  let sent = 0, errors = 0;
-  const BATCH_SIZE = 10;
-  for (let i = 0; i < contacts.length; i += BATCH_SIZE) {
-    const batch = contacts.slice(i, i + BATCH_SIZE);
-    await Promise.all(batch.map(async (contact) => {
-      const payload = JSON.stringify({
-        sender: { name: 'A2KF Suplementos', email: 'no-reply@a2kfsuplementos.com.br' },
-        to: [{ email: contact.email }],
-        subject: `📢 Novo artigo: ${postTitle}`,
-        htmlContent,
-      });
-      try {
-        const result = await new Promise((resolve, reject) => {
-          const opts = {
-            hostname: 'api.brevo.com',
-            path: '/v3/smtp/email',
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'api-key': BREVO_API_KEY, 'Content-Length': Buffer.byteLength(payload) },
-          };
-          const r = https.request(opts, (response) => {
-            let data = '';
-            response.on('data', chunk => data += chunk);
-            response.on('end', () => resolve({ status: response.statusCode }));
-          });
-          r.on('error', reject);
-          r.write(payload);
-          r.end();
-        });
-        if (result.status === 201) sent++; else errors++;
-      } catch { errors++; }
-    }));
-  }
-
-  return res.json({ success: true, sent, errors });
 });
 
 // ─── REAÇÕES ─────────────────────────────────────────────────────────────────
-// GET /api/reactions/:slug — retorna contagem de likes e dislikes
-app.get('/api/reactions/:slug', async (req, res) => {
+app.get('/api/reactions/:slug', reactionLimiter, async (req, res) => {
   const { slug } = req.params;
+  // Valida formato do slug para evitar injeção
+  if (!/^[a-z0-9-]{1,100}$/.test(slug)) {
+    return res.status(400).json({ error: 'Slug inválido.' });
+  }
   try {
     const { data, error } = await supabase
       .from('reactions')
@@ -429,11 +482,10 @@ app.get('/api/reactions/:slug', async (req, res) => {
   }
 });
 
-// POST /api/reactions — registra uma reação
-app.post('/api/reactions', async (req, res) => {
+app.post('/api/reactions', reactionLimiter, async (req, res) => {
   const { slug, type } = req.body;
-  if (!slug || !['like', 'dislike'].includes(type)) {
-    return res.status(400).json({ error: 'slug e type (like|dislike) são obrigatórios.' });
+  if (!slug || !/^[a-z0-9-]{1,100}$/.test(slug) || !['like', 'dislike'].includes(type)) {
+    return res.status(400).json({ error: 'Parâmetros inválidos.' });
   }
   try {
     const { error } = await supabase
@@ -452,67 +504,81 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ─── POST PAGE ───────────────────────────────────────────────────────────────
+// ─── CRÍTICO 2: POST PAGE — escape + sanitização aplicados ───────────────────
 app.get('/post/:slug', async (req, res) => {
-  const { slug } = req.params;
+  const rawSlug = req.params.slug;
+
+  // Valida formato do slug antes de consultar o banco
+  if (!/^[a-z0-9-]{1,100}$/.test(rawSlug)) {
+    return res.status(404).send(notFoundPage());
+  }
 
   const { data: post, error } = await supabase
     .from('posts')
     .select('*')
-    .eq('slug', slug)
+    .eq('slug', rawSlug)
     .eq('published', true)
     .single();
 
   if (error || !post) return res.status(404).send(notFoundPage());
 
-  supabase.rpc('increment_views', { post_slug: slug }).then(() => {}).catch(() => {});
+  supabase.rpc('increment_views', { post_slug: rawSlug }).then(() => {}).catch(() => {});
   const views = (post.views || 0) + 1;
 
-  const plainText = (post.content || '').replace(/<[^>]*>/g, '').trim();
+  // ── CRÍTICO 2: sanitiza o HTML do conteúdo antes de renderizar ──
+  const safeContent = sanitizePostContent(post.content || '');
+
+  const plainText = safeContent.replace(/<[^>]*>/g, '').trim();
   const wordCount = plainText.split(/\s+/).filter(Boolean).length;
   const readMins = Math.max(1, Math.round(wordCount / 200));
   const readingTime = readMins === 1 ? '1 min de leitura' : readMins + ' min de leitura';
 
-  const excerpt = post.excerpt || post.title;
+  // ── CRÍTICO 2: todos os campos de post escapados antes de interpolar ──
+  const safeTitle    = esc(post.title);
+  const safeExcerpt  = esc(post.excerpt || post.title);
+  const safeCategory = esc(post.category || '');
+  const safeCoverUrl = esc(post.cover_url || '');
+  const safeSlug     = esc(rawSlug);
+  const safeDate     = new Date(post.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+
   const image = post.cover_url || `${SITE_URL}/logo.png`;
-  const url = `${SITE_URL}/post/${slug}`;
-  const date = new Date(post.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  const url = `${SITE_URL}/post/${safeSlug}`;
 
   res.send(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${post.title} – A2KF Suplementos</title>
-  <meta name="description" content="${excerpt}" />
+  <title>${safeTitle} – A2KF Suplementos</title>
+  <meta name="description" content="${safeExcerpt}" />
   <meta property="og:type" content="article" />
-  <meta property="og:title" content="${post.title}" />
-  <meta property="og:description" content="${excerpt}" />
-  <meta property="og:image" content="${image}" />
+  <meta property="og:title" content="${safeTitle}" />
+  <meta property="og:description" content="${safeExcerpt}" />
+  <meta property="og:image" content="${safeCoverUrl || esc(image)}" />
   <meta property="og:url" content="${url}" />
   <meta property="og:site_name" content="A2KF Suplementos" />
-  <meta property="article:published_time" content="${post.created_at}" />
+  <meta property="article:published_time" content="${esc(post.created_at)}" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="${post.title}" />
-  <meta name="twitter:description" content="${excerpt}" />
-  <meta name="twitter:image" content="${image}" />
+  <meta name="twitter:title" content="${safeTitle}" />
+  <meta name="twitter:description" content="${safeExcerpt}" />
+  <meta name="twitter:image" content="${safeCoverUrl || esc(image)}" />
   <link rel="canonical" href="${url}" />
   <link rel="icon" type="image/png" href="/logo.png" />
   <script type="application/ld+json">
-  {
+  ${JSON.stringify({
     "@context": "https://schema.org",
     "@type": "BlogPosting",
-    "headline": "${post.title.replace(/"/g, '\\"')}",
-    "description": "${(post.excerpt || post.title).replace(/"/g, '\\"')}",
-    "image": "${image}",
-    "datePublished": "${new Date(post.created_at).toISOString()}",
-    "dateModified": "${new Date(post.updated_at || post.created_at).toISOString()}",
-    "mainEntityOfPage": { "@type": "WebPage", "@id": "${url}" },
+    "headline": post.title,
+    "description": post.excerpt || post.title,
+    "image": image,
+    "datePublished": new Date(post.created_at).toISOString(),
+    "dateModified": new Date(post.updated_at || post.created_at).toISOString(),
+    "mainEntityOfPage": { "@type": "WebPage", "@id": url },
     "author": { "@type": "Organization", "name": "A2KF Suplementos", "url": "https://a2kfsuplementos.com.br" },
-    "publisher": { "@type": "Organization", "name": "A2KF Suplementos", "logo": { "@type": "ImageObject", "url": "${SITE_URL}/logo.png", "width": 200, "height": 200 } }
-    ${post.category ? `,"articleSection": "${post.category}"` : ''}
-    ${post.cover_url ? `,"thumbnailUrl": "${post.cover_url}"` : ''}
-  }
+    "publisher": { "@type": "Organization", "name": "A2KF Suplementos", "logo": { "@type": "ImageObject", "url": `${SITE_URL}/logo.png`, "width": 200, "height": 200 } },
+    ...(post.category && { "articleSection": post.category }),
+    ...(post.cover_url && { "thumbnailUrl": post.cover_url }),
+  })}
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-TN3RMJHTKX"></script>
@@ -569,7 +635,6 @@ app.get('/post/:slug', async (req, res) => {
     .newsletter-msg{margin-top:1rem;font-size:13px;min-height:20px;}
     .share-box{border-top:2px solid var(--border);margin-top:3rem;padding-top:2rem;}
     .share-box h4{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;margin-bottom:1rem;}
-    /* REAÇÕES */
     .reactions-box{border-top:1px solid var(--border);margin-top:2.5rem;padding-top:1.25rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
     .reactions-label{font-size:13px;color:var(--muted);white-space:nowrap;}
     .reactions-btns{display:flex;gap:6px;}
@@ -653,7 +718,7 @@ app.get('/post/:slug', async (req, res) => {
 
 ${post.cover_url ? `
 <div class="post-cover-wrap" id="cover-wrap">
-  <img src="${post.cover_url}" class="post-cover" alt="${post.title}" loading="eager" width="1200" height="480"
+  <img src="${safeCoverUrl}" class="post-cover" alt="${safeTitle}" loading="eager" width="1200" height="480"
     onload="this.classList.add('loaded');this.parentElement.classList.add('loaded')"
     onerror="this.parentElement.style.display='none'" />
 </div>` : ''}
@@ -661,8 +726,8 @@ ${post.cover_url ? `
 <div class="post-hero">
   <div class="post-hero-inner">
     <div class="post-meta">
-      ${post.category ? `<span class="post-category">${post.category}</span>` : ''}
-      <span class="post-date">${date}</span>
+      ${safeCategory ? `<span class="post-category">${safeCategory}</span>` : ''}
+      <span class="post-date">${safeDate}</span>
       <span class="post-read-time">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         ${readingTime}
@@ -672,15 +737,14 @@ ${post.cover_url ? `
         ${views.toLocaleString('pt-BR')} visualizações
       </span>
     </div>
-    <h1 class="post-title">${post.title}</h1>
-    ${post.excerpt ? `<p class="post-excerpt">${post.excerpt}</p>` : ''}
+    <h1 class="post-title">${safeTitle}</h1>
+    ${post.excerpt ? `<p class="post-excerpt">${safeExcerpt}</p>` : ''}
   </div>
 </div>
 
 <div class="post-body">
-  ${post.content || ''}
+  ${safeContent}
 
-  <!-- REAÇÕES -->
   <div class="reactions-box" id="reactionsBox">
     <span class="reactions-label">Foi útil?</span>
     <div class="reactions-btns">
@@ -698,15 +762,15 @@ ${post.cover_url ? `
   <div class="share-box">
     <h4>GOSTOU? COMPARTILHE!</h4>
     <div class="share-btns">
-      <a class="share-btn share-btn-wpp" href="https://wa.me/?text=${encodeURIComponent(post.title + ' - ' + url)}" target="_blank">
+      <a class="share-btn share-btn-wpp" href="https://wa.me/?text=${encodeURIComponent(post.title + ' - ' + url)}" target="_blank" rel="noopener noreferrer">
         <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.134.558 4.133 1.535 5.865L.057 23.535a.75.75 0 00.908.908l5.67-1.478A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.92 0-3.72-.504-5.27-1.385l-.378-.219-3.924 1.022 1.022-3.924-.219-.378A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
         WhatsApp
       </a>
-      <a class="share-btn share-btn-fb" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}" target="_blank">
+      <a class="share-btn share-btn-fb" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}" target="_blank" rel="noopener noreferrer">
         <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
         Facebook
       </a>
-      <a class="share-btn share-btn-ig" href="https://www.instagram.com/a2kfsuplementos" target="_blank">
+      <a class="share-btn share-btn-ig" href="https://www.instagram.com/a2kfsuplementos" target="_blank" rel="noopener noreferrer">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
         Instagram
       </a>
@@ -722,7 +786,7 @@ ${post.cover_url ? `
       <h3>ENCONTRE OS MELHORES SUPLEMENTOS</h3>
       <p>Qualidade garantida, preço justo e entrega rápida para todo o Brasil.</p>
     </div>
-    <a href="https://a2kfsuplementos.com.br" target="_blank" style="background:#000;color:#FFD400;padding:12px 28px;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:1px;text-decoration:none;display:inline-block;">VISITAR LOJA →</a>
+    <a href="https://a2kfsuplementos.com.br" target="_blank" rel="noopener noreferrer" style="background:#000;color:#FFD400;padding:12px 28px;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:1px;text-decoration:none;display:inline-block;">VISITAR LOJA →</a>
   </div>
 
   <div class="newsletter-box">
@@ -774,7 +838,7 @@ ${post.cover_url ? `
     } catch { msg.style.color='#ff8888'; msg.textContent='Erro de conexão.'; }
   }
   async function loadRelated() {
-    const { data } = await _sb.from('posts').select('id,title,slug,category,cover_url').eq('published',true).neq('slug','${slug}').eq('category','${post.category || ''}').limit(3);
+    const { data } = await _sb.from('posts').select('id,title,slug,category,cover_url').eq('published',true).neq('slug','${safeSlug}').eq('category','${safeCategory}').limit(3);
     const grid = document.getElementById('relatedGrid');
     if (!data || !data.length) { document.getElementById('related').style.display='none'; return; }
     grid.innerHTML = data.map(p => \`
@@ -794,13 +858,10 @@ ${post.cover_url ? `
       setTimeout(() => { btn.textContent='Copiar Link'; btn.classList.remove('copied'); }, 2500);
     });
   }
-
-  // ── REAÇÕES ────────────────────────────────────────────────
-  const RX_KEY = 'a2kf_rx_${slug}';
-
+  const RX_KEY = 'a2kf_rx_${safeSlug}';
   async function loadReactions() {
     try {
-      const res = await fetch('/api/reactions/${slug}');
+      const res = await fetch('/api/reactions/${safeSlug}');
       const data = await res.json();
       if (!data.success) return;
       updateReactionUI(data.likes, data.dislikes);
@@ -810,29 +871,21 @@ ${post.cover_url ? `
         document.getElementById('btnLike').disabled = true;
         document.getElementById('btnDislike').disabled = true;
       }
-    } catch(e) { console.log('[reactions] erro ao carregar:', e.message); }
+    } catch(e) {}
   }
-
   async function sendReaction(type) {
-    if (localStorage.getItem(RX_KEY)) return; // já votou
+    if (localStorage.getItem(RX_KEY)) return;
     localStorage.setItem(RX_KEY, type);
-    // feedback imediato
     document.getElementById('btn' + (type === 'like' ? 'Like' : 'Dislike')).classList.add('voted-' + type);
     document.getElementById('btnLike').disabled = true;
     document.getElementById('btnDislike').disabled = true;
     try {
-      await fetch('/api/reactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug: '${slug}', type })
-      });
-      // recarrega contagem atualizada
-      const res = await fetch('/api/reactions/${slug}');
+      await fetch('/api/reactions', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ slug:'${safeSlug}', type }) });
+      const res = await fetch('/api/reactions/${safeSlug}');
       const data = await res.json();
       if (data.success) updateReactionUI(data.likes, data.dislikes);
-    } catch(e) { console.log('[reactions] erro ao votar:', e.message); }
+    } catch(e) {}
   }
-
   function updateReactionUI(likes, dislikes) {
     document.getElementById('rxLikeCount').textContent = likes;
     document.getElementById('rxDislikeCount').textContent = dislikes;
@@ -840,7 +893,6 @@ ${post.cover_url ? `
     const pct = total > 0 ? Math.round((likes / total) * 100) : 0;
     document.getElementById('rxPct').textContent = total > 0 ? pct + '% acharam útil' : 'Seja o primeiro a avaliar!';
   }
-
   loadRelated();
   loadReactions();
   (function(){
@@ -891,59 +943,6 @@ ${post.cover_url ? `
   function hideBanner(){var b=document.getElementById('cookieBanner');b.style.transition='transform .3s ease,opacity .3s ease';b.style.transform='translateY(100%)';b.style.opacity='0';setTimeout(function(){b.style.display='none';},320);}
 </script>
 
-<!-- EXIT INTENT POPUP -->
-<div id="exitPopup" aria-modal="true" role="dialog" style="display:none;">
-  <div class="exit-overlay" onclick="closeExitPopup()"></div>
-  <div class="exit-box">
-    <button class="exit-close" onclick="closeExitPopup()">&times;</button>
-    <div class="exit-badge">OFERTA EXCLUSIVA</div>
-    <div class="exit-top"><img src="/logo.png" alt="A2KF" class="exit-logo" /></div>
-    <h2 class="exit-title">ESPERA!<br/>NÃO VÁ EMBORA<br/><span>SEM ESSE DESCONTO</span></h2>
-    <p class="exit-sub">Na sua primeira compra na loja A2KF Suplementos, use o cupom abaixo e ganhe:</p>
-    <div class="exit-discount">10% OFF</div>
-    <div class="exit-coupon-wrap">
-      <span class="exit-coupon-label">SEU CUPOM</span>
-      <div class="exit-coupon-row"><span class="exit-coupon-code">PRIMEIRACOMPRA</span><button class="exit-copy-btn" onclick="copyCoupon()" id="exitCopyBtn">COPIAR</button></div>
-    </div>
-    <a href="https://a2kfsuplementos.com.br" target="_blank" rel="noopener" class="exit-cta" onclick="closeExitPopup()">IR PARA A LOJA →</a>
-    <button class="exit-skip" onclick="closeExitPopup()">Não, obrigado</button>
-  </div>
-</div>
-<style>
-  #exitPopup{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:1rem;}
-  .exit-overlay{position:absolute;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(3px);}
-  .exit-box{position:relative;z-index:1;background:#0A0A0A;border:2px solid #FFD400;max-width:380px;width:100%;padding:1.75rem 1.5rem 1.5rem;text-align:center;animation:exitPop .35s cubic-bezier(.34,1.56,.64,1);}
-  @keyframes exitPop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
-  .exit-close{position:absolute;top:.5rem;right:.75rem;background:none;border:none;color:#555;font-size:1.5rem;cursor:pointer;}
-  .exit-close:hover{color:#FFD400;}
-  .exit-badge{display:inline-block;background:#FFD400;color:#000;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:3px 10px;margin-bottom:.875rem;}
-  .exit-top{margin-bottom:.75rem;}.exit-logo{height:36px;width:auto;filter:brightness(0) invert(1);opacity:.85;}
-  .exit-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.5rem,6vw,2rem);line-height:1;letter-spacing:1px;color:#fff;margin-bottom:.75rem;}
-  .exit-title span{color:#FFD400;}
-  .exit-sub{color:#888;font-size:12px;line-height:1.5;margin-bottom:.875rem;}
-  .exit-discount{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;color:#FFD400;line-height:1;letter-spacing:2px;margin-bottom:.875rem;}
-  .exit-coupon-wrap{background:#111;border:1.5px dashed #FFD400;padding:.75rem 1rem;margin-bottom:1rem;}
-  .exit-coupon-label{display:block;font-size:9px;font-weight:700;letter-spacing:2px;color:#555;margin-bottom:.4rem;}
-  .exit-coupon-row{display:flex;align-items:center;justify-content:center;gap:.625rem;}
-  .exit-coupon-code{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;color:#FFD400;}
-  .exit-copy-btn{background:#FFD400;color:#000;border:none;font-family:'DM Sans',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;padding:5px 11px;cursor:pointer;}
-  .exit-copy-btn.copied{background:#38A169;color:#fff;}
-  .exit-cta{display:block;background:#FFD400;color:#000;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;padding:11px;text-decoration:none;margin-bottom:.625rem;}
-  .exit-skip{background:none;border:none;color:#444;font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;text-decoration:underline;}
-</style>
-<script>
-  (function(){
-    var shown=false;
-    if(sessionStorage.getItem('a2kf_exit_popup_shown'))return;
-    function showPopup(){if(shown)return;shown=true;sessionStorage.setItem('a2kf_exit_popup_shown','1');document.getElementById('exitPopup').style.display='flex';document.body.style.overflow='hidden';}
-    document.addEventListener('mouseleave',function(e){if(e.clientY<=10)showPopup();});
-    var t=setTimeout(function(){if(/Mobi|Android/i.test(navigator.userAgent))showPopup();},40000);
-    window.closeExitPopup=function(){document.getElementById('exitPopup').style.display='none';document.body.style.overflow='';clearTimeout(t);};
-    window.copyCoupon=function(){navigator.clipboard.writeText('PRIMEIRACOMPRA').then(function(){var b=document.getElementById('exitCopyBtn');b.textContent='✓ COPIADO';b.classList.add('copied');setTimeout(function(){b.textContent='COPIAR';b.classList.remove('copied');},2500);});};
-    document.addEventListener('keydown',function(e){if(e.key==='Escape')closeExitPopup();});
-  })();
-</script>
-
 <!-- Brevo Conversations -->
 <script>
   (function(d,w,c){
@@ -956,7 +955,6 @@ ${post.cover_url ? `
     if(d.head)d.head.appendChild(s);
   })(document,window,'BrevoConversations');
 </script>
-
 </body>
 </html>`);
 });
@@ -967,7 +965,7 @@ app.get('/sitemap.xml', async (req, res) => {
     .from('posts').select('slug,updated_at,created_at').eq('published',true).order('created_at',{ascending:false});
   const urls = (posts||[]).map(p => {
     const lastmod = new Date(p.updated_at||p.created_at).toISOString().split('T')[0];
-    return `\n  <url><loc>${SITE_URL}/post/${p.slug}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`;
+    return `\n  <url><loc>${SITE_URL}/post/${esc(p.slug)}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`;
   }).join('');
   res.header('Content-Type','application/xml');
   res.send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${SITE_URL}</loc><changefreq>daily</changefreq><priority>1.0</priority></url>${urls}</urlset>`);
