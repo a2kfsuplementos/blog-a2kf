@@ -10,7 +10,8 @@ const PORT = process.env.PORT || 3000;
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'SUPABASE_URL_AQUI';
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'SUPABASE_ANON_KEY_AQUI';
-const SITE_URL = process.env.SITE_URL || 'https://blog.a2kfsuplementos.com.br';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -205,14 +206,19 @@ async function checkScheduledPosts() {
   try {
     const now = new Date().toISOString();
 
-    const { data: posts, error } = await supabase
+    const { data: posts, error } = await supabaseAdmin
       .from('posts')
       .select('id,title,slug,excerpt,category,cover_url')
       .eq('published', false)
       .not('scheduled_at', 'is', null)
       .lte('scheduled_at', now);
 
-    if (error) { console.error('[scheduler] Erro na query:', error.message); return; }
+    if (error) {
+  console.error('[scheduler] Erro na query:', error);
+  return;
+}
+
+console.log(`[scheduler] encontrados ${posts?.length || 0} posts`);
     if (!posts || !posts.length) return;
 
     console.log(`[scheduler] ${posts.length} post(s) para publicar.`);
@@ -220,13 +226,16 @@ async function checkScheduledPosts() {
     for (const post of posts) {
       const publishedAt = new Date().toISOString();
 
-      const { error: updateError } = await supabase
+      const { error: updateError } = await supabaseAdmin
         .from('posts')
         .update({ published: true, scheduled_at: null, created_at: publishedAt })
         .eq('id', post.id);
 
       if (updateError) {
-        console.error(`[scheduler] Erro ao publicar post id=${post.id}:`, updateError.message);
+        console.error(
+  `[scheduler] Erro ao publicar post id=${post.id}:`,
+  updateError
+);
         continue;
       }
 
