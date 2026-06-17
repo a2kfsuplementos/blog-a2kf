@@ -230,16 +230,22 @@ async function checkScheduledPosts() {
         continue;
       }
 
-      console.log(`[scheduler] ✓ Post publicado id=${post.id}`);
+      console.log(`[scheduler] ✓ Post publicado id=${post.id} slug=${post.slug}`);
+
+      if (!BREVO_API_KEY) {
+        console.warn('[scheduler] BREVO_API_KEY não configurada — pulando notificação.');
+        continue;
+      }
 
       try {
-        await sendNewsletterNotification({
+        const notifyResult = await sendNewsletterNotification({
           postTitle: post.title,
           postSlug: post.slug || post.id,
           postExcerpt: post.excerpt || '',
           postCategory: post.category || '',
           coverUrl: post.cover_url || '',
         });
+        console.log(`[scheduler] ✓ Notificados: ${notifyResult.sent} enviados, ${notifyResult.errors} erros`);
       } catch (e) {
         console.error(`[scheduler] Erro ao notificar inscritos:`, e.message);
       }
@@ -431,7 +437,19 @@ app.post('/api/newsletter', newsletterLimiter, async (req, res) => {
 });
 
 // ─── CRÍTICO 3: Notificar inscritos — requer autenticação ────────────────────
-app.post('/api/notify-subscribers', requireAuth, notifyLimiter, async (req, res) => {
+// Aceita tanto token Bearer do admin quanto chamada interna via x-internal-secret
+const INTERNAL_SECRET = process.env.INTERNAL_SECRET || `internal_${SUPABASE_ANON_KEY.slice(-16)}`;
+
+async function requireAuthOrInternal(req, res, next) {
+  // Chamada interna do próprio servidor (scheduler)
+  if (req.headers['x-internal-secret'] === INTERNAL_SECRET) {
+    return next();
+  }
+  // Chamada externa: exige token Supabase válido
+  return requireAuth(req, res, next);
+}
+
+app.post('/api/notify-subscribers', requireAuthOrInternal, notifyLimiter, async (req, res) => {
   const { postTitle, postSlug, postExcerpt, postCategory, coverUrl } = req.body;
 
   if (!postTitle || !postSlug) {
