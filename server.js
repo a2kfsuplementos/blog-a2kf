@@ -977,9 +977,36 @@ app.get('/robots.txt', (req, res) => {
   res.send(`User-agent: *\nAllow: /\nDisallow: /admin/\nSitemap: ${SITE_URL}/sitemap.xml`);
 });
 
-// ─── ADMIN ───────────────────────────────────────────────────────────────────
+// ─── ADMIN — arquivos HTML protegidos por cookie de sessão ──────────────────
+// login.html é o único arquivo admin acessível sem sessão.
+// dashboard, editor e banners exigem cookie sb-* válido antes de servir o HTML.
+// Isso impede que alguém sem conta inspecione o código-fonte das páginas admin.
 app.get('/admin', (req, res) => res.redirect('/admin/login.html'));
-app.get('/admin/banners', (req, res) => res.redirect('/admin/banners.html'));
+app.get('/admin/login.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html'));
+});
+
+// Middleware leve: verifica presença do cookie de sessão Supabase
+// (validação completa do token ocorre no cliente via SDK)
+function adminCookieGuard(req, res, next) {
+  const cookies = req.headers.cookie || '';
+  // Cookie de sessão do Supabase tem prefixo 'sb-' seguido do ref do projeto
+  const hasSession = /sb-[a-z]+-auth-token/.test(cookies);
+  if (!hasSession) {
+    return res.redirect('/admin/login.html');
+  }
+  next();
+}
+
+app.get('/admin/dashboard.html', adminCookieGuard, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'dashboard.html'));
+});
+app.get('/admin/editor.html', adminCookieGuard, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'editor.html'));
+});
+app.get('/admin/banners.html', adminCookieGuard, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'banners.html'));
+});
 
 // ─── 404 ─────────────────────────────────────────────────────────────────────
 function notFoundPage() {
