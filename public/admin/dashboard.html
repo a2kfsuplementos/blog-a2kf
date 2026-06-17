@@ -364,9 +364,17 @@
   async function notifySubscribers(post) {
     try {
       showToast('Notificando inscritos...', 'success');
+
+      // Obtém o token de sessão para autenticar a chamada
+      const { data: { session } } = await _sb.auth.getSession();
+      if (!session) { showToast('Sessão expirada. Faça login novamente.', 'error'); return; }
+
       const res = await fetch('/api/notify-subscribers', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           postTitle: post.title,
           postSlug: post.slug || post.id,
@@ -379,10 +387,11 @@
       if (result.success) {
         showToast(`✓ ${result.sent} inscrito(s) notificado(s)!`, 'success');
       } else {
-        showToast('Aviso: erro ao notificar inscritos.', 'error');
+        showToast(`Aviso: ${result.error || 'erro ao notificar inscritos.'}`, 'error');
       }
     } catch (e) {
       console.error('Notify error:', e);
+      showToast('Erro de conexão ao notificar inscritos.', 'error');
     }
   }
 
