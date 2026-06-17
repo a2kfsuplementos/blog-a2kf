@@ -15,6 +15,7 @@ const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+const SITE_URL = process.env.SITE_URL || 'https://blog.a2kfsuplementos.com.br';
 const BREVO_API_KEY = process.env.BREVO_API_KEY || '';
 const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID || '5');
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
