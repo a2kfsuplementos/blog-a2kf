@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agendados – A2KF Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --yellow: #FFD400;
+      --black:  #0A0A0A;
+      --white:  #fff;
+      --gray:   #F4F4F2;
+      --border: #E5E5E0;
+      --muted:  #6B6B6B;
+      --red:    #E53E3E;
+      --green:  #38A169;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: #f7f7f5; color: var(--black); display: flex; min-height: 100vh; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 240px; background: var(--black);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; height: 100vh; z-index: 50;
+    }
+    .sidebar-logo { padding: 1.5rem; border-bottom: 2px solid #222; display: flex; align-items: center; gap: 10px; }
+    .sidebar-logo-badge { background: var(--yellow); color: var(--black); font-family: 'Bebas Neue', sans-serif; font-size: 20px; padding: 2px 10px; }
+    .sidebar-logo-text { color: #fff; font-size: 12px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; }
+    .sidebar-nav { flex: 1; padding: 1rem 0; }
+    .sidebar-nav a {
+      display: flex; align-items: center; gap: 12px; padding: .85rem 1.5rem;
+      color: #888; text-decoration: none; font-size: 14px; font-weight: 500; transition: all .2s;
+    }
+    .sidebar-nav a:hover,
+    .sidebar-nav a.active { color: #fff; background: #1a1a1a; border-left: 3px solid var(--yellow); }
+    .sidebar-nav a svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .sidebar-footer { padding: 1.5rem; border-top: 1px solid #222; }
+    .sidebar-footer button {
+      width: 100%; padding: 10px; background: transparent; border: 1px solid #333; color: #888;
+      font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: all .2s;
+    }
+    .sidebar-footer button:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── MAIN ── */
+    .main { margin-left: 240px; flex: 1; padding: 2rem; min-width: 0; }
+
+    /* ── TOPBAR ── */
+    .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: .75rem; }
+    .topbar h1 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 1px; }
+    .topbar-meta { font-size: 13px; color: var(--muted); }
+
+    /* ── STAT STRIP ── */
+    .stat-strip { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+    .stat-pill {
+      background: var(--white); border: 1.5px solid var(--border);
+      padding: .875rem 1.5rem; display: flex; flex-direction: column; gap: .25rem; flex: 1; min-width: 140px;
+    }
+    .stat-pill-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    .stat-pill-value { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 1px; color: var(--yellow); }
+
+    /* ── TIMELINE ── */
+    .timeline { display: flex; flex-direction: column; gap: 1px; }
+
+    /* date group header */
+    .date-group-label {
+      display: flex; align-items: center; gap: .75rem;
+      padding: .6rem 0 .4rem; margin-top: 1.25rem;
+    }
+    .date-group-label:first-child { margin-top: 0; }
+    .date-group-label .dgl-badge {
+      background: var(--black); color: var(--yellow);
+      font-family: 'Bebas Neue', sans-serif; font-size: .95rem; letter-spacing: 1px;
+      padding: 3px 10px; white-space: nowrap;
+    }
+    .date-group-label .dgl-line { flex: 1; border-top: 1px solid var(--border); }
+    .date-group-label .dgl-count { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+    /* card */
+    .sched-card {
+      background: var(--white); border: 1.5px solid var(--border);
+      display: grid;
+      grid-template-columns: 64px 1fr auto;
+      gap: 0;
+      overflow: hidden;
+      transition: border-color .2s;
+      margin-bottom: .75rem;
+    }
+    .sched-card:hover { border-color: #ccc; }
+    .sched-card.overdue { border-left: 4px solid var(--red); }
+    .sched-card.today   { border-left: 4px solid var(--yellow); }
+    .sched-card.future  { border-left: 4px solid #aaa; }
+
+    /* time column */
+    .sched-time {
+      background: var(--black); color: var(--yellow);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: .75rem .5rem; gap: 2px;
+    }
+    .sched-time-hm { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 1px; line-height: 1; }
+    .sched-time-tz { font-size: 9px; color: #555; letter-spacing: 1px; text-transform: uppercase; }
+
+    /* body */
+    .sched-body { padding: 1rem 1.25rem; min-width: 0; }
+    .sched-top { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: .4rem; }
+    .sched-cat {
+      background: var(--yellow); color: var(--black);
+      font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 2px 8px;
+    }
+    .sched-status-badge {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 2px 8px;
+    }
+    .sched-status-badge.overdue { background: #fff0f0; color: var(--red); }
+    .sched-status-badge.today   { background: #fffbe6; color: #856404; }
+    .sched-status-badge.future  { background: #f0f0f0; color: #555; }
+
+    .sched-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.25rem; letter-spacing: .5px; line-height: 1.1; margin-bottom: .3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sched-excerpt { font-size: 13px; color: var(--muted); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: .5rem; }
+    .sched-countdown { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: #333; }
+    .sched-countdown svg { flex-shrink: 0; }
+    .sched-countdown.overdue { color: var(--red); }
+    .sched-countdown.today   { color: #856404; }
+
+    /* actions */
+    .sched-actions {
+      display: flex; flex-direction: column; gap: .5rem;
+      padding: 1rem; border-left: 1px solid var(--border);
+      align-items: stretch; justify-content: center; min-width: 130px;
+    }
+    .btn {
+      padding: 8px 14px; border: none; font-family: 'DM Sans', sans-serif; font-weight: 700;
+      font-size: 12px; letter-spacing: .5px; text-transform: uppercase; cursor: pointer;
+      transition: all .2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      white-space: nowrap;
+    }
+    .btn-publish-now { background: var(--yellow); color: var(--black); }
+    .btn-publish-now:hover { opacity: .85; }
+    .btn-edit { background: var(--black); color: var(--white); }
+    .btn-edit:hover { opacity: .7; text-decoration: none; }
+    .btn-cancel { background: transparent; color: var(--red); border: 1px solid var(--red); }
+    .btn-cancel:hover { background: var(--red); color: var(--white); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* ── EMPTY ── */
+    .empty {
+      text-align: center; padding: 5rem 2rem; background: var(--white); border: 1.5px solid var(--border);
+    }
+    .empty-icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+    .empty h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; margin-bottom: .5rem; }
+    .empty p { color: var(--muted); font-size: 14px; margin-bottom: 1.5rem; }
+    .empty a {
+      display: inline-block; background: var(--yellow); color: var(--black);
+      font-weight: 700; font-size: 13px; letter-spacing: 1px; text-transform: uppercase;
+      padding: 10px 24px; text-decoration: none;
+    }
+
+    /* ── LOADER ── */
+    .loader { text-align: center; padding: 4rem; color: var(--muted); }
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--yellow); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto .75rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── CONFIRM MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,.6); backdrop-filter: blur(3px);
+      align-items: center; justify-content: center; padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--white); border: 2px solid var(--border);
+      max-width: 420px; width: 100%; padding: 2rem;
+      animation: modalIn .25s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes modalIn { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-box h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 1px; margin-bottom: .5rem; }
+    .modal-box p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; }
+    .modal-title-preview { font-weight: 700; color: var(--black); }
+    .modal-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
+    .modal-actions .btn { flex: 1; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 2rem; right: 2rem; z-index: 99999;
+      background: var(--black); color: #fff; padding: 12px 24px; font-size: 14px; font-weight: 500;
+      transform: translateY(80px); opacity: 0; transition: all .3s;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-left: 4px solid var(--green); }
+    .toast.error   { border-left: 4px solid var(--red); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 1.25rem; }
+    }
+    @media (max-width: 600px) {
+      .sched-card { grid-template-columns: 56px 1fr; }
+      .sched-actions { display: none; }
+      .sched-body { padding: .875rem 1rem; }
+      .sched-mobile-actions { display: flex !important; gap: .5rem; flex-wrap: wrap; margin-top: .625rem; }
+      .sched-title { font-size: 1.1rem; }
+    }
+    .sched-mobile-actions { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="sidebar-logo-badge">A2KF</span>
+    <span class="sidebar-logo-text">Admin</span>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="dashboard.html">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a href="editor.html">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+      Novo Post
+    </a>
+    <a href="banners.html">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3h-8"/><path d="M12 3v4"/></svg>
+      Banners
+    </a>
+    <a href="scheduled.html" class="active">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Agendados
+    </a>
+    <a href="../index.html" target="_blank">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Ver Blog
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <button onclick="logout()">Sair da conta</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <h1>POSTS AGENDADOS</h1>
+    <span class="topbar-meta" id="topbarMeta">—</span>
+  </div>
+
+  <!-- STAT STRIP -->
+  <div class="stat-strip">
+    <div class="stat-pill">
+      <span class="stat-pill-label">Total agendados</span>
+      <span class="stat-pill-value" id="statTotal">—</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-pill-label">Hoje</span>
+      <span class="stat-pill-value" id="statHoje">—</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-pill-label">Próximos 7 dias</span>
+      <span class="stat-pill-value" id="stat7d">—</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-pill-label">Vencidos</span>
+      <span class="stat-pill-value" id="statOverdue" style="color:var(--red)">—</span>
+    </div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div id="timelineWrap">
+    <div class="loader"><div class="spinner"></div><p>Carregando posts agendados...</p></div>
+  </div>
+</main>
+
+<!-- CONFIRM MODAL: publicar agora -->
+<div class="modal-overlay" id="modalPublish">
+  <div class="modal-box">
+    <h3>PUBLICAR AGORA?</h3>
+    <p>O post "<span class="modal-title-preview" id="modalPublishTitle"></span>" será publicado imediatamente e os inscritos serão notificados.</p>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeModal('modalPublish')">Cancelar</button>
+      <button class="btn btn-publish-now" id="modalPublishConfirm">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Publicar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL: cancelar agendamento -->
+<div class="modal-overlay" id="modalCancel">
+  <div class="modal-box">
+    <h3>CANCELAR AGENDAMENTO?</h3>
+    <p>O post "<span class="modal-title-preview" id="modalCancelTitle"></span>" voltará para rascunho. Você poderá reagendá-lo depois.</p>
+    <div class="modal-actions">
+      <button class="btn btn-edit" onclick="closeModal('modalCancel')">Manter agendamento</button>
+      <button class="btn btn-cancel" id="modalCancelConfirm">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Cancelar agendamento
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const SUPABASE_URL     = 'https://cducpjclmtzktncqhjoa.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkdWNwamNsbXR6a3RuY3Foam9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMDY4OTEsImV4cCI6MjA5NDg4Mjg5MX0.ReDmQFqXEWzOKW2akPrOnLMuf7wBo4ZY5Oh_8ocfZZg';
+  const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let scheduledPosts = [];
+  let countdownInterval = null;
+
+  // ── AUTH GUARD ─────────────────────────────────────────────────────────────
+  _sb.auth.getSession().then(({ data: { session } }) => {
+    if (!session) { window.location.href = 'login.html'; return; }
+    loadScheduled();
+  });
+
+  async function logout() {
+    await _sb.auth.signOut();
+    window.location.href = 'login.html';
+  }
+
+  // ── LOAD ───────────────────────────────────────────────────────────────────
+  async function loadScheduled() {
+    const { data, error } = await _sb
+      .from('posts')
+      .select('id, title, slug, excerpt, category, cover_url, scheduled_at, created_at')
+      .eq('published', false)
+      .not('scheduled_at', 'is', null)
+      .order('scheduled_at', { ascending: true });
+
+    if (error) {
+      showToast('Erro ao carregar posts agendados.', 'error');
+      document.getElementById('timelineWrap').innerHTML = '';
+      return;
+    }
+
+    scheduledPosts = data || [];
+    updateStats();
+    renderTimeline();
+
+    // Atualiza countdowns a cada segundo
+    if (countdownInterval) clearInterval(countdownInterval);
+    countdownInterval = setInterval(tickCountdowns, 1000);
+
+    // Atualiza topbar
+    const now = new Date();
+    document.getElementById('topbarMeta').textContent =
+      `Atualizado às ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+  }
+
+  // ── STATS ──────────────────────────────────────────────────────────────────
+  function updateStats() {
+    const now = new Date();
+    const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
+    const todayEnd   = new Date(now); todayEnd.setHours(23,59,59,999);
+    const in7d       = new Date(now); in7d.setDate(now.getDate() + 7);
+
+    const overdue = scheduledPosts.filter(p => new Date(p.scheduled_at) < now).length;
+    const hoje    = scheduledPosts.filter(p => { const d = new Date(p.scheduled_at); return d >= todayStart && d <= todayEnd; }).length;
+    const prox7   = scheduledPosts.filter(p => { const d = new Date(p.scheduled_at); return d >= now && d <= in7d; }).length;
+
+    document.getElementById('statTotal').textContent   = scheduledPosts.length;
+    document.getElementById('statHoje').textContent    = hoje;
+    document.getElementById('stat7d').textContent      = prox7;
+    document.getElementById('statOverdue').textContent = overdue;
+  }
+
+  // ── RENDER TIMELINE ────────────────────────────────────────────────────────
+  function renderTimeline() {
+    const wrap = document.getElementById('timelineWrap');
+
+    if (!scheduledPosts.length) {
+      wrap.innerHTML = `
+        <div class="empty">
+          <span class="empty-icon">⏰</span>
+          <h2>NENHUM POST AGENDADO</h2>
+          <p>Crie um novo post e defina uma data de publicação futura.</p>
+          <a href="editor.html">Criar novo post</a>
+        </div>`;
+      return;
+    }
+
+    // Agrupa por data (dia)
+    const groups = {};
+    scheduledPosts.forEach(p => {
+      const d = new Date(p.scheduled_at);
+      const key = d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(p);
+    });
+
+    let html = '<div class="timeline">';
+    for (const [dateLabel, posts] of Object.entries(groups)) {
+      html += `
+        <div class="date-group-label">
+          <span class="dgl-badge">${capitalizeFirst(dateLabel)}</span>
+          <span class="dgl-line"></span>
+          <span class="dgl-count">${posts.length} post${posts.length > 1 ? 's' : ''}</span>
+        </div>`;
+      posts.forEach(p => { html += cardHTML(p); });
+    }
+    html += '</div>';
+    wrap.innerHTML = html;
+  }
+
+  function cardHTML(p) {
+    const now   = new Date();
+    const sched = new Date(p.scheduled_at);
+    const hm    = sched.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    let state = 'future';
+    const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
+    const todayEnd   = new Date(now); todayEnd.setHours(23,59,59,999);
+    if (sched < now) state = 'overdue';
+    else if (sched >= todayStart && sched <= todayEnd) state = 'today';
+
+    const statusLabel = state === 'overdue' ? 'Vencido' : state === 'today' ? 'Hoje' : 'Agendado';
+    const cat = p.category ? `<span class="sched-cat">${p.category}</span>` : '';
+
+    return `
+      <div class="sched-card ${state}" id="card-${p.id}">
+
+        <!-- hora -->
+        <div class="sched-time">
+          <span class="sched-time-hm">${hm}</span>
+          <span class="sched-time-tz">BRT</span>
+        </div>
+
+        <!-- corpo -->
+        <div class="sched-body">
+          <div class="sched-top">
+            ${cat}
+            <span class="sched-status-badge ${state}">${statusLabel}</span>
+          </div>
+          <div class="sched-title">${p.title}</div>
+          ${p.excerpt ? `<div class="sched-excerpt">${p.excerpt}</div>` : ''}
+          <div class="sched-countdown ${state}" id="cd-${p.id}" data-ts="${sched.getTime()}">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>${formatCountdown(sched, now)}</span>
+          </div>
+          <!-- ações mobile -->
+          <div class="sched-mobile-actions">
+            <button class="btn btn-publish-now" onclick="confirmPublishNow('${p.id}','${escapeTitle(p.title)}')">Publicar agora</button>
+            <a href="editor.html?id=${p.id}" class="btn btn-edit">Editar</a>
+            <button class="btn btn-cancel" onclick="confirmCancel('${p.id}','${escapeTitle(p.title)}')">Cancelar</button>
+          </div>
+        </div>
+
+        <!-- ações desktop -->
+        <div class="sched-actions">
+          <button class="btn btn-publish-now" onclick="confirmPublishNow('${p.id}','${escapeTitle(p.title)}')">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Publicar agora
+          </button>
+          <a href="editor.html?id=${p.id}" class="btn btn-edit">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Editar
+          </a>
+          <button class="btn btn-cancel" onclick="confirmCancel('${p.id}','${escapeTitle(p.title)}')">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Cancelar agendamento
+          </button>
+        </div>
+      </div>`;
+  }
+
+  // ── COUNTDOWNS ─────────────────────────────────────────────────────────────
+  function tickCountdowns() {
+    const now = new Date();
+    document.querySelectorAll('[id^="cd-"]').forEach(el => {
+      const ts   = parseInt(el.dataset.ts, 10);
+      const sched = new Date(ts);
+      el.querySelector('span').textContent = formatCountdown(sched, now);
+    });
+  }
+
+  function formatCountdown(sched, now) {
+    const diff = sched - now; // ms
+    if (diff < 0) {
+      const abs = Math.abs(diff);
+      const h = Math.floor(abs / 3600000);
+      const m = Math.floor((abs % 3600000) / 60000);
+      if (h >= 24) return `Vencido há ${Math.floor(h/24)}d ${h%24}h`;
+      if (h > 0)   return `Vencido há ${h}h ${m}min`;
+      return `Vencido há ${m}min`;
+    }
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    if (h >= 24) {
+      const days = Math.floor(h / 24);
+      return `Em ${days}d ${h % 24}h`;
+    }
+    if (h > 0) return `Em ${h}h ${m}min`;
+    if (m > 0) return `Em ${m}min ${s}s`;
+    return `Em ${s}s`;
+  }
+
+  // ── CONFIRMA PUBLICAR AGORA ────────────────────────────────────────────────
+  let pendingPublishId = null;
+  function confirmPublishNow(id, title) {
+    pendingPublishId = id;
+    document.getElementById('modalPublishTitle').textContent = title;
+    document.getElementById('modalPublish').classList.add('open');
+  }
+  document.getElementById('modalPublishConfirm').addEventListener('click', async () => {
+    if (!pendingPublishId) return;
+    const btn = document.getElementById('modalPublishConfirm');
+    btn.disabled = true; btn.textContent = 'Publicando...';
+
+    const now = new Date().toISOString();
+    const { error } = await _sb.from('posts')
+      .update({ published: true, scheduled_at: null, created_at: now })
+      .eq('id', pendingPublishId);
+
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Publicar';
+    closeModal('modalPublish');
+
+    if (error) { showToast('Erro ao publicar.', 'error'); return; }
+
+    // Notifica inscritos
+    const post = scheduledPosts.find(p => p.id === pendingPublishId);
+    if (post) notifySubscribers(post);
+
+    showToast('✓ Post publicado!', 'success');
+    pendingPublishId = null;
+    loadScheduled();
+  });
+
+  // ── CONFIRMA CANCELAR ─────────────────────────────────────────────────────
+  let pendingCancelId = null;
+  function confirmCancel(id, title) {
+    pendingCancelId = id;
+    document.getElementById('modalCancelTitle').textContent = title;
+    document.getElementById('modalCancel').classList.add('open');
+  }
+  document.getElementById('modalCancelConfirm').addEventListener('click', async () => {
+    if (!pendingCancelId) return;
+    const btn = document.getElementById('modalCancelConfirm');
+    btn.disabled = true; btn.textContent = 'Cancelando...';
+
+    const { error } = await _sb.from('posts')
+      .update({ scheduled_at: null })
+      .eq('id', pendingCancelId);
+
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Cancelar agendamento';
+    closeModal('modalCancel');
+
+    if (error) { showToast('Erro ao cancelar agendamento.', 'error'); return; }
+    showToast('Agendamento cancelado. Post voltou para rascunho.', 'success');
+    pendingCancelId = null;
+    loadScheduled();
+  });
+
+  // ── NOTIFICAR INSCRITOS ───────────────────────────────────────────────────
+  async function notifySubscribers(post) {
+    try {
+      const { data: { session } } = await _sb.auth.getSession();
+      if (!session) return;
+      await fetch('/api/notify-subscribers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          postTitle:    post.title,
+          postSlug:     post.slug || post.id,
+          postExcerpt:  post.excerpt  || '',
+          postCategory: post.category || '',
+          coverUrl:     post.cover_url || '',
+        }),
+      });
+    } catch(e) { console.warn('[notify]', e.message); }
+  }
+
+  // ── MODAL HELPERS ─────────────────────────────────────────────────────────
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(el => el.classList.remove('open'));
+  });
+
+  // ── UTILS ─────────────────────────────────────────────────────────────────
+  function capitalizeFirst(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+  function escapeTitle(str) {
+    return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;').substring(0, 120);
+  }
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.className = 'toast', 3500);
+  }
+</script>
+</body>
+</html>
