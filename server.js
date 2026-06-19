@@ -1038,6 +1038,9 @@ app.get('/admin/banners.html', adminCookieGuard, (req, res) => {
 app.get('/admin/scheduled.html', adminCookieGuard, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin', 'scheduled.html'));
 });
+app.get('/admin/preview.html', adminCookieGuard, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'preview.html'));
+});
 
 // ─── 404 ─────────────────────────────────────────────────────────────────────
 function notFoundPage() {
