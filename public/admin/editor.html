@@ -626,13 +626,6 @@
         return;
       }
     }
-function openPreview() {
-  if (!postId) {
-    showToast('Salve o post primeiro para ver a prévia.', 'error');
-    return;
-  }
-  window.open(`preview.html?id=${postId}`, '_blank');
-}
     const data = getFormData(publish);
     if (!data.title) { showToast('Adicione um título ao post.', 'error'); return; }
 
@@ -712,6 +705,16 @@ function openPreview() {
     t.textContent = msg;
     t.className = `toast ${type} show`;
     setTimeout(() => t.className = 'toast', 3500);
+  }
+
+  function openPreview() {
+    if (!postId) {
+      showToast('Salve o post primeiro para ver a prévia.', 'error');
+      return;
+    }
+    const url = `preview.html?id=${postId}`;
+    const w = window.open(url, '_blank');
+    if (!w) window.location.href = url;
   }
 
   // Ctrl+S to save
