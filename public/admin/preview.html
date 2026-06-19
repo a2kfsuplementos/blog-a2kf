@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prévia do Post – A2KF Admin</title>
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* ── TOKENS ── */
+    :root {
+      --yellow:  #FFD400;
+      --black:   #0A0A0A;
+      --white:   #FFFFFF;
+      --gray:    #F4F4F2;
+      --border:  #E5E5E0;
+      --muted:   #6B6B6B;
+      --red:     #E53E3E;
+      --green:   #38A169;
+
+      /* altura da barra de revisão — usada para offset do conteúdo */
+      --bar-h: 56px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--white); color: var(--black); }
+
+    /* ══════════════════════════════════════════════
+       BARRA DE REVISÃO — o único elemento "admin"
+       que aparece nessa página
+    ══════════════════════════════════════════════ */
+    #preview-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 9999;
+      height: var(--bar-h);
+
+      /* fita de obra: listras diagonais amarelo / preto */
+      background: repeating-linear-gradient(
+        -45deg,
+        var(--yellow)       0px,
+        var(--yellow)       18px,
+        var(--black)        18px,
+        var(--black)        36px
+      );
+      border-bottom: 3px solid var(--black);
+
+      display: flex;
+      align-items: center;
+      padding: 0 1.25rem;
+      gap: 1rem;
+    }
+
+    .pb-badge {
+      background: var(--black);
+      color: var(--yellow);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem;
+      letter-spacing: 2px;
+      padding: 4px 14px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .pb-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--black);
+      background: rgba(255,255,255,.75);
+      padding: 3px 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 340px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .pb-spacer { flex: 1; }
+
+    /* status pill */
+    .pb-status {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .pb-status.draft     { background: var(--black); color: #aaa; }
+    .pb-status.scheduled { background: #856404;       color: #fff; }
+
+    /* botões da barra */
+    .pb-btn {
+      padding: 7px 18px;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity .2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      text-decoration: none;
+    }
+    .pb-btn-edit    { background: var(--black); color: var(--white); }
+    .pb-btn-publish { background: var(--white); color: var(--black); }
+    .pb-btn:hover   { opacity: .8; }
+    .pb-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* viewport-switcher (desktop / tablet / mobile) */
+    .pb-views {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+      background: var(--black);
+      padding: 3px;
+    }
+    .pb-view-btn {
+      background: transparent;
+      border: none;
+      color: #666;
+      width: 30px; height: 30px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .pb-view-btn.active { background: var(--yellow); color: var(--black); }
+    .pb-view-btn:hover:not(.active) { color: #ccc; }
+
+    /* ── WRAPPER DO IFRAME ── */
+    body { padding-top: var(--bar-h); }
+
+    #preview-shell {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      background: #e8e8e4;
+      min-height: calc(100vh - var(--bar-h));
+      transition: padding .3s;
+    }
+
+    #preview-frame {
+      width: 100%;
+      border: none;
+      display: block;
+      /* altura auto via JS */
+      min-height: calc(100vh - var(--bar-h));
+      background: var(--white);
+      transition: width .35s cubic-bezier(.77,0,.175,1), box-shadow .35s;
+    }
+
+    /* viewports */
+    #preview-shell.vp-desktop #preview-frame { width: 100%;   box-shadow: none; }
+    #preview-shell.vp-tablet  #preview-frame { width: 768px;  box-shadow: 0 0 0 1px #ccc, 4px 0 24px rgba(0,0,0,.1), -4px 0 24px rgba(0,0,0,.1); }
+    #preview-shell.vp-mobile  #preview-frame { width: 390px;  box-shadow: 0 0 0 1px #ccc, 4px 0 24px rgba(0,0,0,.15), -4px 0 24px rgba(0,0,0,.15); }
+
+    /* ── LOADER / ERROR ── */
+    #preview-loader {
+      position: fixed;
+      inset: var(--bar-h) 0 0 0;
+      background: var(--white);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      z-index: 100;
+      transition: opacity .4s;
+    }
+    #preview-loader.hidden { opacity: 0; pointer-events: none; }
+    .pl-spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--yellow);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .pl-text { font-size: 13px; color: var(--muted); }
+
+    #preview-error {
+      display: none;
+      position: fixed;
+      inset: var(--bar-h) 0 0 0;
+      background: var(--white);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: .75rem;
+      text-align: center;
+      padding: 2rem;
+    }
+    #preview-error h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; }
+    #preview-error p  { color: var(--muted); font-size: 14px; max-width: 400px; }
+    #preview-error a  {
+      display: inline-block; margin-top: .5rem;
+      background: var(--yellow); color: var(--black);
+      font-weight: 700; font-size: 13px; letter-spacing: 1px; text-transform: uppercase;
+      padding: 10px 24px; text-decoration: none;
+    }
+
+    /* ── MODAL: confirmar publicação ── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 99999;
+      background: rgba(0,0,0,.65);
+      backdrop-filter: blur(4px);
+      align-items: center; justify-content: center;
+      padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--white); border: 2px solid var(--border);
+      max-width: 440px; width: 100%; padding: 2rem;
+      animation: modalIn .25s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes modalIn { from { transform: scale(.88); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-box h3  { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 1px; margin-bottom: .5rem; }
+    .modal-box p   { font-size: 14px; color: var(--muted); line-height: 1.65; margin-bottom: 1.5rem; }
+    .modal-title   { font-weight: 700; color: var(--black); }
+    .modal-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
+    .modal-actions .btn {
+      flex: 1; padding: 10px 20px; border: none;
+      font-family: 'DM Sans', sans-serif; font-weight: 700;
+      font-size: 13px; letter-spacing: 1px; text-transform: uppercase;
+      cursor: pointer; transition: opacity .2s;
+    }
+    .btn-cancel-m  { background: transparent; color: var(--muted); border: 1.5px solid var(--border) !important; }
+    .btn-confirm-m { background: var(--yellow); color: var(--black); }
+    .btn-cancel-m:hover  { border-color: #aaa !important; color: var(--black); }
+    .btn-confirm-m:hover { opacity: .85; }
+    .btn-confirm-m:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 2rem; right: 2rem; z-index: 99999;
+      background: var(--black); color: var(--white);
+      padding: 12px 24px; font-size: 14px; font-weight: 500;
+      transform: translateY(80px); opacity: 0; transition: all .3s;
+    }
+    .toast.show   { transform: translateY(0); opacity: 1; }
+    .toast.success { border-left: 4px solid var(--green); }
+    .toast.error   { border-left: 4px solid var(--red); }
+
+    @media (max-width: 600px) {
+      :root { --bar-h: 50px; }
+      .pb-label   { display: none; }
+      .pb-spacer  { display: none; }
+      .pb-status  { display: none; }
+      .pb-views   { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ BARRA DE REVISÃO ══════════════════════════════════════════════════════ -->
+<div id="preview-bar">
+  <span class="pb-badge">⚠ PRÉVIA</span>
+  <span class="pb-label" id="pb-title">Carregando...</span>
+
+  <span class="pb-status draft" id="pb-status">RASCUNHO</span>
+
+  <!-- switcher de viewport -->
+  <div class="pb-views">
+    <button class="pb-view-btn active" id="vp-desktop" onclick="setViewport('desktop')" title="Desktop">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    </button>
+    <button class="pb-view-btn" id="vp-tablet" onclick="setViewport('tablet')" title="Tablet">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+    </button>
+    <button class="pb-view-btn" id="vp-mobile" onclick="setViewport('mobile')" title="Mobile">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+    </button>
+  </div>
+
+  <a class="pb-btn pb-btn-edit" id="pb-edit-btn" href="#">
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Editar
+  </a>
+  <button class="pb-btn pb-btn-publish" id="pb-publish-btn" onclick="openPublishModal()">
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    Publicar agora
+  </button>
+</div>
+
+<!-- ══ SHELL DO IFRAME ════════════════════════════════════════════════════════ -->
+<div id="preview-shell" class="vp-desktop">
+  <iframe id="preview-frame" title="Prévia do post" scrolling="yes"></iframe>
+</div>
+
+<!-- ══ LOADER ════════════════════════════════════════════════════════════════ -->
+<div id="preview-loader">
+  <div class="pl-spinner"></div>
+  <span class="pl-text">Carregando prévia...</span>
+</div>
+
+<!-- ══ ERROR ═════════════════════════════════════════════════════════════════ -->
+<div id="preview-error">
+  <h2>POST NÃO ENCONTRADO</h2>
+  <p>O rascunho pode ter sido excluído ou o ID é inválido.</p>
+  <a href="dashboard.html">← Voltar ao dashboard</a>
+</div>
+
+<!-- ══ MODAL: confirmar publicação ═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-publish">
+  <div class="modal-box">
+    <h3>PUBLICAR ESTE POST?</h3>
+    <p>
+      "<span class="modal-title" id="modal-post-title"></span>" ficará visível para todos os leitores imediatamente e os inscritos na newsletter serão notificados.
+    </p>
+    <div class="modal-actions">
+      <button class="btn btn-cancel-m" onclick="closePublishModal()">Cancelar</button>
+      <button class="btn btn-confirm-m" id="btn-confirm-publish" onclick="publishNow()">
+        Publicar agora
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ── CONFIG ─────────────────────────────────────────────────────────────── */
+  const SUPABASE_URL      = 'https://cducpjclmtzktncqhjoa.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkdWNwamNsbXR6a3RuY3Foam9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMDY4OTEsImV4cCI6MjA5NDg4Mjg5MX0.ReDmQFqXEWzOKW2akPrOnLMuf7wBo4ZY5Oh_8ocfZZg';
+  const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let currentPost = null;
+
+  /* ── AUTH GUARD ──────────────────────────────────────────────────────────── */
+  _sb.auth.getSession().then(({ data: { session } }) => {
+    if (!session) { window.location.href = 'login.html'; return; }
+    init();
+  });
+
+  /* ── INIT ────────────────────────────────────────────────────────────────── */
+  function init() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    if (!id) { showError(); return; }
+    loadPost(id);
+  }
+
+  /* ── LOAD POST ───────────────────────────────────────────────────────────── */
+  async function loadPost(id) {
+    const { data, error } = await _sb
+      .from('posts')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !data) { showError(); return; }
+    currentPost = data;
+
+    // Barra: título
+    document.getElementById('pb-title').textContent = data.title || '(sem título)';
+    document.getElementById('pb-edit-btn').href = `editor.html?id=${id}`;
+    document.getElementById('modal-post-title').textContent = data.title || '(sem título)';
+
+    // Status badge
+    const statusEl = document.getElementById('pb-status');
+    if (data.published) {
+      statusEl.textContent    = 'PUBLICADO';
+      statusEl.className      = 'pb-status';
+      statusEl.style.background = '#256341';
+      statusEl.style.color    = '#fff';
+      // já publicado: desabilita botão
+      const pubBtn = document.getElementById('pb-publish-btn');
+      pubBtn.disabled    = true;
+      pubBtn.title       = 'Este post já está publicado';
+    } else if (data.scheduled_at) {
+      const d = new Date(data.scheduled_at);
+      statusEl.textContent = `AGENDADO · ${d.toLocaleDateString('pt-BR', { day:'2-digit', month:'short' })} ${d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })}`;
+      statusEl.className   = 'pb-status scheduled';
+    } else {
+      statusEl.textContent = 'RASCUNHO';
+      statusEl.className   = 'pb-status draft';
+    }
+
+    // Monta o HTML do post e injeta no iframe
+    buildPreviewFrame(data);
+  }
+
+  /* ── MONTA O IFRAME ──────────────────────────────────────────────────────── */
+  function buildPreviewFrame(post) {
+    const frame = document.getElementById('preview-frame');
+
+    // Helpers de escape/sanitização simples (exibe no iframe, não persiste)
+    const esc = s => String(s || '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+
+    const safeTitle    = esc(post.title);
+    const safeExcerpt  = esc(post.excerpt || '');
+    const safeCategory = esc(post.category || '');
+    const safeCover    = esc(post.cover_url || '');
+    const safeDate     = new Date(post.created_at || Date.now())
+      .toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+
+    // Tempo de leitura
+    const plainText = (post.content || '').replace(/<[^>]*>/g, '').trim();
+    const wordCount = plainText.split(/\s+/).filter(Boolean).length;
+    const readMins  = Math.max(1, Math.round(wordCount / 200));
+    const readingTime = readMins === 1 ? '1 min de leitura' : `${readMins} min de leitura`;
+
+    // Tags
+    const tagsHtml = (Array.isArray(post.tags) && post.tags.length)
+      ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.5rem;">
+           ${post.tags.map(t => `<span style="background:#f4f4f2;color:#555;font-size:11px;font-weight:700;padding:3px 10px;letter-spacing:.5px;text-transform:uppercase;">#${esc(t)}</span>`).join('')}
+         </div>`
+      : '';
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>${safeTitle} – PRÉVIA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--yellow:#FFD400;--black:#0A0A0A;--white:#fff;--gray:#F4F4F2;--border:#E5E5E0;--muted:#6B6B6B;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'DM Sans',sans-serif;background:var(--white);color:var(--black);}
+    /* NAV */
+    nav{background:var(--black);border-bottom:3px solid var(--yellow);padding:0 1.25rem;display:flex;align-items:center;justify-content:space-between;height:110px;}
+    .nav-logo img{height:95px;width:auto;display:block;}
+    .nav-links{display:flex;gap:1.25rem;align-items:center;}
+    .nav-links a{color:#ccc;text-decoration:none;font-size:14px;font-weight:500;}
+    /* COVER */
+    .post-cover-wrap{background:#111;overflow:hidden;}
+    .post-cover{width:100%;max-height:480px;object-fit:cover;display:block;}
+    /* HERO */
+    .post-hero{background:var(--black);color:var(--white);padding:1.5rem 1.25rem 1.75rem;border-bottom:3px solid var(--yellow);}
+    .post-hero-inner{max-width:800px;margin:0 auto;}
+    .post-meta{display:flex;gap:.75rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap;}
+    .post-category{background:var(--yellow);color:var(--black);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:3px 10px;}
+    .post-date{font-size:12px;color:#888;}
+    .post-read-time{font-size:12px;color:#FFD400;display:flex;align-items:center;gap:4px;font-weight:600;}
+    .post-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.8rem,7vw,4rem);line-height:1;letter-spacing:1px;}
+    .post-excerpt{color:#aaa;font-size:clamp(.9rem,3.5vw,1.1rem);line-height:1.6;margin-top:.75rem;max-width:640px;}
+    /* BODY */
+    .post-body{max-width:800px;margin:0 auto;padding:2rem 1.25rem;}
+    .post-body h2{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:1px;margin:2rem 0 .75rem;}
+    .post-body h3{font-size:1.1rem;font-weight:700;margin:1.5rem 0 .5rem;}
+    .post-body p{font-size:16px;line-height:1.85;color:#222;margin-bottom:1.25rem;}
+    .post-body ul,.post-body ol{padding-left:1.5rem;margin-bottom:1.25rem;}
+    .post-body li{font-size:16px;line-height:1.85;color:#222;margin-bottom:.4rem;}
+    .post-body blockquote{border-left:4px solid var(--yellow);padding:1rem 1.25rem;background:var(--gray);margin:1.5rem 0;font-style:italic;color:#444;}
+    .post-body img{width:100%;height:auto;margin:1.5rem 0;}
+    .post-body a{color:var(--black);font-weight:700;border-bottom:2px solid var(--yellow);text-decoration:none;}
+    .post-body pre{background:#111;color:#eee;padding:1rem 1.25rem;overflow-x:auto;font-size:14px;margin-bottom:1.25rem;}
+    /* DIVIDER */
+    .post-divider{border:none;border-top:2px solid var(--border);margin:2.5rem 0;}
+    /* COMPARTILHAR (decorativo na prévia) */
+    .share-box{margin-top:2rem;}
+    .share-box h4{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;margin-bottom:1rem;}
+    .share-btns{display:flex;gap:.75rem;flex-wrap:wrap;}
+    .share-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;cursor:default;border:none;flex:1;min-width:110px;justify-content:center;opacity:.6;}
+    .share-btn-wpp{background:#25D366;color:#fff;}
+    .share-btn-fb{background:#1877F2;color:#fff;}
+    .share-btn-copy{background:var(--black);color:#fff;}
+    /* PROMO */
+    .promo-banner{background:var(--yellow);padding:1.5rem 1.25rem;margin-top:3rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+    .promo-banner h3{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;}
+    .promo-banner p{font-size:14px;color:#333;margin-top:.25rem;}
+    /* NEWSLETTER */
+    .newsletter-box{background:var(--black);color:var(--white);padding:2rem 1.25rem;margin-top:3rem;text-align:center;border-top:4px solid var(--yellow);}
+    .newsletter-box h3{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.6rem,5vw,2rem);letter-spacing:1px;margin-bottom:.5rem;}
+    .newsletter-box p{color:#aaa;font-size:14px;margin-bottom:1.5rem;}
+    .newsletter-form{display:flex;flex-wrap:wrap;gap:.75rem;max-width:460px;margin:0 auto;}
+    .newsletter-form input{flex:1;min-width:200px;padding:12px 18px;background:#1a1a1a;color:#aaa;border:2px solid #333;font-family:'DM Sans',sans-serif;font-size:16px;outline:none;cursor:default;}
+    .newsletter-form button{background:var(--yellow);color:var(--black);border:none;padding:12px 22px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;cursor:default;opacity:.7;}
+    /* FOOTER */
+    footer{background:var(--black);border-top:3px solid var(--yellow);}
+    .footer-inner{max-width:1100px;margin:0 auto;padding:2rem 1.25rem;display:flex;flex-direction:column;align-items:center;gap:1.25rem;}
+    .footer-copy{color:#444;font-size:12px;}
+    .footer-copy span{color:var(--yellow);}
+    /* BADGE PRÉVIA flutuante dentro do iframe */
+    .preview-watermark{
+      position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%);
+      background:rgba(10,10,10,.85);color:var(--yellow);
+      font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:3px;
+      padding:5px 16px;pointer-events:none;z-index:9000;
+      border:1px solid rgba(255,212,0,.3);backdrop-filter:blur(4px);
+    }
+    @media(max-width:600px){
+      nav{height:56px;}.nav-logo img{height:44px;}
+      .post-cover{max-height:220px;}
+      .newsletter-form{flex-direction:column;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV (decorativa) -->
+<nav>
+  <a href="#" class="nav-logo"><img src="/logo.png" alt="A2KF Suplementos" /></a>
+  <div class="nav-links">
+    <a href="#">Blog</a>
+    <a href="#">Loja</a>
+  </div>
+</nav>
+
+<!-- CAPA -->
+${safeCover ? `
+<div class="post-cover-wrap">
+  <img src="${safeCover}" class="post-cover" alt="${safeTitle}" />
+</div>` : ''}
+
+<!-- HERO -->
+<div class="post-hero">
+  <div class="post-hero-inner">
+    <div class="post-meta">
+      ${safeCategory ? `<span class="post-category">${safeCategory}</span>` : ''}
+      <span class="post-date">${safeDate}</span>
+      <span class="post-read-time">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        ${readingTime}
+      </span>
+    </div>
+    <h1 class="post-title">${safeTitle}</h1>
+    ${safeExcerpt ? `<p class="post-excerpt">${safeExcerpt}</p>` : ''}
+  </div>
+</div>
+
+<!-- CONTEÚDO -->
+<div class="post-body">
+  ${post.content || '<p style="color:#aaa;font-style:italic;">Nenhum conteúdo ainda.</p>'}
+
+  ${tagsHtml}
+
+  <hr class="post-divider" />
+
+  <!-- COMPARTILHAR (decorativo) -->
+  <div class="share-box">
+    <h4>GOSTOU? COMPARTILHE!</h4>
+    <div class="share-btns">
+      <span class="share-btn share-btn-wpp">WhatsApp</span>
+      <span class="share-btn share-btn-fb">Facebook</span>
+      <span class="share-btn share-btn-copy">Copiar link</span>
+    </div>
+  </div>
+
+  <!-- PROMO -->
+  <div class="promo-banner">
+    <div>
+      <h3>ENCONTRE OS MELHORES SUPLEMENTOS</h3>
+      <p>Qualidade garantida, preço justo e entrega rápida para todo o Brasil.</p>
+    </div>
+    <span style="background:#000;color:#FFD400;padding:12px 28px;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:1px;cursor:default;">VISITAR LOJA →</span>
+  </div>
+
+  <!-- NEWSLETTER -->
+  <div class="newsletter-box">
+    <h3>FIQUE POR DENTRO DE TUDO</h3>
+    <p>Receba artigos sobre treino, nutrição e suplementação diretamente no seu email.</p>
+    <div class="newsletter-form">
+      <input type="email" placeholder="seu@email.com" disabled />
+      <button disabled>Quero receber</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <p class="footer-copy">© 2026 <span>A2KF Suplementos</span> · Todos os direitos reservados</p>
+  </div>
+</footer>
+
+<!-- marca d'água dentro do iframe -->
+<div class="preview-watermark">⚠ PRÉVIA — NÃO PUBLICADO</div>
+
+</body>
+</html>`;
+
+    // Injeta no iframe via srcdoc
+    frame.srcdoc = html;
+
+    frame.onload = () => {
+      hideLoader();
+      // Ajusta altura do iframe ao conteúdo
+      autoResizeFrame();
+      frame.onload = autoResizeFrame;
+    };
+  }
+
+  /* ── RESIZE DO IFRAME ────────────────────────────────────────────────────── */
+  function autoResizeFrame() {
+    const frame = document.getElementById('preview-frame');
+    try {
+      const body = frame.contentDocument?.body;
+      if (body) {
+        const h = body.scrollHeight;
+        frame.style.height = Math.max(h, window.innerHeight - 56) + 'px';
+      }
+    } catch(e) {}
+  }
+  window.addEventListener('resize', autoResizeFrame);
+
+  /* ── VIEWPORT SWITCHER ───────────────────────────────────────────────────── */
+  function setViewport(vp) {
+    const shell = document.getElementById('preview-shell');
+    shell.className = `vp-${vp}`;
+    ['desktop','tablet','mobile'].forEach(v => {
+      document.getElementById(`vp-${v}`).classList.toggle('active', v === vp);
+    });
+    setTimeout(autoResizeFrame, 380); // aguarda a transição CSS
+  }
+
+  /* ── MODAL PUBLICAR ──────────────────────────────────────────────────────── */
+  function openPublishModal() {
+    document.getElementById('modal-publish').classList.add('open');
+  }
+  function closePublishModal() {
+    document.getElementById('modal-publish').classList.remove('open');
+  }
+  document.getElementById('modal-publish').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-publish')) closePublishModal();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closePublishModal();
+  });
+
+  async function publishNow() {
+    if (!currentPost) return;
+    const btn = document.getElementById('btn-confirm-publish');
+    btn.disabled = true; btn.textContent = 'Publicando...';
+
+    const now = new Date().toISOString();
+    const { error } = await _sb.from('posts')
+      .update({ published: true, scheduled_at: null, created_at: now })
+      .eq('id', currentPost.id);
+
+    if (error) {
+      btn.disabled = false; btn.textContent = 'Publicar agora';
+      closePublishModal();
+      showToast('Erro ao publicar.', 'error');
+      return;
+    }
+
+    // Notifica inscritos
+    await notifySubscribers(currentPost);
+
+    showToast('✓ Post publicado com sucesso!', 'success');
+    closePublishModal();
+
+    // Atualiza barra
+    const statusEl = document.getElementById('pb-status');
+    statusEl.textContent = 'PUBLICADO';
+    statusEl.className   = '';
+    statusEl.style.background = '#256341';
+    statusEl.style.color = '#fff';
+    statusEl.style.padding = '4px 12px';
+    statusEl.style.fontSize = '11px';
+    statusEl.style.fontWeight = '700';
+    statusEl.style.letterSpacing = '1px';
+    statusEl.style.textTransform = 'uppercase';
+
+    document.getElementById('pb-publish-btn').disabled = true;
+    currentPost.published = true;
+
+    btn.disabled = false; btn.textContent = 'Publicar agora';
+
+    // Redireciona para o post real após 2s
+    setTimeout(() => {
+      window.location.href = `/post/${currentPost.slug || currentPost.id}`;
+    }, 2000);
+  }
+
+  /* ── NOTIFICAR INSCRITOS ─────────────────────────────────────────────────── */
+  async function notifySubscribers(post) {
+    try {
+      const { data: { session } } = await _sb.auth.getSession();
+      if (!session) return;
+      await fetch('/api/notify-subscribers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          postTitle:    post.title,
+          postSlug:     post.slug || post.id,
+          postExcerpt:  post.excerpt  || '',
+          postCategory: post.category || '',
+          coverUrl:     post.cover_url || '',
+        }),
+      });
+    } catch(e) { console.warn('[notify]', e.message); }
+  }
+
+  /* ── UTILS ───────────────────────────────────────────────────────────────── */
+  function hideLoader() {
+    document.getElementById('preview-loader').classList.add('hidden');
+    setTimeout(() => document.getElementById('preview-loader').style.display = 'none', 450);
+  }
+  function showError() {
+    document.getElementById('preview-loader').style.display = 'none';
+    document.getElementById('preview-error').style.display  = 'flex';
+  }
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.className = 'toast', 3500);
+  }
+</script>
+</body>
+</html>
