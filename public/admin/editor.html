@@ -626,7 +626,13 @@
         return;
       }
     }
-
+function openPreview() {
+  if (!postId) {
+    showToast('Salve o post primeiro para ver a prévia.', 'error');
+    return;
+  }
+  window.open(`preview.html?id=${postId}`, '_blank');
+}
     const data = getFormData(publish);
     if (!data.title) { showToast('Adicione um título ao post.', 'error'); return; }
 
