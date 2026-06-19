@@ -281,13 +281,20 @@
   <div class="topbar">
     <h1 id="pageTitle">NOVO POST</h1>
     <div class="topbar-actions">
-      <span style="display:flex;align-items:center;font-size:13px;color:var(--muted);">
-        <span class="saving-dot" id="savingDot"></span>
-        <span id="savingText"></span>
-      </span>
-      <button class="btn btn-outline" onclick="savePost(false)">Salvar Rascunho</button>
-      <button class="btn btn-primary" onclick="savePost(true)" id="publishBtn">Publicar</button>
-      <button class="btn-ia" onclick="openIAModal()">
+  <span style="display:flex;align-items:center;font-size:13px;color:var(--muted);">
+    <span class="saving-dot" id="savingDot"></span>
+    <span id="savingText"></span>
+  </span>
+  <button class="btn btn-outline" onclick="savePost(false)">Salvar Rascunho</button>
+
+  <!-- BOTÃO VER PRÉVIA -->
+  <button class="btn btn-outline" id="previewBtn" onclick="openPreview()" title="Ver como o post ficará publicado">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    Ver Prévia
+  </button>
+
+  <button class="btn btn-primary" onclick="savePost(true)" id="publishBtn">Publicar</button>
+  <button class="btn-ia" onclick="openIAModal()">
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a4 4 0 014 4v1h1a3 3 0 010 6h-1v1a4 4 0 01-8 0v-1H7a3 3 0 010-6h1V6a4 4 0 014-4z"/></svg>
         Gerar com IA
       </button>
