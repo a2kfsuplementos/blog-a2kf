@@ -487,6 +487,35 @@ app.post('/api/notify-subscribers', requireAuthOrInternal, notifyLimiter, async 
   }
 });
 
+// ─── POSTS POPULARES ─────────────────────────────────────────────────────────
+// Cache em memória por 5 minutos para não bater no banco a cada pageview
+let popularCache = { data: null, ts: 0 };
+const POPULAR_TTL = 5 * 60 * 1000; // 5 min
+
+app.get('/api/posts-populares', async (req, res) => {
+  const now = Date.now();
+  if (popularCache.data && now - popularCache.ts < POPULAR_TTL) {
+    return res.json(popularCache.data);
+  }
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('title, slug, cover_url, category, views, created_at')
+      .eq('published', true)
+      .order('views', { ascending: false })
+      .limit(5);
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    popularCache = { data: { success: true, posts: data || [] }, ts: now };
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json(popularCache.data);
+  } catch (e) {
+    console.error('[popular] Erro:', e.message);
+    res.status(500).json({ error: 'Erro interno.' });
+  }
+});
+
 // ─── REAÇÕES ─────────────────────────────────────────────────────────────────
 app.get('/api/reactions/:slug', reactionLimiter, async (req, res) => {
   const { slug } = req.params;
@@ -527,6 +556,75 @@ app.post('/api/reactions', reactionLimiter, async (req, res) => {
   }
 });
 
+// ─── FAQ AUTOMÁTICO ───────────────────────────────────────────────────────────
+// Extrai perguntas e respostas do HTML do post para gerar o schema FAQPage.
+// Detecta 3 padrões:
+//   1. Títulos H2/H3 que terminam com "?" seguidos de parágrafo(s)
+//   2. Seção "Mitos e Verdades" com ❌ Mito / ✅ Verdade
+//   3. H2/H3 genérico seguido de parágrafo (limitado a 5 pares como fallback)
+function extractFAQ(html) {
+  if (!html) return [];
+  const faqs = [];
+  const seen = new Set();
+
+  // Helper: strip tags e decodifica entidades básicas
+  const strip = s => s
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+
+  const addFAQ = (q, a) => {
+    const qClean = strip(q).replace(/^[❌✅•\-–—*]\s*/u, '').trim();
+    const aClean = strip(a).trim();
+    if (!qClean || !aClean || seen.has(qClean) || aClean.length < 10) return;
+    seen.add(qClean);
+    faqs.push({ question: qClean, answer: aClean.substring(0, 600) });
+  };
+
+  // ── PADRÃO 1: Títulos H2/H3 com "?" ─────────────────────────────────────
+  const questionHeadings = [...html.matchAll(/<h[23][^>]*>(.*?\?.*?)<\/h[23]>\s*(<p[^>]*>[\s\S]*?<\/p>(?:\s*<p[^>]*>[\s\S]*?<\/p>)?)/gi)];
+  for (const m of questionHeadings) {
+    const answer = m[2].replace(/<\/p>\s*<p[^>]*>/gi, ' ');
+    addFAQ(m[1], answer);
+    if (faqs.length >= 8) break;
+  }
+
+  // ── PADRÃO 2: Mitos e Verdades ❌ / ✅ ──────────────────────────────────
+  // Captura pares dentro de <li> ou <p> com emoji de mito/verdade
+  const mitoBlocks = [...html.matchAll(/❌\s*(?:<[^>]*>)?\s*(?:Mito[:\s]*)?\s*(.*?)(?:<\/[^>]*>)?\s*(?:✅|<\/li>|<\/p>)/gis)];
+  const verdadeBlocks = [...html.matchAll(/✅\s*(?:<[^>]*>)?\s*(?:Verdade[:\s]*)?\s*(.*?)(?:<\/[^>]*>)?\s*(?=❌|$)/gis)];
+
+  // Tenta parear: cada ❌ vira pergunta, ✅ seguinte vira resposta
+  const mitoVerdadePairs = [...html.matchAll(/❌\s*(.*?)\s*✅\s*(.*?)(?=❌|<\/ul>|<\/ol>|$)/gis)];
+  for (const m of mitoVerdadePairs) {
+    const mito    = strip(m[1]).replace(/^Mito[:\s]*/i, '').trim();
+    const verdade = strip(m[2]).replace(/^Verdade[:\s]*/i, '').trim();
+    if (mito && verdade) {
+      // Converte o mito em pergunta (é verdade que...?)
+      const pergunta = mito.endsWith('?') ? mito : `É verdade que ${mito.charAt(0).toLowerCase() + mito.slice(1)}?`;
+      addFAQ(pergunta, verdade);
+    }
+    if (faqs.length >= 8) break;
+  }
+
+  // ── PADRÃO 3: H2/H3 genérico + parágrafo (fallback, máx 5) ──────────────
+  if (faqs.length < 3) {
+    const genericPairs = [...html.matchAll(/<h[23][^>]*>(.*?)<\/h[23]>\s*<p[^>]*>([\s\S]*?)<\/p>/gi)];
+    for (const m of genericPairs) {
+      const title = strip(m[1]);
+      if (!title || title.length < 5) continue;
+      // Ignora títulos que claramente não são perguntas/seções de conteúdo
+      if (/^(referências|fontes|conclus|introdução|compartilh|newsletter|loja)/i.test(title)) continue;
+      const q = title.endsWith('?') ? title : `O que é ${title.charAt(0).toLowerCase() + title.slice(1)}?`;
+      addFAQ(q, m[2]);
+      if (faqs.length >= 6) break;
+    }
+  }
+
+  return faqs.slice(0, 8); // Máximo 8 FAQs por post
+}
+
 // ─── HOME ────────────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -560,6 +658,9 @@ app.get('/post/:slug', async (req, res) => {
   const wordCount = plainText.split(/\s+/).filter(Boolean).length;
   const readMins = Math.max(1, Math.round(wordCount / 200));
   const readingTime = readMins === 1 ? '1 min de leitura' : readMins + ' min de leitura';
+
+  // ── FAQ automático ──
+  const faqItems = extractFAQ(post.content || '');
 
   // ── CRÍTICO 2: todos os campos de post escapados antes de interpolar ──
   const safeTitle    = esc(post.title);
@@ -608,6 +709,17 @@ app.get('/post/:slug', async (req, res) => {
     ...(post.cover_url && { "thumbnailUrl": post.cover_url }),
   })}
   </script>
+  ${faqItems.length ? `<script type="application/ld+json">
+  ${JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqItems.map(f => ({
+      "@type": "Question",
+      "name": f.question,
+      "acceptedAnswer": { "@type": "Answer", "text": f.answer }
+    }))
+  })}
+  </script>` : ''}
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-TN3RMJHTKX"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TN3RMJHTKX');</script>
@@ -696,6 +808,30 @@ app.get('/post/:slug', async (req, res) => {
     .related-card-body{padding:1rem;}
     .related-card-cat{background:var(--yellow);color:var(--black);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:2px 8px;display:inline-block;margin-bottom:.5rem;}
     .related-card-title{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;line-height:1.1;}
+    /* POSTS POPULARES */
+    .popular-section{background:var(--black);padding:2rem 1.25rem;border-top:3px solid var(--yellow);}
+    .popular-inner{max-width:1100px;margin:0 auto;}
+    .popular-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
+    .popular-header h2{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:1px;color:var(--white);}
+    .popular-header h2 span{color:var(--yellow);}
+    .popular-list{display:flex;flex-direction:column;gap:.75rem;}
+    .popular-item{display:flex;align-items:center;gap:1rem;text-decoration:none;color:var(--white);padding:.75rem;border:1px solid #222;transition:border-color .2s,background .2s;}
+    .popular-item:hover{border-color:var(--yellow);background:#111;}
+    .popular-num{font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1;color:#333;width:36px;text-align:center;flex-shrink:0;transition:color .2s;}
+    .popular-item:hover .popular-num{color:var(--yellow);}
+    .popular-item.rank-1 .popular-num{color:var(--yellow);}
+    .popular-item.rank-2 .popular-num{color:#aaa;}
+    .popular-item.rank-3 .popular-num{color:#cd7f32;}
+    .popular-thumb{width:72px;height:56px;object-fit:cover;flex-shrink:0;display:block;background:#1a1a1a;}
+    .popular-thumb-placeholder{width:72px;height:56px;flex-shrink:0;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#333;}
+    .popular-info{flex:1;min-width:0;}
+    .popular-cat{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:.2rem;}
+    .popular-title{font-size:13px;font-weight:700;line-height:1.3;color:#eee;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+    .popular-views{font-size:11px;color:#555;margin-top:.25rem;display:flex;align-items:center;gap:3px;}
+    @media(max-width:600px){
+      .popular-thumb,.popular-thumb-placeholder{width:56px;height:44px;}
+      .popular-num{font-size:1.5rem;width:28px;}
+    }
     footer{background:var(--black);border-top:3px solid var(--yellow);}
     .footer-inner{max-width:1100px;margin:0 auto;padding:2rem 1.25rem;display:flex;flex-direction:column;align-items:center;gap:1.25rem;}
     .footer-social{display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center;}
@@ -704,6 +840,21 @@ app.get('/post/:slug', async (req, res) => {
     .footer-copy{color:#444;font-size:12px;text-align:center;}
     .footer-copy span{color:var(--yellow);}
     #read-progress{position:fixed;top:0;left:0;z-index:9999;height:3px;width:0%;background:var(--yellow);transition:width .1s linear;box-shadow:0 0 8px rgba(255,212,0,.6);}
+    /* FAQ VISUAL */
+    .faq-section{margin:3rem 0;border:2px solid var(--border);}
+    .faq-header{background:var(--black);padding:1rem 1.5rem;display:flex;align-items:center;gap:.75rem;}
+    .faq-header-badge{background:var(--yellow);color:var(--black);font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:2px;padding:3px 10px;flex-shrink:0;}
+    .faq-header-title{color:var(--white);font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;}
+    .faq-item{border-bottom:1px solid var(--border);}
+    .faq-item:last-child{border-bottom:none;}
+    .faq-question{width:100%;text-align:left;background:var(--white);border:none;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;cursor:pointer;transition:background .2s;}
+    .faq-question:hover{background:var(--gray);}
+    .faq-question-text{font-size:15px;font-weight:700;color:var(--black);line-height:1.4;text-align:left;}
+    .faq-icon{width:22px;height:22px;border:2px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .25s;color:var(--muted);}
+    .faq-item.open .faq-icon{background:var(--yellow);border-color:var(--yellow);color:var(--black);transform:rotate(45deg);}
+    .faq-answer{max-height:0;overflow:hidden;transition:max-height .35s ease,padding .35s ease;}
+    .faq-item.open .faq-answer{max-height:600px;}
+    .faq-answer-inner{padding:.25rem 1.5rem 1.25rem;font-size:15px;line-height:1.75;color:#333;}
     #backToTop{position:fixed;bottom:2rem;right:2rem;z-index:998;width:48px;height:48px;background:#FFD400;color:#0A0A0A;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.25);opacity:0;visibility:hidden;transform:translateY(12px);transition:opacity .3s ease,transform .3s ease,visibility .3s ease,background .2s;}
     #backToTop.visible{opacity:1;visibility:visible;transform:translateY(0);}
     #backToTop:hover{background:#e6be00;}
@@ -773,6 +924,26 @@ ${post.cover_url ? `
 <div class="post-body">
   ${safeContent}
 
+  ${faqItems.length >= 2 ? `
+  <div class="faq-section" id="faq-section">
+    <div class="faq-header">
+      <span class="faq-header-badge">FAQ</span>
+      <span class="faq-header-title">PERGUNTAS FREQUENTES</span>
+    </div>
+    ${faqItems.map((f, i) => `
+    <div class="faq-item" id="faq-${i}">
+      <button class="faq-question" onclick="toggleFAQ(${i})" aria-expanded="false" aria-controls="faq-answer-${i}">
+        <span class="faq-question-text">${esc(f.question)}</span>
+        <span class="faq-icon" aria-hidden="true">
+          <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </span>
+      </button>
+      <div class="faq-answer" id="faq-answer-${i}" role="region">
+        <div class="faq-answer-inner">${esc(f.answer)}</div>
+      </div>
+    </div>`).join('')}
+  </div>` : ''}
+
   <div class="reactions-box" id="reactionsBox">
     <span class="reactions-label">Foi útil?</span>
     <div class="reactions-btns">
@@ -832,6 +1003,16 @@ ${post.cover_url ? `
   <div class="related-inner">
     <h2>ARTIGOS RELACIONADOS</h2>
     <div class="related-grid" id="relatedGrid">Carregando...</div>
+  </div>
+</div>
+
+<!-- POSTS MAIS LIDOS -->
+<div class="popular-section" id="popularSection" style="display:none;">
+  <div class="popular-inner">
+    <div class="popular-header">
+      <h2>MAIS <span>LIDOS</span></h2>
+    </div>
+    <div class="popular-list" id="popularList"></div>
   </div>
 </div>
 
@@ -923,6 +1104,52 @@ ${post.cover_url ? `
   }
   loadRelated();
   loadReactions();
+  loadPopular();
+  function toggleFAQ(i) {
+    const item = document.getElementById('faq-' + i);
+    const btn  = item.querySelector('.faq-question');
+    const isOpen = item.classList.contains('open');
+    // Fecha todos
+    document.querySelectorAll('.faq-item.open').forEach(el => {
+      el.classList.remove('open');
+      el.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+    });
+    // Abre o clicado (se estava fechado)
+    if (!isOpen) {
+      item.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+  }
+  async function loadPopular() {
+    try {
+      const res = await fetch('/api/posts-populares');
+      const data = await res.json();
+      if (!data.success || !data.posts.length) return;
+      // Remove o post atual da lista
+      const posts = data.posts.filter(p => p.slug !== '${safeSlug}');
+      if (!posts.length) return;
+      const section = document.getElementById('popularSection');
+      const list    = document.getElementById('popularList');
+      const rankClass = ['rank-1','rank-2','rank-3','',''];
+      list.innerHTML = posts.map((p, i) => \`
+        <a href="/post/\${p.slug}" class="popular-item \${rankClass[i] || ''}">
+          <span class="popular-num">\${i + 1}</span>
+          \${p.cover_url
+            ? \`<img src="\${p.cover_url}" class="popular-thumb" alt="\${p.title}" loading="lazy" onerror="this.outerHTML='<div class=popular-thumb-placeholder>A2KF</div>'" />\`
+            : \`<div class="popular-thumb-placeholder">A2KF</div>\`}
+          <div class="popular-info">
+            \${p.category ? \`<div class="popular-cat">\${p.category}</div>\` : ''}
+            <div class="popular-title">\${p.title}</div>
+            <div class="popular-views">
+              <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              \${(p.views || 0).toLocaleString('pt-BR')} visualizações
+            </div>
+          </div>
+        </a>
+      \`).join('');
+      section.style.display = 'block';
+    } catch(e) {}
+  }
   (function(){
     var btn = document.getElementById('backToTop');
     var bar = document.getElementById('read-progress');
