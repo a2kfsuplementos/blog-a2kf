@@ -838,19 +838,26 @@
 
   // ── GERAR IMAGEM DE CAPA via Pollinations AI (gratuita, sem chave) ────────
   async function gerarImagemCapa(tema, categoria) {
-    try {
-      const promptImg = `professional fitness supplement blog cover photo, ${tema}, ${categoria}, athlete, gym, dynamic lighting, high quality, photorealistic, no text, no watermark`;
-      const encoded   = encodeURIComponent(promptImg);
-      const url       = `https://image.pollinations.ai/prompt/${encoded}?width=1200&height=630&nologo=true&seed=${Date.now()}`;
+  try {
+    const promptImg = `professional fitness supplement blog cover photo, ${tema}, ${categoria}, athlete, gym, dynamic lighting, high quality, photorealistic, no text, no watermark`;
+    const encoded = encodeURIComponent(promptImg);
+    const seed = Math.floor(Math.random() * 999999);
+    const url = `https://image.pollinations.ai/prompt/${encoded}?width=1200&height=630&nologo=true&seed=${seed}`;
 
-      // Faz um HEAD para confirmar que a imagem foi gerada antes de usar
-      const check = await fetch(url, { method: 'HEAD' });
-      if (check.ok) return url;
-    } catch(e) {
-      console.warn('[capa] Erro ao gerar imagem:', e.message);
-    }
+    // Aguarda a imagem carregar de verdade antes de usar
+    await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload  = resolve;
+      img.onerror = reject;
+      img.src = url;
+    });
+
+    return url;
+  } catch(e) {
+    console.warn('[capa] Erro ao gerar imagem:', e.message);
     return null;
   }
+}
 
   // ── MONTA O CTA PARA A LOJA ───────────────────────────────────────────────
   function ctaLojaHTML(categoria) {
