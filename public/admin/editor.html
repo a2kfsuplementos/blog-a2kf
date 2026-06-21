@@ -725,17 +725,25 @@
 <!-- MODAL GERADOR IA -->
 <div id="iaModal">
   <div class="ia-overlay" onclick="closeIAModal()"></div>
-  <div class="ia-box">
+  <div class="ia-box" style="max-width:580px;">
     <button class="ia-close" onclick="closeIAModal()">×</button>
     <h2>✨ Gerar Post com IA</h2>
-    <p>Descreva o tema e a IA escreve o artigo completo para você.</p>
+    <p>Preencha os campos abaixo e a IA cria o artigo completo com estrutura profissional, CTA e imagem de capa.</p>
 
+    <!-- TEMA -->
     <div class="ia-field">
       <label>Tema do post *</label>
       <input type="text" id="iaTema" placeholder="Ex: Benefícios da creatina para ganho muscular" maxlength="200" />
     </div>
 
+    <!-- PALAVRAS-CHAVE SEO -->
+    <div class="ia-field">
+      <label>Palavras-chave SEO (opcional)</label>
+      <input type="text" id="iaKeywords" placeholder="Ex: creatina, suplemento, força, massa muscular" maxlength="200" />
+    </div>
+
     <div class="ia-options">
+      <!-- CATEGORIA -->
       <div class="ia-field">
         <label>Categoria</label>
         <select id="iaCategoria">
@@ -747,24 +755,54 @@
           <option value="Dicas">Dicas</option>
         </select>
       </div>
+      <!-- TAMANHO -->
       <div class="ia-field">
         <label>Tamanho</label>
         <select id="iaTamanho">
-          <option value="curto">Curto (~400 palavras)</option>
-          <option value="medio" selected>Médio (~700 palavras)</option>
-          <option value="longo">Longo (~1200 palavras)</option>
+          <option value="medio">Médio (4–5 min leitura)</option>
+          <option value="longo" selected>Longo (5–6 min leitura)</option>
+          <option value="muito_longo">Muito longo (6–8 min leitura)</option>
+        </select>
+      </div>
+      <!-- TOM DE VOZ -->
+      <div class="ia-field">
+        <label>Tom de voz</label>
+        <select id="iaTom">
+          <option value="informativo_motivador">Informativo e motivador</option>
+          <option value="cientifico_acessivel" selected>Científico e acessível</option>
+          <option value="descontraido">Descontraído e prático</option>
+          <option value="tecnico">Técnico e aprofundado</option>
+        </select>
+      </div>
+      <!-- PÚBLICO -->
+      <div class="ia-field">
+        <label>Público principal</label>
+        <select id="iaPublico">
+          <option value="todos" selected>Todos os níveis</option>
+          <option value="iniciante">Iniciantes</option>
+          <option value="intermediario">Intermediários</option>
+          <option value="avancado">Avançados / Atletas</option>
         </select>
       </div>
     </div>
 
+    <!-- GERAR IMAGEM DE CAPA -->
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;padding:.75rem 1rem;background:#f8f4ff;border:1px solid #e0d4ff;">
+      <input type="checkbox" id="iaGerarCapa" checked style="width:16px;height:16px;accent-color:#7c3aed;cursor:pointer;flex-shrink:0;" />
+      <label for="iaGerarCapa" style="font-size:13px;font-weight:500;cursor:pointer;color:#333;text-transform:none;letter-spacing:0;">
+        🖼️ Gerar imagem de capa automaticamente com IA
+      </label>
+    </div>
+
+    <!-- EXTRAS -->
     <div class="ia-field">
       <label>Informações extras (opcional)</label>
-      <textarea id="iaExtras" rows="2" placeholder="Ex: mencionar a marca A2KF, público iniciante, tom descontraído..."></textarea>
+      <textarea id="iaExtras" rows="2" placeholder="Ex: mencionar A2KF Suplementos, citar estudo específico, incluir receita..."></textarea>
     </div>
 
     <button class="ia-btn-generate" id="iaBtnGerar" onclick="gerarPostIA()">
       <span class="ia-spinner"></span>
-      <span class="ia-btn-text">✨ Gerar Artigo</span>
+      <span class="ia-btn-text">✨ Gerar Artigo Completo</span>
     </button>
 
     <div class="ia-progress" id="iaProgress">
@@ -776,6 +814,7 @@
 
 <script>
   // ── GERADOR IA ────────────────────────────────────────────────────────────
+
   function openIAModal() {
     document.getElementById('iaModal').style.display = 'flex';
     document.getElementById('iaTema').focus();
@@ -797,41 +836,115 @@
     document.getElementById('iaProgressText').textContent = text;
   }
 
-// ── CRÍTICO 1: Groq via proxy autenticado ────────────────────────────────
-  // A chave Groq NUNCA vai ao navegador. O editor envia o token de sessão
-  // Supabase no header Authorization; o servidor valida e faz a chamada.
+  // ── GERAR IMAGEM DE CAPA via Pollinations AI (gratuita, sem chave) ────────
+  async function gerarImagemCapa(tema, categoria) {
+    try {
+      const promptImg = `professional fitness supplement blog cover photo, ${tema}, ${categoria}, athlete, gym, dynamic lighting, high quality, photorealistic, no text, no watermark`;
+      const encoded   = encodeURIComponent(promptImg);
+      const url       = `https://image.pollinations.ai/prompt/${encoded}?width=1200&height=630&nologo=true&seed=${Date.now()}`;
+
+      // Faz um HEAD para confirmar que a imagem foi gerada antes de usar
+      const check = await fetch(url, { method: 'HEAD' });
+      if (check.ok) return url;
+    } catch(e) {
+      console.warn('[capa] Erro ao gerar imagem:', e.message);
+    }
+    return null;
+  }
+
+  // ── MONTA O CTA PARA A LOJA ───────────────────────────────────────────────
+  function ctaLojaHTML(categoria) {
+    const ctaMap = {
+      'Suplementação': { titulo: 'Encontre os Melhores Suplementos na A2KF', sub: 'Creatina, Whey, Pré-treino e muito mais com qualidade garantida e entrega rápida para todo o Brasil.' },
+      'Treino':        { titulo: 'Potencialize Seus Resultados com a A2KF',   sub: 'Suplementos selecionados para atletas que levam o treino a sério. Qualidade, preço justo e entrega rápida.' },
+      'Nutrição':      { titulo: 'Suplementação de Qualidade na A2KF',         sub: 'Complete sua alimentação com os melhores suplementos. Whey, vitaminas, aminoácidos e muito mais.' },
+      'Saúde':         { titulo: 'Cuide da Sua Saúde com a A2KF Suplementos', sub: 'Vitaminas, minerais e suplementos para uma vida mais saudável. Entrega rápida para todo o Brasil.' },
+      'Receitas':      { titulo: 'Suplementos para Turbinar Suas Receitas',    sub: 'Proteínas, adoçantes naturais e ingredientes fitness na A2KF Suplementos. Peça agora!' },
+      'Dicas':         { titulo: 'A2KF Suplementos — Para Quem Quer Resultado',sub: 'Os melhores suplementos do mercado com qualidade garantida. Visite nossa loja e confira!' },
+    };
+    const cta = ctaMap[categoria] || ctaMap['Suplementação'];
+    return `<div style="background:#FFD400;padding:2rem 1.5rem;margin:2.5rem 0;text-align:center;">
+<h3 style="font-family:Arial,sans-serif;font-size:1.4rem;font-weight:900;color:#0A0A0A;margin:0 0 .5rem;">${cta.titulo}</h3>
+<p style="font-size:14px;color:#333;margin:0 0 1.25rem;">${cta.sub}</p>
+<a href="https://a2kfsuplementos.com.br" target="_blank" rel="noopener" style="display:inline-block;background:#0A0A0A;color:#FFD400;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;padding:12px 28px;text-decoration:none;">Visitar Loja A2KF →</a>
+</div>`;
+  }
+
+  // ── GERADOR PRINCIPAL ─────────────────────────────────────────────────────
+  // A chave Groq NUNCA vai ao navegador — o proxy do servidor valida a sessão.
   async function gerarPostIA() {
-    const tema = document.getElementById('iaTema').value.trim();
+    const tema     = document.getElementById('iaTema').value.trim();
     if (!tema) { document.getElementById('iaTema').focus(); return; }
 
-    const categoria = document.getElementById('iaCategoria').value;
-    const tamanho   = document.getElementById('iaTamanho').value;
-    const extras    = document.getElementById('iaExtras').value.trim();
+    const categoria  = document.getElementById('iaCategoria').value;
+    const tamanho    = document.getElementById('iaTamanho').value;
+    const tom        = document.getElementById('iaTom').value;
+    const publico    = document.getElementById('iaPublico').value;
+    const keywords   = document.getElementById('iaKeywords').value.trim();
+    const extras     = document.getElementById('iaExtras').value.trim();
+    const gerarCapa  = document.getElementById('iaGerarCapa').checked;
 
-    const tamanhoMap = { curto: '400', medio: '700', longo: '1200' };
-    const palavras   = tamanhoMap[tamanho];
+    const tamanhoMap = {
+      medio:       { palavras: '800',  minutos: '4 a 5' },
+      longo:       { palavras: '1200', minutos: '5 a 6' },
+      muito_longo: { palavras: '1600', minutos: '6 a 8' },
+    };
+    const { palavras, minutos } = tamanhoMap[tamanho] || tamanhoMap.longo;
+
+    const tomMap = {
+      informativo_motivador:  'Informativo e motivador — inspire o leitor a agir, use frases de impacto.',
+      cientifico_acessivel:   'Científico e acessível — cite estudos e evidências, mas explique de forma clara para leigos.',
+      descontraido:           'Descontraído e prático — use linguagem direta, exemplos do dia a dia, evite jargões.',
+      tecnico:                'Técnico e aprofundado — explore mecanismos fisiológicos, doses, protocolos e referências científicas.',
+    };
+    const publicoMap = {
+      todos:          'Atletas profissionais, amadores, iniciantes e praticantes de musculação e atividades físicas em geral.',
+      iniciante:      'Iniciantes que estão começando na academia e querem entender suplementação e treino.',
+      intermediario:  'Praticantes intermediários com pelo menos 1 ano de treino, buscando evoluir seus resultados.',
+      avancado:       'Atletas avançados e competidores que buscam otimizar performance e recuperação.',
+    };
 
     const btn = document.getElementById('iaBtnGerar');
     btn.classList.add('loading');
     btn.disabled = true;
 
-    setIAProgress(10, 'Conectando com a IA...');
+    setIAProgress(5, 'Conectando com a IA...');
 
-    const prompt = `Você é um especialista em nutrição esportiva e suplementação. Escreva um artigo de blog completo em português do Brasil sobre o tema: "${tema}".
+    // ── PROMPT COMPLETO E ESTRUTURADO ────────────────────────────────────────
+    const prompt = `Você é um redator especialista em nutrição esportiva, suplementação e performance física. Escreva um post de blog completo em português do Brasil, otimizado para SEO, sobre o tema: "${tema}".
 
-Categoria: ${categoria}
-Tamanho: aproximadamente ${palavras} palavras
-${extras ? `Informações adicionais: ${extras}` : ''}
+DIRETRIZES OBRIGATÓRIAS:
+- Público-alvo: ${publicoMap[publico]}
+- Tom de voz: ${tomMap[tom]}
+- Tempo de leitura: ${minutos} minutos (aproximadamente ${palavras} palavras no conteúdo)
+- Categoria: ${categoria}
+${keywords ? `- Palavras-chave SEO a incluir naturalmente: ${keywords}` : ''}
+${extras ? `- Instruções adicionais: ${extras}` : ''}
 
-Retorne SOMENTE um JSON minificado (sem quebras de linha desnecessárias) neste formato:
-{"titulo":"Título aqui","resumo":"Resumo de até 160 caracteres","conteudo":"HTML aqui usando h2 h3 p ul li strong, tudo em uma linha só, sem quebras de linha reais dentro das strings"}
+ESTRUTURA OBRIGATÓRIA DO ARTIGO (siga esta ordem):
+1. TÍTULO CHAMATIVO E OTIMIZADO PARA SEO (use números, perguntas ou promessas quando fizer sentido)
+2. INTRODUÇÃO — contextualize o tema, apresente o problema ou dúvida do leitor, antecipe o que ele vai aprender. (2–3 parágrafos)
+3. DESENVOLVIMENTO — aprofunde o conteúdo com subtítulos H2 e H3, listas com bullet points, dados e exemplos práticos. Divida em pelo menos 3 seções temáticas.
+4. MITOS E VERDADES — quebre pelo menos 2 objeções ou crenças comuns sobre o tema usando o formato: ❌ Mito / ✅ Verdade.
+5. CONCLUSÃO — resuma os pontos principais e reforce a mensagem central.
+6. FONTES E REFERÊNCIAS — inclua pelo menos 4 referências reais e verificáveis: estudos científicos (PubMed, SciELO), publicações brasileiras (SBME, CFN, ANVISA) e internacionais (ISSN, NSCA, ACSM). Formate como lista numerada.
 
-IMPORTANTE: O JSON deve ser válido. Escape aspas duplas dentro do conteúdo com \\". Não use quebras de linha dentro dos valores de string.`;
+REGRAS DE FORMATAÇÃO:
+- Use <h2> para seções principais e <h3> para subseções
+- Use <ul><li> para listas e bullet points
+- Use <strong> para destacar termos importantes
+- Use <blockquote> para citações ou dados de destaque
+- NÃO inclua o CTA da loja no conteúdo (ele será adicionado automaticamente)
+- NÃO inclua meta descrição no conteúdo HTML
+
+Retorne SOMENTE um JSON minificado e válido neste formato exato (sem quebras de linha dentro dos valores):
+{"titulo":"Título do artigo aqui","resumo":"Meta descrição SEO de até 160 caracteres com a palavra-chave principal","tags":["tag1","tag2","tag3","tag4","tag5"],"conteudo":"HTML completo aqui usando h2 h3 p ul li strong blockquote, sem quebras de linha reais dentro da string, aspas duplas escapadas com \\""}
+
+IMPORTANTE: O JSON deve ser 100% válido. Escape aspas duplas dentro do conteúdo com \\". Não use quebras de linha reais dentro dos valores de string JSON.`;
 
     try {
-      setIAProgress(30, 'A IA está escrevendo o artigo...');
+      setIAProgress(15, 'A IA está escrevendo o artigo...');
 
-      // Obtém sessão atual para enviar o Bearer token ao servidor
       const { data: { session } } = await _sb.auth.getSession();
       if (!session) {
         showToast('Sessão expirada. Faça login novamente.', 'error');
@@ -839,17 +952,20 @@ IMPORTANTE: O JSON deve ser válido. Escape aspas duplas dentro do conteúdo com
         return;
       }
 
-      // Chama o proxy no servidor — a chave Groq nunca sai do backend
-      const response = await fetch('/api/groq-generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ prompt }),
-      });
+      // Gera artigo e imagem em paralelo (se solicitado)
+      const [response, coverUrl] = await Promise.all([
+        fetch('/api/groq-generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ prompt }),
+        }),
+        gerarCapa ? gerarImagemCapa(tema, categoria) : Promise.resolve(null),
+      ]);
 
-      setIAProgress(70, 'Processando resposta...');
+      setIAProgress(70, 'Processando resposta da IA...');
 
       if (!response.ok) {
         const err = await response.json();
@@ -859,37 +975,63 @@ IMPORTANTE: O JSON deve ser válido. Escape aspas duplas dentro do conteúdo com
       const data = await response.json();
       const raw  = data.content.trim();
 
-      // Extrai JSON — tenta múltiplas abordagens
+      // Extrai JSON — tenta múltiplas abordagens para robustez
       let result;
       try {
         let jsonStr = raw.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
         jsonStr = jsonStr.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
         result = JSON.parse(jsonStr);
       } catch (e1) {
-        const titulo   = raw.match(/"titulo"\s*:\s*"((?:[^"\\]|\\.)*)"/)?.[1] || tema;
-        const resumo   = raw.match(/"resumo"\s*:\s*"((?:[^"\\]|\\.)*)"/)?.[1] || '';
+        // Fallback: extrai campos individualmente por regex
+        const titulo  = raw.match(/"titulo"\s*:\s*"((?:[^"\\]|\\.)*)"/)?.[1] || tema;
+        const resumo  = raw.match(/"resumo"\s*:\s*"((?:[^"\\]|\\.)*)"/)?.[1] || '';
+        const tagsMatch = raw.match(/"tags"\s*:\s*\[([^\]]*)\]/);
+        const tags    = tagsMatch ? tagsMatch[1].replace(/"/g,'').split(',').map(t=>t.trim()).filter(Boolean) : [];
         const conteudoMatch = raw.match(/"conteudo"\s*:\s*"([\s\S]*?)"\s*\}?\s*$/);
-        const conteudo = conteudoMatch ? conteudoMatch[1].replace(/\\n/g, '').replace(/\\"/g, '"') : '';
-        result = { titulo, resumo, conteudo };
+        const conteudo = conteudoMatch ? conteudoMatch[1].replace(/\\n/g,'').replace(/\\"/g,'"') : '';
+        result = { titulo, resumo, tags, conteudo };
       }
 
-      setIAProgress(90, 'Preenchendo o editor...');
+      setIAProgress(88, 'Montando o artigo no editor...');
 
-      document.getElementById('postTitle').value   = result.titulo || '';
-      document.getElementById('postExcerpt').value = result.resumo || '';
+      // CTA da loja injetado automaticamente antes das referências
+      let conteudoFinal = result.conteudo || '';
+      const ctaHtml = ctaLojaHTML(categoria);
+
+      // Insere o CTA antes das referências (h2 contendo "referência" ou "fonte")
+      const refRegex = /(<h2[^>]*>(?:[^<]*(?:referência|fonte|bibliografia)[^<]*)<\/h2>)/i;
+      if (refRegex.test(conteudoFinal)) {
+        conteudoFinal = conteudoFinal.replace(refRegex, ctaHtml + '$1');
+      } else {
+        conteudoFinal += ctaHtml;
+      }
+
+      // Preenche o editor
+      document.getElementById('postTitle').value    = result.titulo || '';
+      document.getElementById('postExcerpt').value  = (result.resumo || '').substring(0, 200);
       document.getElementById('postCategory').value = categoria;
       document.getElementById('excerptCount').textContent = (result.resumo || '').length;
+      quill.root.innerHTML = conteudoFinal;
 
-      if (result.conteudo) {
-        quill.root.innerHTML = result.conteudo;
+      // Tags geradas pela IA
+      if (Array.isArray(result.tags) && result.tags.length) {
+        currentTags = [];
+        result.tags.slice(0, 8).forEach(t => addTag(t));
       }
 
-      setIAProgress(100, '✓ Artigo gerado com sucesso!');
+      // Imagem de capa gerada
+      if (coverUrl) {
+        document.getElementById('coverUrl').value = coverUrl;
+        previewCover();
+        setIAProgress(96, 'Imagem de capa gerada!');
+      }
+
+      setIAProgress(100, '✓ Artigo completo gerado com sucesso!');
 
       setTimeout(() => {
         closeIAModal();
-        showToast('✨ Artigo gerado! Revise antes de publicar.', 'success');
-      }, 800);
+        showToast('✨ Artigo gerado! Revise o conteúdo antes de publicar.', 'success');
+      }, 900);
 
     } catch (e) {
       console.error('Erro IA:', e);
@@ -902,7 +1044,7 @@ IMPORTANTE: O JSON deve ser válido. Escape aspas duplas dentro do conteúdo com
     }
   }
 
-  // Função getGroqKey REMOVIDA — a chave nunca vai ao frontend.
+  // A chave Groq nunca vai ao frontend — apenas o proxy do servidor a usa.
 </script>
 
 </body>
