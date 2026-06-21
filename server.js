@@ -487,6 +487,32 @@ app.post('/api/notify-subscribers', requireAuthOrInternal, notifyLimiter, async 
   }
 });
 
+// ─── POSTS POPULARES ─────────────────────────────────────────────────────────
+let popularCache = { data: null, ts: 0 };
+const POPULAR_TTL = 5 * 60 * 1000;
+
+app.get('/api/posts-populares', async (req, res) => {
+  const now = Date.now();
+  if (popularCache.data && now - popularCache.ts < POPULAR_TTL) {
+    return res.json(popularCache.data);
+  }
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('title, slug, cover_url, category, views')
+      .eq('published', true)
+      .order('views', { ascending: false })
+      .limit(5);
+    if (error) return res.status(500).json({ error: error.message });
+    popularCache = { data: { success: true, posts: data || [] }, ts: now };
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json(popularCache.data);
+  } catch (e) {
+    console.error('[popular] Erro:', e.message);
+    res.status(500).json({ error: 'Erro interno.' });
+  }
+});
+
 // ─── REAÇÕES ─────────────────────────────────────────────────────────────────
 app.get('/api/reactions/:slug', reactionLimiter, async (req, res) => {
   const { slug } = req.params;
@@ -696,6 +722,30 @@ app.get('/post/:slug', async (req, res) => {
     .related-card-body{padding:1rem;}
     .related-card-cat{background:var(--yellow);color:var(--black);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:2px 8px;display:inline-block;margin-bottom:.5rem;}
     .related-card-title{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;line-height:1.1;}
+    /* POSTS MAIS LIDOS */
+    .popular-section{background:var(--black);padding:2rem 1.25rem;border-top:3px solid var(--yellow);}
+    .popular-inner{max-width:1100px;margin:0 auto;}
+    .popular-title{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:1px;color:var(--white);margin-bottom:1.25rem;}
+    .popular-title span{color:var(--yellow);}
+    .popular-list{display:flex;flex-direction:column;gap:.625rem;}
+    .popular-item{display:flex;align-items:center;gap:.875rem;text-decoration:none;color:var(--white);padding:.75rem;border:1px solid #1e1e1e;background:#111;transition:border-color .2s,background .2s;}
+    .popular-item:hover{border-color:var(--yellow);background:#1a1a1a;}
+    .popular-num{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;line-height:1;color:#2a2a2a;width:32px;text-align:center;flex-shrink:0;transition:color .2s;}
+    .popular-item:hover .popular-num{color:#444;}
+    .popular-item.rank-1 .popular-num{color:var(--yellow);}
+    .popular-item.rank-2 .popular-num{color:#aaa;}
+    .popular-item.rank-3 .popular-num{color:#cd7f32;}
+    .popular-thumb{width:68px;height:52px;object-fit:cover;flex-shrink:0;display:block;background:#222;}
+    .popular-thumb-ph{width:68px;height:52px;flex-shrink:0;background:#222;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:#444;}
+    .popular-info{flex:1;min-width:0;}
+    .popular-cat{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:.2rem;}
+    .popular-name{font-size:13px;font-weight:700;line-height:1.3;color:#ddd;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+    .popular-views{font-size:11px;color:#555;margin-top:.2rem;display:flex;align-items:center;gap:3px;}
+    @media(max-width:600px){
+      .popular-thumb,.popular-thumb-ph{width:54px;height:42px;}
+      .popular-num{font-size:1.4rem;width:26px;}
+      .popular-name{font-size:12px;}
+    }
     footer{background:var(--black);border-top:3px solid var(--yellow);}
     .footer-inner{max-width:1100px;margin:0 auto;padding:2rem 1.25rem;display:flex;flex-direction:column;align-items:center;gap:1.25rem;}
     .footer-social{display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center;}
@@ -835,6 +885,14 @@ ${post.cover_url ? `
   </div>
 </div>
 
+<!-- POSTS MAIS LIDOS -->
+<div class="popular-section" id="popularSection" style="display:none;">
+  <div class="popular-inner">
+    <h2 class="popular-title">MAIS <span>LIDOS</span></h2>
+    <div class="popular-list" id="popularList"></div>
+  </div>
+</div>
+
 <footer>
   <div class="footer-inner">
     <div class="footer-social">
@@ -923,6 +981,34 @@ ${post.cover_url ? `
   }
   loadRelated();
   loadReactions();
+  async function loadPopular() {
+    try {
+      const res = await fetch('/api/posts-populares');
+      const data = await res.json();
+      if (!data.success || !data.posts.length) return;
+      const posts = data.posts.filter(p => p.slug !== '${safeSlug}');
+      if (!posts.length) return;
+      const rankClass = ['rank-1','rank-2','rank-3','',''];
+      document.getElementById('popularList').innerHTML = posts.map((p, i) => \`
+        <a href="/post/\${p.slug}" class="popular-item \${rankClass[i] || ''}">
+          <span class="popular-num">\${i + 1}</span>
+          \${p.cover_url
+            ? \`<img src="\${p.cover_url}" class="popular-thumb" alt="\${p.title}" loading="lazy" onerror="this.outerHTML='<div class=popular-thumb-ph>A2KF</div>'" />\`
+            : \`<div class="popular-thumb-ph">A2KF</div>\`}
+          <div class="popular-info">
+            \${p.category ? \`<div class="popular-cat">\${p.category}</div>\` : ''}
+            <div class="popular-name">\${p.title}</div>
+            <div class="popular-views">
+              <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              \${(p.views||0).toLocaleString('pt-BR')} visualizações
+            </div>
+          </div>
+        </a>
+      \`).join('');
+      document.getElementById('popularSection').style.display = 'block';
+    } catch(e) {}
+  }
+  loadPopular();
   (function(){
     var btn = document.getElementById('backToTop');
     var bar = document.getElementById('read-progress');
