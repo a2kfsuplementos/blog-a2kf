@@ -300,18 +300,52 @@ app.get('/api/produtos-destaque', async (req, res) => {
 
     const parsed = JSON.parse(result.body);
 
+    // Log completo da primeira SKU para debug de campos de preço
+    const firstSkus = (parsed.data?.[0]?.skus?.data || []);
+    if (firstSkus.length) {
+      const s = firstSkus[0];
+      console.log('[yampi] Campos de preço da 1ª SKU:', JSON.stringify({
+        price: s.price,
+        price_sale: s.price_sale,
+        promotional_price: s.promotional_price,
+        price_discount: s.price_discount,
+        price_with_discount: s.price_with_discount,
+        sale_price: s.sale_price,
+        pricing: s.pricing,
+      }));
+    }
+
     const products = (parsed.data || []).map(p => {
       const skus = p.skus?.data || [];
-      const originalPrice = skus.length
-        ? Math.min(...skus.map(s => parseFloat(s.price || 0)).filter(v => v > 0))
-        : 0;
-      const salePrice = skus.length
-        ? Math.min(...skus.map(s => {
-            const sale = parseFloat(s.price_sale);
-            return (sale && sale > 0) ? sale : parseFloat(s.price || 0);
-          }).filter(v => v > 0))
-        : 0;
-      const hasDiscount = salePrice > 0 && salePrice < originalPrice;
+
+      let originalPrice = 0;
+      let finalPrice = 0;
+
+      skus.forEach(s => {
+        // price = preço cheio cadastrado na Yampi
+        const base = parseFloat(s.price || 0);
+
+        // Yampi pode usar qualquer um desses campos para promoção
+        const sale = parseFloat(
+          s.price_sale ||
+          s.promotional_price ||
+          s.price_with_discount ||
+          s.sale_price ||
+          0
+        );
+
+        if (base > 0) {
+          // Mantém o menor preço cheio
+          if (originalPrice === 0 || base < originalPrice) originalPrice = base;
+
+          // Preço final: usa sale se existir e for menor, senão usa base
+          const effective = (sale > 0 && sale < base) ? sale : base;
+          if (finalPrice === 0 || effective < finalPrice) finalPrice = effective;
+        }
+      });
+
+      const hasDiscount = finalPrice > 0 && finalPrice < originalPrice;
+
       const images = p.images?.data || [];
       const image = images.length
         ? (images[0].thumb?.url || images[0].small?.url || images[0].large?.url || images[0].url || '')
@@ -320,18 +354,21 @@ app.get('/api/produtos-destaque', async (req, res) => {
         ? p.url
         : `https://www.a2kfsuplementos.com.br/${p.url || p.slug || p.id}`;
 
+      console.log(`[yampi] ${p.name} → original: ${originalPrice} | final: ${finalPrice} | desconto: ${hasDiscount}`);
+
       return {
         id: p.id,
         name: p.name,
         slug: p.slug || '',
         image,
-        price: salePrice || originalPrice,
+        price: finalPrice || originalPrice,
         originalPrice: hasDiscount ? originalPrice : 0,
         url: productUrl,
       };
     }).filter(p => p.name && p.price > 0);
 
-    res.set('Cache-Control', 'public, max-age=120');
+    // Sem cache — preços precisam sempre estar atualizados
+    res.set('Cache-Control', 'no-store');
     res.json({ success: true, products });
   } catch (e) {
     console.error('[yampi] Erro:', e.message);
