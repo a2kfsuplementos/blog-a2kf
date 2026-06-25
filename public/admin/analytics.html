@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analytics – A2KF Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --yellow: #FFD400; --black: #0A0A0A; --white: #fff;
+      --gray: #F4F4F2; --border: #E5E5E0; --muted: #6B6B6B;
+      --red: #E53E3E; --green: #38A169; --blue: #3182CE; --purple: #7C3AED;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: #f7f7f5; color: var(--black); display: flex; min-height: 100vh; }
+
+    /* ── SIDEBAR ── */
+    .sidebar { width: 240px; background: var(--black); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 50; }
+    .sidebar-logo { padding: 1.5rem; border-bottom: 2px solid #222; display: flex; align-items: center; gap: 10px; }
+    .sidebar-logo-badge { background: var(--yellow); color: var(--black); font-family: 'Bebas Neue', sans-serif; font-size: 20px; padding: 2px 10px; }
+    .sidebar-logo-text { color: #fff; font-size: 12px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; }
+    .sidebar-nav { flex: 1; padding: 1rem 0; }
+    .sidebar-nav a { display: flex; align-items: center; gap: 12px; padding: .85rem 1.5rem; color: #888; text-decoration: none; font-size: 14px; font-weight: 500; transition: all .2s; }
+    .sidebar-nav a:hover, .sidebar-nav a.active { color: #fff; background: #1a1a1a; border-left: 3px solid var(--yellow); }
+    .sidebar-nav a svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .sidebar-footer { padding: 1.5rem; border-top: 1px solid #222; }
+    .sidebar-footer button { width: 100%; padding: 10px; background: transparent; border: 1px solid #333; color: #888; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: all .2s; }
+    .sidebar-footer button:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── MAIN ── */
+    .main { margin-left: 240px; flex: 1; padding: 2rem; min-width: 0; }
+
+    /* ── TOPBAR ── */
+    .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+    .topbar h1 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 1px; }
+    .period-btns { display: flex; gap: .5rem; }
+    .period-btn { padding: 7px 16px; border: 1.5px solid var(--border); background: var(--white); font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: .5px; transition: all .2s; }
+    .period-btn.active { background: var(--yellow); border-color: var(--yellow); color: var(--black); }
+    .period-btn:hover:not(.active) { border-color: #aaa; }
+
+    /* ── STATS GRID ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--white); border: 1.5px solid var(--border); padding: 1.25rem 1.5rem; }
+    .stat-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: .5rem; }
+    .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 1px; line-height: 1; }
+    .stat-value.yellow { color: var(--yellow); }
+    .stat-value.green  { color: var(--green); }
+    .stat-value.blue   { color: var(--blue); }
+    .stat-value.purple { color: var(--purple); }
+    .stat-sub { font-size: 11px; color: var(--muted); margin-top: .3rem; }
+
+    /* ── GRID DE CARDS ── */
+    .cards-row { display: grid; gap: 1.25rem; margin-bottom: 1.25rem; }
+    .cards-row.col2 { grid-template-columns: 1fr 1fr; }
+    .cards-row.col3 { grid-template-columns: 2fr 1fr 1fr; }
+    .cards-row.col1 { grid-template-columns: 1fr; }
+
+    .card { background: var(--white); border: 1.5px solid var(--border); padding: 1.5rem; }
+    .card-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+
+    /* ── CHART ÁREA ── */
+    .chart-wrap { position: relative; width: 100%; }
+    .chart-bars { display: flex; align-items: flex-end; gap: 3px; height: 120px; padding-bottom: 20px; }
+    .chart-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; position: relative; }
+    .chart-bar { width: 100%; background: var(--yellow); opacity: .85; border-radius: 1px 1px 0 0; transition: opacity .2s; cursor: default; position: relative; min-height: 2px; }
+    .chart-bar:hover { opacity: 1; }
+    .chart-bar-sessions { width: 100%; background: #333; opacity: .6; border-radius: 1px 1px 0 0; min-height: 2px; }
+    .chart-label { font-size: 9px; color: var(--muted); position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+    .chart-tooltip { position: absolute; top: -36px; left: 50%; transform: translateX(-50%); background: var(--black); color: #fff; font-size: 11px; padding: 4px 8px; white-space: nowrap; pointer-events: none; z-index: 10; opacity: 0; transition: opacity .15s; border-left: 2px solid var(--yellow); }
+    .chart-bar-group:hover .chart-tooltip { opacity: 1; }
+    .chart-legend { display: flex; gap: 1rem; margin-top: .75rem; }
+    .chart-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+    .chart-legend-dot { width: 10px; height: 10px; border-radius: 1px; flex-shrink: 0; }
+
+    /* ── TABELAS ── */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); padding: .5rem .75rem; text-align: left; border-bottom: 1.5px solid var(--border); background: #fafaf8; }
+    .data-table td { padding: .625rem .75rem; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #fafaf8; }
+    .page-path { font-weight: 600; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .page-path small { display: block; font-weight: 400; color: var(--muted); font-size: 11px; }
+    .num { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--black); }
+    .num-muted { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; color: var(--muted); }
+
+    /* ── BARRAS HORIZONTAIS ── */
+    .hbar-row { display: flex; align-items: center; gap: .75rem; margin-bottom: .75rem; }
+    .hbar-row:last-child { margin-bottom: 0; }
+    .hbar-label { font-size: 12px; font-weight: 500; width: 130px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hbar-wrap { flex: 1; height: 8px; background: var(--gray); border-radius: 1px; overflow: hidden; }
+    .hbar-fill { height: 100%; border-radius: 1px; transition: width .6s ease; }
+    .hbar-count { font-size: 12px; font-weight: 700; width: 48px; text-align: right; flex-shrink: 0; }
+
+    /* ── DONUT CHART (dispositivos) ── */
+    .donut-wrap { display: flex; align-items: center; gap: 1.5rem; }
+    .donut-svg { flex-shrink: 0; }
+    .donut-legend { display: flex; flex-direction: column; gap: .625rem; }
+    .donut-item { display: flex; align-items: center; gap: .5rem; font-size: 12px; }
+    .donut-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── CANAL BADGES ── */
+    .channel-badge { display: inline-block; padding: 2px 8px; font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
+    .ch-direto    { background: #e8f4fd; color: #1a6fa8; }
+    .ch-busca     { background: #e6f7ee; color: #256341; }
+    .ch-social    { background: #f0e8ff; color: #6b21a8; }
+    .ch-campanha  { background: #fff3e0; color: #b45309; }
+    .ch-referencia{ background: #f5f5f5; color: #555; }
+    .ch-interno   { background: #fef3c7; color: #92400e; }
+
+    /* ── CLICK TARGET BADGE ── */
+    .ct-badge { display: inline-block; padding: 2px 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+    .ct-loja      { background: #FFD400; color: #000; }
+    .ct-produto   { background: #111; color: #FFD400; }
+    .ct-whatsapp  { background: #dcfce7; color: #166534; }
+    .ct-newsletter{ background: #dbeafe; color: #1e40af; }
+    .ct-post      { background: #f3f4f6; color: #374151; }
+    .ct-externo   { background: #fee2e2; color: #991b1b; }
+    .ct-outro     { background: #f5f5f5; color: #888; }
+
+    /* ── SCROLL METER ── */
+    .scroll-meter { height: 6px; background: var(--gray); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+    .scroll-fill  { height: 100%; background: linear-gradient(90deg, var(--yellow), #ff8c00); border-radius: 3px; }
+
+    /* ── LOADER ── */
+    .loader-overlay { position: fixed; inset: 0; background: rgba(247,247,245,.8); display: flex; align-items: center; justify-content: center; z-index: 999; flex-direction: column; gap: 1rem; }
+    .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--yellow); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-text { font-size: 13px; color: var(--muted); }
+
+    /* ── EMPTY ── */
+    .empty-state { text-align: center; padding: 2rem; color: var(--muted); font-size: 13px; }
+    .empty-state strong { display: block; font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: #ccc; margin-bottom: .25rem; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .cards-row.col3 { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 900px) { .sidebar { display: none; } .main { margin-left: 0; padding: 1.25rem; } .cards-row.col2, .cards-row.col3 { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr 1fr; } .topbar h1 { font-size: 1.6rem; } }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="sidebar-logo-badge">A2KF</span>
+    <span class="sidebar-logo-text">Admin</span>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="dashboard.html">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a href="editor.html">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+      Novo Post
+    </a>
+    <a href="banners.html">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3h-8"/><path d="M12 3v4"/></svg>
+      Banners
+    </a>
+    <a href="scheduled.html">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Agendados
+    </a>
+    <a href="analytics.html" class="active">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Analytics
+    </a>
+    <a href="../index.html" target="_blank">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Ver Blog
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <button onclick="logout()">Sair da conta</button>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <h1>ANALYTICS</h1>
+    <div class="period-btns">
+      <button class="period-btn" onclick="loadData(7)">7 dias</button>
+      <button class="period-btn active" onclick="loadData(30)">30 dias</button>
+      <button class="period-btn" onclick="loadData(90)">90 dias</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Pageviews</div>
+      <div class="stat-value yellow" id="sViews">—</div>
+      <div class="stat-sub" id="sViewsSub"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Sessões Únicas</div>
+      <div class="stat-value green" id="sSessions">—</div>
+      <div class="stat-sub" id="sSessionsSub"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Tempo Médio</div>
+      <div class="stat-value blue" id="sAvgTime">—</div>
+      <div class="stat-sub">por visita</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Scroll Médio</div>
+      <div class="stat-value purple" id="sAvgScroll">—</div>
+      <div class="stat-sub">profundidade média</div>
+    </div>
+  </div>
+
+  <!-- GRÁFICO DIÁRIO -->
+  <div class="cards-row col1">
+    <div class="card">
+      <div class="card-title">
+        Pageviews por Dia
+        <div class="chart-legend">
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:var(--yellow)"></div>Pageviews</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#333"></div>Sessões</div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-bars" id="chartBars"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP PÁGINAS + CANAIS -->
+  <div class="cards-row col2">
+    <div class="card">
+      <div class="card-title">Top Páginas</div>
+      <div id="topPagesWrap">
+        <div class="empty-state"><strong>—</strong>Carregando...</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Canais de Aquisição</div>
+      <div id="channelsWrap">
+        <div class="empty-state"><strong>—</strong>Carregando...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORIGENS + DISPOSITIVOS -->
+  <div class="cards-row col2">
+    <div class="card">
+      <div class="card-title">Origens de Tráfego</div>
+      <div id="sourcesWrap">
+        <div class="empty-state"><strong>—</strong>Carregando...</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Dispositivos</div>
+      <div id="devicesWrap">
+        <div class="empty-state"><strong>—</strong>Carregando...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLIQUES + SCROLL -->
+  <div class="cards-row col2">
+    <div class="card">
+      <div class="card-title">Top Cliques</div>
+      <div id="clicksWrap">
+        <div class="empty-state"><strong>—</strong>Carregando...</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Scroll Depth por Página</div>
+      <div id="scrollWrap">
+        <div class="empty-state"><strong>—</strong>Carregando...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEMPO NA PÁGINA -->
+  <div class="cards-row col1">
+    <div class="card">
+      <div class="card-title">Tempo Médio na Página</div>
+      <div id="timeWrap">
+        <div class="empty-state"><strong>—</strong>Carregando...</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="loader-overlay" id="loaderOverlay">
+  <div class="spinner"></div>
+  <span class="loader-text">Carregando analytics...</span>
+</div>
+
+<script>
+  const SUPABASE_URL     = 'https://cducpjclmtzktncqhjoa.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkdWNwamNsbXR6a3RuY3Foam9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMDY4OTEsImV4cCI6MjA5NDg4Mjg5MX0.ReDmQFqXEWzOKW2akPrOnLMuf7wBo4ZY5Oh_8ocfZZg';
+  const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let currentSession = null;
+  let currentDays = 30;
+
+  _sb.auth.getSession().then(({ data: { session } }) => {
+    if (!session) { window.location.href = 'login.html'; return; }
+    currentSession = session;
+    loadData(30);
+  });
+
+  async function logout() { await _sb.auth.signOut(); window.location.href = 'login.html'; }
+
+  // ── LOAD DATA ──────────────────────────────────────────────────────────────
+  async function loadData(days) {
+    currentDays = days;
+    document.querySelectorAll('.period-btn').forEach((b, i) => b.classList.toggle('active', [7,30,90][i] === days));
+    showLoader(true);
+
+    try {
+      const res = await fetch(`/api/analytics/summary?days=${days}`, {
+        headers: { 'Authorization': `Bearer ${currentSession.access_token}` }
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Erro desconhecido');
+      render(data);
+    } catch (e) {
+      console.error('Analytics error:', e);
+      showLoader(false);
+    }
+  }
+
+  // ── RENDER ─────────────────────────────────────────────────────────────────
+  function render(d) {
+    // Stats
+    document.getElementById('sViews').textContent    = fmtNum(d.totalPageviews);
+    document.getElementById('sSessions').textContent = fmtNum(d.uniqueSessions);
+    document.getElementById('sViewsSub').textContent = `nos últimos ${d.days} dias`;
+    document.getElementById('sSessionsSub').textContent = d.totalPageviews > 0
+      ? `${Math.round(d.totalPageviews / Math.max(1, d.uniqueSessions) * 10) / 10} pág/sessão`
+      : '';
+
+    // Tempo e scroll médios globais
+    const avgTime = d.timeData?.length
+      ? Math.round(d.timeData.reduce((a, r) => a + Number(r.avg_time), 0) / d.timeData.length)
+      : 0;
+    const avgScroll = d.scrollData?.length
+      ? Math.round(d.scrollData.reduce((a, r) => a + Number(r.avg_scroll), 0) / d.scrollData.length)
+      : 0;
+    document.getElementById('sAvgTime').textContent   = avgTime ? fmtTime(avgTime) : '—';
+    document.getElementById('sAvgScroll').textContent = avgScroll ? avgScroll + '%' : '—';
+
+    renderChart(d.daily || []);
+    renderTopPages(d.topPages || []);
+    renderChannels(d.channels || []);
+    renderSources(d.sources || []);
+    renderDevices(d.devices || []);
+    renderClicks(d.clicks || []);
+    renderScroll(d.scrollData || []);
+    renderTime(d.timeData || []);
+
+    showLoader(false);
+  }
+
+  // ── GRÁFICO DIÁRIO ─────────────────────────────────────────────────────────
+  function renderChart(daily) {
+    const wrap = document.getElementById('chartBars');
+    if (!daily.length) { wrap.innerHTML = '<div class="empty-state" style="width:100%"><strong>SEM DADOS</strong>Nenhuma visita no período.</div>'; return; }
+
+    const maxViews = Math.max(...daily.map(d => Number(d.views)), 1);
+    const maxSessions = Math.max(...daily.map(d => Number(d.sessions)), 1);
+
+    // Limita a 30 barras no máximo para não ficar apertado
+    const shown = daily.slice(-30);
+
+    wrap.innerHTML = shown.map(d => {
+      const hViews    = Math.max(2, Math.round((Number(d.views) / maxViews) * 100));
+      const hSessions = Math.max(1, Math.round((Number(d.sessions) / maxViews) * 100));
+      const label     = fmtDayLabel(d.day);
+      return `
+        <div class="chart-bar-group">
+          <div class="chart-tooltip">${label}: ${d.views} views · ${d.sessions} sessões</div>
+          <div style="display:flex;align-items:flex-end;gap:1px;height:100px;width:100%;">
+            <div class="chart-bar" style="height:${hViews}%"></div>
+            <div class="chart-bar-sessions" style="height:${hSessions}%"></div>
+          </div>
+          <span class="chart-label">${label}</span>
+        </div>`;
+    }).join('');
+  }
+
+  // ── TOP PÁGINAS ────────────────────────────────────────────────────────────
+  function renderTopPages(pages) {
+    const wrap = document.getElementById('topPagesWrap');
+    if (!pages.length) { wrap.innerHTML = emptyState(); return; }
+    wrap.innerHTML = `<div style="overflow-x:auto">
+      <table class="data-table">
+        <thead><tr><th>Página</th><th>Views</th><th>Sessões</th><th>Tempo</th><th>Scroll</th></tr></thead>
+        <tbody>
+          ${pages.map(p => `<tr>
+            <td><div class="page-path">${fmtPath(p.page)}<small>${p.page_title || ''}</small></div></td>
+            <td><span class="num">${fmtNum(p.views)}</span></td>
+            <td><span class="num-muted">${fmtNum(p.unique_sessions)}</span></td>
+            <td><span class="num-muted">${p.avg_time ? fmtTime(p.avg_time) : '—'}</span></td>
+            <td>${p.avg_scroll ? `<div>${p.avg_scroll}%</div><div class="scroll-meter"><div class="scroll-fill" style="width:${p.avg_scroll}%"></div></div>` : '—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  }
+
+  // ── CANAIS ─────────────────────────────────────────────────────────────────
+  function renderChannels(channels) {
+    const wrap = document.getElementById('channelsWrap');
+    if (!channels.length) { wrap.innerHTML = emptyState(); return; }
+    const maxV = Math.max(...channels.map(c => Number(c.views)), 1);
+    const colors = { 'Direto':'#3182CE','Busca Orgânica':'#38A169','Redes Sociais':'#7C3AED','Campanha':'#D97706','Referência':'#9CA3AF','Interno':'#F59E0B' };
+    wrap.innerHTML = channels.map(c => `
+      <div class="hbar-row">
+        <div class="hbar-label">${channelBadge(c.channel)}</div>
+        <div class="hbar-wrap"><div class="hbar-fill" style="width:${Math.round(Number(c.views)/maxV*100)}%;background:${colors[c.channel]||'#888'}"></div></div>
+        <div class="hbar-count">${fmtNum(c.views)}</div>
+      </div>`).join('');
+  }
+
+  // ── ORIGENS ────────────────────────────────────────────────────────────────
+  function renderSources(sources) {
+    const wrap = document.getElementById('sourcesWrap');
+    if (!sources.length) { wrap.innerHTML = emptyState(); return; }
+    const maxV = Math.max(...sources.map(s => Number(s.views)), 1);
+    wrap.innerHTML = sources.map((s, i) => `
+      <div class="hbar-row">
+        <div class="hbar-label" title="${s.source}">${s.source}</div>
+        <div class="hbar-wrap"><div class="hbar-fill" style="width:${Math.round(Number(s.views)/maxV*100)}%;background:${hueColor(i)}"></div></div>
+        <div class="hbar-count">${fmtNum(s.views)}</div>
+      </div>`).join('');
+  }
+
+  // ── DISPOSITIVOS ───────────────────────────────────────────────────────────
+  function renderDevices(devices) {
+    const wrap = document.getElementById('devicesWrap');
+    if (!devices.length) { wrap.innerHTML = emptyState(); return; }
+    const total = devices.reduce((a, d) => a + Number(d.views), 0) || 1;
+    const colors = { mobile: '#FFD400', desktop: '#0A0A0A', tablet: '#6B6B6B' };
+    const icons  = { mobile: '📱', desktop: '🖥️', tablet: '📟' };
+
+    // Donut SVG
+    let offset = 0;
+    const r = 40, circ = 2 * Math.PI * r;
+    const segments = devices.map(d => {
+      const pct = Number(d.views) / total;
+      const seg = { pct, offset, color: colors[d.device] || '#ccc', device: d.device, views: d.views };
+      offset += pct;
+      return seg;
+    });
+
+    const svgPaths = segments.map(s => {
+      const dash = s.pct * circ;
+      const gap  = circ - dash;
+      const rot  = s.offset * 360 - 90;
+      return `<circle cx="50" cy="50" r="${r}" fill="none" stroke="${s.color}" stroke-width="18"
+        stroke-dasharray="${dash.toFixed(1)} ${gap.toFixed(1)}"
+        transform="rotate(${rot.toFixed(1)} 50 50)" />`;
+    }).join('');
+
+    wrap.innerHTML = `
+      <div class="donut-wrap">
+        <svg class="donut-svg" width="100" height="100" viewBox="0 0 100 100">${svgPaths}</svg>
+        <div class="donut-legend">
+          ${devices.map(d => `
+            <div class="donut-item">
+              <div class="donut-dot" style="background:${colors[d.device]||'#ccc'}"></div>
+              <span>${icons[d.device]||''} ${d.device} — <strong>${Math.round(Number(d.views)/total*100)}%</strong> (${fmtNum(d.views)})</span>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  // ── CLIQUES ────────────────────────────────────────────────────────────────
+  function renderClicks(clicks) {
+    const wrap = document.getElementById('clicksWrap');
+    if (!clicks.length) { wrap.innerHTML = emptyState(); return; }
+    wrap.innerHTML = `<div style="overflow-x:auto">
+      <table class="data-table">
+        <thead><tr><th>Tipo</th><th>Texto</th><th>Cliques</th></tr></thead>
+        <tbody>
+          ${clicks.map(c => `<tr>
+            <td><span class="ct-badge ct-${c.click_target||'outro'}">${c.click_target||'outro'}</span></td>
+            <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${c.click_url||''}">${c.click_text||'—'}</td>
+            <td><span class="num">${fmtNum(c.clicks)}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  }
+
+  // ── SCROLL DEPTH ───────────────────────────────────────────────────────────
+  function renderScroll(scrollData) {
+    const wrap = document.getElementById('scrollWrap');
+    if (!scrollData.length) { wrap.innerHTML = emptyState(); return; }
+    wrap.innerHTML = scrollData.map(s => `
+      <div style="margin-bottom:1rem;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+          <span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;">${fmtPath(s.page)}</span>
+          <span style="color:var(--muted)">${s.avg_scroll}% médio</span>
+        </div>
+        <div class="scroll-meter" style="height:8px;">
+          <div class="scroll-fill" style="width:${s.avg_scroll}%"></div>
+        </div>
+      </div>`).join('');
+  }
+
+  // ── TEMPO ──────────────────────────────────────────────────────────────────
+  function renderTime(timeData) {
+    const wrap = document.getElementById('timeWrap');
+    if (!timeData.length) { wrap.innerHTML = emptyState(); return; }
+    const maxT = Math.max(...timeData.map(t => Number(t.avg_time)), 1);
+    wrap.innerHTML = `<div style="overflow-x:auto">
+      <table class="data-table">
+        <thead><tr><th>Página</th><th>Tempo Médio</th><th>Máximo</th><th>Sessões</th></tr></thead>
+        <tbody>
+          ${timeData.map(t => `<tr>
+            <td><div class="page-path">${fmtPath(t.page)}</div>
+              <div style="margin-top:4px;height:4px;background:var(--gray);border-radius:2px;overflow:hidden;">
+                <div style="height:100%;background:var(--blue);width:${Math.round(Number(t.avg_time)/maxT*100)}%;border-radius:2px;"></div>
+              </div>
+            </td>
+            <td><span class="num">${fmtTime(t.avg_time)}</span></td>
+            <td><span class="num-muted">${fmtTime(t.max_time)}</span></td>
+            <td><span class="num-muted">${fmtNum(t.sessions)}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  }
+
+  // ── HELPERS ────────────────────────────────────────────────────────────────
+  function fmtNum(n) { return Number(n || 0).toLocaleString('pt-BR'); }
+  function fmtPath(p) { if (!p || p === '/') return 'Home'; return p.replace('/post/', '').replace(/^\//, '') || p; }
+  function fmtTime(s) {
+    s = Math.round(Number(s));
+    if (!s) return '—';
+    if (s < 60) return s + 's';
+    return Math.floor(s/60) + 'min ' + (s%60) + 's';
+  }
+  function fmtDayLabel(day) {
+    if (!day) return '';
+    const d = new Date(day + 'T12:00:00');
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  }
+  function emptyState() { return '<div class="empty-state"><strong>SEM DADOS</strong>Nenhum registro no período selecionado.</div>'; }
+  function channelBadge(ch) {
+    const map = { 'Direto':'ch-direto','Busca Orgânica':'ch-busca','Redes Sociais':'ch-social','Campanha':'ch-campanha','Referência':'ch-referencia','Interno':'ch-interno' };
+    return `<span class="channel-badge ${map[ch]||'ch-referencia'}">${ch}</span>`;
+  }
+  function hueColor(i) {
+    const palette = ['#FFD400','#3182CE','#38A169','#7C3AED','#E53E3E','#D97706','#0BC5EA','#ED64A6'];
+    return palette[i % palette.length];
+  }
+  function showLoader(show) { document.getElementById('loaderOverlay').style.display = show ? 'flex' : 'none'; }
+</script>
+</body>
+</html>
