@@ -1143,6 +1143,87 @@ ${post.cover_url ? `
 </html>`);
 });
 
+
+// ─── ANALYTICS ───────────────────────────────────────────────────────────────
+const analyticsLimiter = rateLimit({
+  windowMs: 10 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+function classifySource(referrer, utmSource, utmMedium) {
+  if (utmSource) return { source: utmSource, medium: utmMedium || 'utm', channel: 'Campanha' };
+  if (!referrer) return { source: '(direto)', medium: 'none', channel: 'Direto' };
+  try {
+    const url = new URL(referrer);
+    const host = url.hostname.replace(/^www\./, '');
+    if (/google\.|bing\.|yahoo\.|duckduckgo\.|baidu\./.test(host)) return { source: host, medium: 'organic', channel: 'Busca Orgânica' };
+    if (/instagram\.|facebook\.|t\.co|twitter\.|tiktok\.|youtube\.|linkedin\.|pinterest\./.test(host)) return { source: host, medium: 'social', channel: 'Redes Sociais' };
+    if (host === new URL(SITE_URL).hostname) return { source: '(interno)', medium: 'referral', channel: 'Interno' };
+    return { source: host, medium: 'referral', channel: 'Referência' };
+  } catch { return { source: (referrer || '').substring(0, 100), medium: 'referral', channel: 'Referência' }; }
+}
+
+app.post('/api/analytics/event', analyticsLimiter, async (req, res) => {
+  try {
+    const { event_type, page, page_title, referrer, utm_source, utm_medium, utm_campaign,
+            click_target, click_text, click_url, scroll_depth, time_seconds, session_id, device } = req.body;
+
+    if (!event_type || !page) return res.status(400).json({ error: 'event_type e page são obrigatórios.' });
+    if (!['pageview','click','scroll','time_on_page'].includes(event_type)) return res.status(400).json({ error: 'event_type inválido.' });
+
+    const { source, medium, channel } = classifySource(referrer, utm_source, utm_medium);
+
+    const { error } = await supabaseAdmin.from('analytics_events').insert([{
+      event_type,
+      page: String(page).substring(0, 200),
+      page_title: page_title ? String(page_title).substring(0, 200) : null,
+      source, medium, channel,
+      utm_campaign: utm_campaign ? String(utm_campaign).substring(0, 100) : null,
+      click_target: click_target ? String(click_target).substring(0, 100) : null,
+      click_text: click_text ? String(click_text).substring(0, 200) : null,
+      click_url: click_url ? String(click_url).substring(0, 500) : null,
+      scroll_depth: scroll_depth != null ? Math.min(100, Math.max(0, parseInt(scroll_depth))) : null,
+      time_seconds: time_seconds != null ? Math.min(3600, Math.max(0, parseInt(time_seconds))) : null,
+      session_id: session_id ? String(session_id).substring(0, 64) : null,
+      device: ['mobile','desktop','tablet'].includes(device) ? device : 'desktop',
+    }]);
+
+    if (error) { console.error('[analytics] Insert:', error.message); return res.status(500).json({ error: 'Erro ao salvar.' }); }
+    res.json({ ok: true });
+  } catch (e) { console.error('[analytics]', e.message); res.status(500).json({ error: 'Erro interno.' }); }
+});
+
+app.get('/api/analytics/summary', requireAuth, async (req, res) => {
+  try {
+    const days = Math.min(90, Math.max(1, parseInt(req.query.days || '30')));
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+    const [pvRes, topRes, srcRes, chRes, devRes, clkRes, scrRes, tmRes, dayRes] = await Promise.all([
+      supabaseAdmin.from('analytics_events').select('session_id').eq('event_type','pageview').gte('created_at', since),
+      supabaseAdmin.rpc('analytics_top_pages', { since_ts: since, lim: 10 }),
+      supabaseAdmin.rpc('analytics_sources', { since_ts: since }),
+      supabaseAdmin.rpc('analytics_channels', { since_ts: since }),
+      supabaseAdmin.rpc('analytics_devices', { since_ts: since }),
+      supabaseAdmin.rpc('analytics_top_clicks', { since_ts: since, lim: 10 }),
+      supabaseAdmin.rpc('analytics_scroll', { since_ts: since }),
+      supabaseAdmin.rpc('analytics_time', { since_ts: since }),
+      supabaseAdmin.rpc('analytics_daily', { since_ts: since }),
+    ]);
+
+    const uniqueSessions = new Set((pvRes.data || []).map(r => r.session_id)).size;
+    res.json({
+      ok: true, days,
+      totalPageviews: pvRes.data?.length || 0, uniqueSessions,
+      topPages: topRes.data || [], sources: srcRes.data || [],
+      channels: chRes.data || [], devices: devRes.data || [],
+      clicks: clkRes.data || [], scrollData: scrRes.data || [],
+      timeData: tmRes.data || [], daily: dayRes.data || [],
+    });
+  } catch (e) { console.error('[analytics] Summary:', e.message); res.status(500).json({ error: 'Erro ao buscar analytics.' }); }
+});
+
 // ─── SITEMAP.XML ─────────────────────────────────────────────────────────────
 app.get('/sitemap.xml', async (req, res) => {
   const { data: posts } = await supabase
@@ -1194,6 +1275,9 @@ app.get('/admin/banners.html', adminCookieGuard, (req, res) => {
 app.get('/admin/scheduled.html', adminCookieGuard, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin', 'scheduled.html'));
 });
+app.get('/admin/analytics.html', adminCookieGuard, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'analytics.html'));
+});
 app.get('/admin/preview.html', adminCookieGuard, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin', 'preview.html'));
 });
@@ -1206,3 +1290,5 @@ function notFoundPage() {
 app.use(async (req, res) => res.status(404).send(notFoundPage()));
 
 app.listen(PORT, () => console.log(`A2KF Blog rodando na porta ${PORT}`));
+
+// ─── ANALYTICS ROUTES (inseridas após as rotas existentes) ───────────────────
