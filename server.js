@@ -1139,6 +1139,9 @@ ${post.cover_url ? `
     if(d.head)d.head.appendChild(s);
   })(document,window,'BrevoConversations');
 </script>
+
+<script src="/analytics.js"></script>
+
 </body>
 </html>`);
 });
