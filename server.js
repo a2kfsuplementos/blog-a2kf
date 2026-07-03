@@ -1079,6 +1079,12 @@ ${post.cover_url ? `
     } catch(e) {}
   }
   loadPopular();
+</script>
+
+<button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Voltar ao topo">
+  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+<script>
   (function(){
     var btn = document.getElementById('backToTop');
     var bar = document.getElementById('read-progress');
@@ -1089,10 +1095,6 @@ ${post.cover_url ? `
     }, {passive:true});
   })();
 </script>
-
-<button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Voltar ao topo">
-  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
-</button>
 
 <!-- COOKIE BANNER -->
 <div id="cookieBanner" style="display:none;" aria-live="polite" role="dialog">
