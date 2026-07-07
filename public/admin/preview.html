@@ -92,6 +92,20 @@
     .pb-status.draft     { background: var(--black); color: #aaa; }
     .pb-status.scheduled { background: #856404;       color: #fff; }
 
+    /* indicador de sincronização ao vivo */
+    .pb-live {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      color: rgba(0,0,0,.55); white-space: nowrap; flex-shrink: 0;
+    }
+    .pb-live-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #1a7a3f; flex-shrink: 0;
+      animation: pbPulse 1.6s infinite;
+    }
+    @keyframes pbPulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+    .pb-live.syncing .pb-live-dot { background: var(--black); animation: pbPulse .6s infinite; }
+
     /* botões da barra */
     .pb-btn {
       padding: 7px 18px;
@@ -255,6 +269,7 @@
       .pb-label   { display: none; }
       .pb-spacer  { display: none; }
       .pb-status  { display: none; }
+      .pb-live    { display: none; }
       .pb-views   { display: none; }
     }
   </style>
@@ -267,6 +282,11 @@
   <span class="pb-label" id="pb-title">Carregando...</span>
 
   <span class="pb-status draft" id="pb-status">RASCUNHO</span>
+
+  <!-- indicador de sincronização em tempo real -->
+  <span class="pb-live" id="pb-live" title="A prévia se atualiza automaticamente ao salvar no editor">
+    <span class="pb-live-dot"></span> Ao vivo
+  </span>
 
   <!-- switcher de viewport -->
   <div class="pb-views">
@@ -334,6 +354,8 @@
   const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let currentPost = null;
+  let realtimeChannel = null;
+  let realtimePollInterval = null;
 
   /* ── AUTH GUARD ──────────────────────────────────────────────────────────── */
   _sb.auth.getSession().then(({ data: { session } }) => {
@@ -347,17 +369,62 @@
     const id = params.get('id');
     if (!id) { showError(); return; }
     loadPost(id);
+    subscribeToPostChanges(id);
+    // Sincroniza também quando o usuário volta para esta aba
+    // (cobre navegadores/redes onde o Realtime não chega a tempo)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') loadPost(id, { silent: true });
+    });
+  }
+
+  /* ── SINCRONIZAÇÃO EM TEMPO REAL ────────────────────────────────────────────
+     Corrige a divergência entre "tempo de leitura" do editor e da prévia:
+     antes, a prévia só carregava o post 1x. Se o editor salvasse mudanças
+     depois (ex.: IA adicionando referências/CTA), a aba de prévia continuava
+     mostrando a contagem de palavras antiga. Agora ela escuta updates da
+     linha do post no Supabase e recarrega sozinha assim que algo é salvo. */
+  function subscribeToPostChanges(id) {
+    setLiveState('idle');
+    realtimeChannel = _sb
+      .channel('preview-post-' + id)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'posts', filter: `id=eq.${id}` },
+        () => {
+          setLiveState('syncing');
+          loadPost(id, { silent: true }).finally(() => setLiveState('idle'));
+        }
+      )
+      .subscribe();
+
+    // Fallback: se o Realtime não estiver habilitado na tabela 'posts',
+    // faz um polling leve a cada 4s para garantir que a prévia não fique presa.
+    if (realtimePollInterval) clearInterval(realtimePollInterval);
+    realtimePollInterval = setInterval(() => loadPost(id, { silent: true }), 4000);
+  }
+
+  function setLiveState(state) {
+    const el = document.getElementById('pb-live');
+    if (!el) return;
+    el.classList.toggle('syncing', state === 'syncing');
   }
 
   /* ── LOAD POST ───────────────────────────────────────────────────────────── */
-  async function loadPost(id) {
+  async function loadPost(id, opts = {}) {
     const { data, error } = await _sb
       .from('posts')
       .select('*')
       .eq('id', id)
       .single();
 
-    if (error || !data) { showError(); return; }
+    if (error || !data) { if (!opts.silent) showError(); return; }
+
+    // Evita re-render desnecessário quando nada mudou desde a última carga
+    if (currentPost && data.updated_at && currentPost.updated_at === data.updated_at &&
+        data.content === currentPost.content && data.title === currentPost.title) {
+      return;
+    }
+
     currentPost = data;
 
     // Barra: título
@@ -405,7 +472,10 @@
     const safeDate     = new Date(post.created_at || Date.now())
       .toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
 
-    // Tempo de leitura
+    // Tempo de leitura — MESMA fórmula usada no editor, no index.html e no
+    // server.js (post real): 200 palavras/minuto, arredondado, mínimo 1 min.
+    // Mantendo a fórmula idêntica nos 3 lugares, o número bate sempre que o
+    // conteúdo usado no cálculo for o mesmo (por isso a sincronização acima).
     const plainText = (post.content || '').replace(/<[^>]*>/g, '').trim();
     const wordCount = plainText.split(/\s+/).filter(Boolean).length;
     const readMins  = Math.max(1, Math.round(wordCount / 200));
@@ -506,11 +576,6 @@
   <div class="nav-links">
     <a href="#">Blog</a>
     <a href="#">Loja</a>
-
-  <a href="analytics.html">
-  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-  Analytics
-</a>  
   </div>
 </nav>
 
@@ -587,6 +652,10 @@ ${safeCover ? `
 </body>
 </html>`;
 
+    // Preserva posição de scroll do iframe entre re-renders (evita "pulo" ao sincronizar)
+    let scrollY = 0;
+    try { scrollY = frame.contentWindow?.scrollY || 0; } catch (e) {}
+
     // Injeta no iframe via srcdoc
     frame.srcdoc = html;
 
@@ -594,6 +663,7 @@ ${safeCover ? `
       hideLoader();
       // Ajusta altura do iframe ao conteúdo
       autoResizeFrame();
+      try { frame.contentWindow.scrollTo(0, scrollY); } catch (e) {}
       frame.onload = autoResizeFrame;
     };
   }
@@ -718,6 +788,11 @@ ${safeCover ? `
     t.className = `toast ${type} show`;
     setTimeout(() => t.className = 'toast', 3500);
   }
+
+  window.addEventListener('beforeunload', () => {
+    if (realtimeChannel) _sb.removeChannel(realtimeChannel);
+    if (realtimePollInterval) clearInterval(realtimePollInterval);
+  });
 </script>
 </body>
 </html>

@@ -49,15 +49,29 @@
 
     /* ── TOPBAR ── */
     .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: .75rem; }
+    .topbar-left { display: flex; align-items: center; gap: .875rem; flex-wrap: wrap; }
     .topbar h1 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 1px; }
     .topbar-meta { font-size: 13px; color: var(--muted); }
+
+    /* indicador ao vivo */
+    .live-indicator {
+      display:flex; align-items:center; gap:6px;
+      font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+      color:var(--muted); background:var(--white); border:1.5px solid var(--border);
+      padding:5px 12px; white-space:nowrap;
+    }
+    .live-dot { width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0; animation:livePulse 1.6s infinite; }
+    @keyframes livePulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+    .live-indicator.syncing .live-dot { background:var(--yellow); animation:livePulse .6s infinite; }
 
     /* ── STAT STRIP ── */
     .stat-strip { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
     .stat-pill {
       background: var(--white); border: 1.5px solid var(--border);
       padding: .875rem 1.5rem; display: flex; flex-direction: column; gap: .25rem; flex: 1; min-width: 140px;
+      transition: box-shadow .3s;
     }
+    .stat-pill.flash { box-shadow: 0 0 0 2px var(--yellow); }
     .stat-pill-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
     .stat-pill-value { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 1px; color: var(--yellow); }
 
@@ -85,13 +99,14 @@
       grid-template-columns: 64px 1fr auto;
       gap: 0;
       overflow: hidden;
-      transition: border-color .2s;
+      transition: border-color .2s, box-shadow .3s;
       margin-bottom: .75rem;
     }
     .sched-card:hover { border-color: #ccc; }
     .sched-card.overdue { border-left: 4px solid var(--red); }
     .sched-card.today   { border-left: 4px solid var(--yellow); }
     .sched-card.future  { border-left: 4px solid #aaa; }
+    .sched-card.flash   { box-shadow: 0 0 0 2px var(--yellow); }
 
     /* time column */
     .sched-time {
@@ -201,6 +216,7 @@
       .sched-body { padding: .875rem 1rem; }
       .sched-mobile-actions { display: flex !important; gap: .5rem; flex-wrap: wrap; margin-top: .625rem; }
       .sched-title { font-size: 1.1rem; }
+      .live-indicator { display: none; }
     }
     .sched-mobile-actions { display: none; }
   </style>
@@ -247,25 +263,30 @@
 <!-- MAIN -->
 <main class="main">
   <div class="topbar">
-    <h1>POSTS AGENDADOS</h1>
+    <div class="topbar-left">
+      <h1>POSTS AGENDADOS</h1>
+      <span class="live-indicator" id="liveIndicator" title="Os dados se atualizam automaticamente quando algo muda no banco">
+        <span class="live-dot"></span> Ao vivo
+      </span>
+    </div>
     <span class="topbar-meta" id="topbarMeta">—</span>
   </div>
 
   <!-- STAT STRIP -->
   <div class="stat-strip">
-    <div class="stat-pill">
+    <div class="stat-pill" id="pillTotal">
       <span class="stat-pill-label">Total agendados</span>
       <span class="stat-pill-value" id="statTotal">—</span>
     </div>
-    <div class="stat-pill">
+    <div class="stat-pill" id="pillHoje">
       <span class="stat-pill-label">Hoje</span>
       <span class="stat-pill-value" id="statHoje">—</span>
     </div>
-    <div class="stat-pill">
+    <div class="stat-pill" id="pill7d">
       <span class="stat-pill-label">Próximos 7 dias</span>
       <span class="stat-pill-value" id="stat7d">—</span>
     </div>
-    <div class="stat-pill">
+    <div class="stat-pill" id="pillOverdue">
       <span class="stat-pill-label">Vencidos</span>
       <span class="stat-pill-value" id="statOverdue" style="color:var(--red)">—</span>
     </div>
@@ -316,20 +337,62 @@
 
   let scheduledPosts = [];
   let countdownInterval = null;
+  let realtimeChannel = null;
+  let realtimePollInterval = null;
 
   // ── AUTH GUARD ─────────────────────────────────────────────────────────────
   _sb.auth.getSession().then(({ data: { session } }) => {
     if (!session) { window.location.href = 'login.html'; return; }
     loadScheduled();
+    subscribeToPostsChanges();
   });
 
   async function logout() {
+    if (realtimeChannel) _sb.removeChannel(realtimeChannel);
+    if (realtimePollInterval) clearInterval(realtimePollInterval);
     await _sb.auth.signOut();
     window.location.href = 'login.html';
   }
 
+  /* ── SINCRONIZAÇÃO EM TEMPO REAL ────────────────────────────────────────────
+     Mesmo padrão de preview.html e dashboard.html: escuta mudanças na tabela
+     'posts' e recarrega a timeline de agendados automaticamente — cobre tanto
+     edições feitas no editor quanto publicações automáticas feitas pelo
+     scheduler do server.js (checkScheduledPosts), que atualiza published/
+     scheduled_at direto no banco sem o admin precisar dar F5. */
+  function subscribeToPostsChanges() {
+    setLiveState('idle');
+    realtimeChannel = _sb
+      .channel('scheduled-posts')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'posts' },
+        () => {
+          setLiveState('syncing');
+          loadScheduled({ silent: true }).finally(() => setLiveState('idle'));
+        }
+      )
+      .subscribe();
+
+    // Fallback por polling caso o Realtime não esteja habilitado na tabela.
+    // Intervalo mais curto aqui porque o scheduler do servidor roda a cada 60s
+    // e publica posts vencidos — queremos que a tela reflita isso rápido.
+    if (realtimePollInterval) clearInterval(realtimePollInterval);
+    realtimePollInterval = setInterval(() => loadScheduled({ silent: true }), 10000);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') loadScheduled({ silent: true });
+    });
+  }
+
+  function setLiveState(state) {
+    const el = document.getElementById('liveIndicator');
+    if (!el) return;
+    el.classList.toggle('syncing', state === 'syncing');
+  }
+
   // ── LOAD ───────────────────────────────────────────────────────────────────
-  async function loadScheduled() {
+  async function loadScheduled(opts = {}) {
     const { data, error } = await _sb
       .from('posts')
       .select('id, title, slug, excerpt, category, cover_url, scheduled_at, created_at')
@@ -338,14 +401,17 @@
       .order('scheduled_at', { ascending: true });
 
     if (error) {
-      showToast('Erro ao carregar posts agendados.', 'error');
-      document.getElementById('timelineWrap').innerHTML = '';
+      if (!opts.silent) {
+        showToast('Erro ao carregar posts agendados.', 'error');
+        document.getElementById('timelineWrap').innerHTML = '';
+      }
       return;
     }
 
+    const prevIds = new Set(scheduledPosts.map(p => p.id + ':' + p.scheduled_at));
     scheduledPosts = data || [];
     updateStats();
-    renderTimeline();
+    renderTimeline({ highlightNew: opts.silent, prevIds });
 
     // Atualiza countdowns a cada segundo
     if (countdownInterval) clearInterval(countdownInterval);
@@ -368,14 +434,25 @@
     const hoje    = scheduledPosts.filter(p => { const d = new Date(p.scheduled_at); return d >= todayStart && d <= todayEnd; }).length;
     const prox7   = scheduledPosts.filter(p => { const d = new Date(p.scheduled_at); return d >= now && d <= in7d; }).length;
 
-    document.getElementById('statTotal').textContent   = scheduledPosts.length;
-    document.getElementById('statHoje').textContent    = hoje;
-    document.getElementById('stat7d').textContent      = prox7;
-    document.getElementById('statOverdue').textContent = overdue;
+    setPillFlash('statTotal',   'pillTotal',    scheduledPosts.length);
+    setPillFlash('statHoje',    'pillHoje',     hoje);
+    setPillFlash('stat7d',      'pill7d',       prox7);
+    setPillFlash('statOverdue', 'pillOverdue',  overdue);
+  }
+
+  function setPillFlash(valueId, pillId, newValue) {
+    const el = document.getElementById(valueId);
+    const pill = document.getElementById(pillId);
+    const changed = el.textContent !== String(newValue);
+    el.textContent = newValue;
+    if (changed && el.textContent !== '—') {
+      pill.classList.add('flash');
+      setTimeout(() => pill.classList.remove('flash'), 900);
+    }
   }
 
   // ── RENDER TIMELINE ────────────────────────────────────────────────────────
-  function renderTimeline() {
+  function renderTimeline(opts = {}) {
     const wrap = document.getElementById('timelineWrap');
 
     if (!scheduledPosts.length) {
@@ -406,13 +483,19 @@
           <span class="dgl-line"></span>
           <span class="dgl-count">${posts.length} post${posts.length > 1 ? 's' : ''}</span>
         </div>`;
-      posts.forEach(p => { html += cardHTML(p); });
+      posts.forEach(p => { html += cardHTML(p, opts); });
     }
     html += '</div>';
     wrap.innerHTML = html;
+
+    if (opts.highlightNew) {
+      setTimeout(() => {
+        document.querySelectorAll('.sched-card.flash').forEach(el => el.classList.remove('flash'));
+      }, 1200);
+    }
   }
 
-  function cardHTML(p) {
+  function cardHTML(p, opts = {}) {
     const now   = new Date();
     const sched = new Date(p.scheduled_at);
     const hm    = sched.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -426,8 +509,11 @@
     const statusLabel = state === 'overdue' ? 'Vencido' : state === 'today' ? 'Hoje' : 'Agendado';
     const cat = p.category ? `<span class="sched-cat">${p.category}</span>` : '';
 
+    const key = p.id + ':' + p.scheduled_at;
+    const isNewOrChanged = opts.highlightNew && opts.prevIds && !opts.prevIds.has(key);
+
     return `
-      <div class="sched-card ${state}" id="card-${p.id}">
+      <div class="sched-card ${state} ${isNewOrChanged ? 'flash' : ''}" id="card-${p.id}">
 
         <!-- hora -->
         <div class="sched-time">
@@ -606,6 +692,11 @@
     t.className = `toast ${type} show`;
     setTimeout(() => t.className = 'toast', 3500);
   }
+
+  window.addEventListener('beforeunload', () => {
+    if (realtimeChannel) _sb.removeChannel(realtimeChannel);
+    if (realtimePollInterval) clearInterval(realtimePollInterval);
+  });
 </script>
 </body>
 </html>

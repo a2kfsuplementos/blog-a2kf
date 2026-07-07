@@ -38,6 +38,7 @@
 
     /* TOPBAR */
     .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem; flex-wrap:wrap; gap:.75rem; }
+    .topbar-left { display:flex; align-items:center; gap:.875rem; flex-wrap:wrap; }
     .topbar h1 { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:1px; }
     .btn-new {
       background:var(--yellow); color:var(--black); border:none; padding:10px 24px;
@@ -46,10 +47,22 @@
     }
     .btn-new:hover { opacity:.9; }
 
+    /* indicador ao vivo */
+    .live-indicator {
+      display:flex; align-items:center; gap:6px;
+      font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+      color:var(--muted); background:var(--white); border:1.5px solid var(--border);
+      padding:5px 12px; white-space:nowrap;
+    }
+    .live-dot { width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0; animation:livePulse 1.6s infinite; }
+    @keyframes livePulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+    .live-indicator.syncing .live-dot { background:var(--yellow); animation:livePulse .6s infinite; }
+
     /* STATS */
     .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem; margin-bottom:1.5rem; }
     .stats-row2 { display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem; margin-bottom:2rem; }
-    .stat-card { background:var(--white); border:1.5px solid var(--border); padding:1.25rem 1.5rem; }
+    .stat-card { background:var(--white); border:1.5px solid var(--border); padding:1.25rem 1.5rem; transition:box-shadow .3s; }
+    .stat-card.flash { box-shadow:0 0 0 2px var(--yellow); }
     .stat-label { font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:.5rem; }
     .stat-value { font-family:'Bebas Neue',sans-serif; font-size:2.2rem; letter-spacing:1px; }
     .stat-value.yellow { color:var(--yellow); }
@@ -76,6 +89,7 @@
     td { padding:.875rem 1rem; border-bottom:1px solid var(--border); font-size:14px; vertical-align:middle; }
     tr:last-child td { border-bottom:none; }
     tr:hover td { background:#fafaf8; }
+    tr.row-flash td { background:#fffbe6; }
 
     .badge {
       display:inline-block; padding:3px 10px; font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
@@ -134,6 +148,7 @@
       .stat-value { font-size:1.8rem; }
       .btn-new { padding:8px 14px; font-size:12px; }
       .post-title-cell small { display:none; }
+      .live-indicator { display:none; }
     }
   </style>
 </head>
@@ -181,7 +196,12 @@
 <!-- MAIN -->
 <main class="main">
   <div class="topbar">
-    <h1>DASHBOARD</h1>
+    <div class="topbar-left">
+      <h1>DASHBOARD</h1>
+      <span class="live-indicator" id="liveIndicator" title="Os dados se atualizam automaticamente quando algo muda no banco">
+        <span class="live-dot"></span> Ao vivo
+      </span>
+    </div>
     <a href="editor.html" class="btn-new">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Novo Post
@@ -190,15 +210,15 @@
 
   <!-- STATS ROW 1 -->
   <div class="stats">
-    <div class="stat-card">
+    <div class="stat-card" id="cardTotal">
       <div class="stat-label">Total de Posts</div>
       <div class="stat-value yellow" id="statTotal">—</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card" id="cardPublished">
       <div class="stat-label">Publicados</div>
       <div class="stat-value" id="statPublished">—</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card" id="cardDraft">
       <div class="stat-label">Rascunhos</div>
       <div class="stat-value" id="statDraft">—</div>
     </div>
@@ -206,15 +226,15 @@
 
   <!-- STATS ROW 2 -->
   <div class="stats-row2">
-    <div class="stat-card">
+    <div class="stat-card" id="cardViews">
       <div class="stat-label">Visualizações Totais</div>
       <div class="stat-value yellow" id="statViews">—</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card" id="cardThisMonth">
       <div class="stat-label">Publicados Este Mês</div>
       <div class="stat-value" id="statThisMonth">—</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card" id="cardScheduled">
       <div class="stat-label">Agendados</div>
       <div class="stat-value" id="statScheduled">—</div>
     </div>
@@ -262,24 +282,69 @@
   const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let allPosts = [];
+  let realtimeChannel = null;
+  let realtimePollInterval = null;
 
   // Auth guard
   _sb.auth.getSession().then(({ data: { session } }) => {
     if (!session) window.location.href = 'login.html';
-    else loadPosts();
+    else {
+      loadPosts();
+      subscribeToPostsChanges();
+    }
   });
 
   async function logout() {
+    if (realtimeChannel) _sb.removeChannel(realtimeChannel);
+    if (realtimePollInterval) clearInterval(realtimePollInterval);
     await _sb.auth.signOut();
     window.location.href = 'login.html';
   }
 
-  async function loadPosts() {
+  /* ── SINCRONIZAÇÃO EM TEMPO REAL ────────────────────────────────────────────
+     Mesmo padrão usado em preview.html: escuta mudanças na tabela 'posts'
+     (qualquer INSERT/UPDATE/DELETE) e recarrega o dashboard automaticamente.
+     Isso garante que os números (total, publicados, visualizações, etc.)
+     e a tabela nunca fiquem desatualizados em relação ao que foi salvo no
+     editor — mesmo que o dashboard esteja aberto em outra aba. */
+  function subscribeToPostsChanges() {
+    setLiveState('idle');
+    realtimeChannel = _sb
+      .channel('dashboard-posts')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'posts' },
+        () => {
+          setLiveState('syncing');
+          loadPosts({ silent: true }).finally(() => setLiveState('idle'));
+        }
+      )
+      .subscribe();
+
+    // Fallback: caso o Realtime não esteja habilitado na tabela 'posts'
+    // (Database → Replication no Supabase), garante atualização por polling.
+    if (realtimePollInterval) clearInterval(realtimePollInterval);
+    realtimePollInterval = setInterval(() => loadPosts({ silent: true }), 15000);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') loadPosts({ silent: true });
+    });
+  }
+
+  function setLiveState(state) {
+    const el = document.getElementById('liveIndicator');
+    if (!el) return;
+    el.classList.toggle('syncing', state === 'syncing');
+  }
+
+  async function loadPosts(opts = {}) {
     const { data, error } = await _sb.from('posts').select('*').order('created_at', { ascending: false });
-    if (error) { showToast('Erro ao carregar posts.', 'error'); return; }
+    if (error) { if (!opts.silent) showToast('Erro ao carregar posts.', 'error'); return; }
+
+    const prevIds = new Set(allPosts.map(p => p.id + ':' + (p.updated_at || p.created_at)));
     allPosts = data || [];
     updateStats();
-    renderTable(allPosts);
+    renderTable(allPosts, { highlightNew: opts.silent, prevIds });
   }
 
   function updateStats() {
@@ -292,12 +357,12 @@
     const scheduled = allPosts.filter(p => p.scheduled_at && !p.published).length;
     const topPost = [...allPosts].filter(p => p.published).sort((a, b) => (b.views || 0) - (a.views || 0))[0];
 
-    document.getElementById('statTotal').textContent = allPosts.length;
-    document.getElementById('statPublished').textContent = allPosts.filter(p => p.published).length;
-    document.getElementById('statDraft').textContent = allPosts.filter(p => !p.published && !p.scheduled_at).length;
-    document.getElementById('statViews').textContent = totalViews.toLocaleString('pt-BR');
-    document.getElementById('statThisMonth').textContent = thisMonth;
-    document.getElementById('statScheduled').textContent = scheduled;
+    setStatFlash('statTotal', 'cardTotal', allPosts.length);
+    setStatFlash('statPublished', 'cardPublished', allPosts.filter(p => p.published).length);
+    setStatFlash('statDraft', 'cardDraft', allPosts.filter(p => !p.published && !p.scheduled_at).length);
+    setStatFlash('statViews', 'cardViews', totalViews.toLocaleString('pt-BR'));
+    setStatFlash('statThisMonth', 'cardThisMonth', thisMonth);
+    setStatFlash('statScheduled', 'cardScheduled', scheduled);
 
     if (topPost) {
       document.getElementById('topPostCard').style.display = 'flex';
@@ -305,6 +370,18 @@
       document.getElementById('topPostViews').textContent = (topPost.views || 0).toLocaleString('pt-BR') + ' visualizações';
       document.getElementById('topPostLink').href = `/post/${topPost.slug || topPost.id}`;
       document.getElementById('topPostLink').target = '_blank';
+    }
+  }
+
+  // Atualiza o valor e, se ele mudou, dá um leve destaque visual no card
+  function setStatFlash(valueId, cardId, newValue) {
+    const el = document.getElementById(valueId);
+    const card = document.getElementById(cardId);
+    const changed = el.textContent !== String(newValue);
+    el.textContent = newValue;
+    if (changed && el.textContent !== '—') {
+      card.classList.add('flash');
+      setTimeout(() => card.classList.remove('flash'), 900);
     }
   }
 
@@ -318,14 +395,17 @@
     return new Date(d).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
   }
 
-  function renderTable(posts) {
+  function renderTable(posts, opts = {}) {
     const tbody = document.getElementById('postsTableBody');
     if (!posts.length) {
       tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:#888;">Nenhum post encontrado.</td></tr>';
       return;
     }
-    tbody.innerHTML = posts.map(p => `
-      <tr>
+    tbody.innerHTML = posts.map(p => {
+      const key = p.id + ':' + (p.updated_at || p.created_at);
+      const isNewOrChanged = opts.highlightNew && opts.prevIds && !opts.prevIds.has(key);
+      return `
+      <tr id="row-${p.id}" class="${isNewOrChanged ? 'row-flash' : ''}">
         <td class="post-title-cell">
           ${p.title}
           <small>${(p.excerpt || '').substring(0, 60)}${p.excerpt && p.excerpt.length > 60 ? '...' : ''}</small>
@@ -342,7 +422,14 @@
           </div>
         </td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
+
+    if (opts.highlightNew) {
+      setTimeout(() => {
+        document.querySelectorAll('.row-flash').forEach(el => el.classList.remove('row-flash'));
+      }, 1200);
+    }
   }
 
   async function togglePublish(id, current) {
@@ -421,6 +508,11 @@
     t.className = `toast ${type} show`;
     setTimeout(() => t.className = 'toast', 3000);
   }
+
+  window.addEventListener('beforeunload', () => {
+    if (realtimeChannel) _sb.removeChannel(realtimeChannel);
+    if (realtimePollInterval) clearInterval(realtimePollInterval);
+  });
 </script>
 </body>
 </html>
