@@ -1,3 +1,5 @@
+const https = require('https');
+
 // yampi.js — Produtos em destaque (Yampi) para o blog A2KF
 // Uso no server.js:  require('./yampi')(app, { requireAuth });
 
@@ -79,20 +81,32 @@ function parseProducts(parsed) {
   }).filter(p => p && p.name && p.price > 0);
 }
 
-async function fetchYampi() {
-  const res = await fetch(
-    `https://api.dooki.com.br/v2/${YAMPI_ALIAS}/catalog/products?include=images,skus&limit=8&page=1&sortBy=total_sold&sortDirection=desc`,
-    {
+function fetchYampi() {
+  return new Promise((resolve, reject) => {
+    const r = https.request({
+      hostname: 'api.dooki.com.br',
+      path: `/v2/${YAMPI_ALIAS}/catalog/products?include=images,skus&limit=8&page=1&sortBy=total_sold&sortDirection=desc`,
+      method: 'GET',
       headers: {
         'User-Token': YAMPI_TOKEN,
         'User-Secret-Key': YAMPI_API_KEY,
         'Accept': 'application/json',
       },
-      signal: AbortSignal.timeout(8000),
-    }
-  );
-  if (!res.ok) throw new Error(`Yampi HTTP ${res.status}`);
-  return res.json();
+    }, response => {
+      let data = '';
+      response.on('data', chunk => data += chunk);
+      response.on('end', () => {
+        if (response.statusCode !== 200) {
+          return reject(new Error(`Yampi HTTP ${response.statusCode}: ${data.substring(0, 200)}`));
+        }
+        try { resolve(JSON.parse(data)); }
+        catch (e) { reject(new Error('Resposta da Yampi não é JSON válido')); }
+      });
+    });
+    r.on('error', reject);
+    r.setTimeout(8000, () => r.destroy(new Error('Timeout Yampi')));
+    r.end();
+  });
 }
 
 module.exports = function registerYampiRoutes(app, { requireAuth }) {
@@ -119,7 +133,7 @@ module.exports = function registerYampiRoutes(app, { requireAuth }) {
       if (cache.products && now - cache.ts < STALE_MAX) {
         return res.json({ success: true, products: cache.products, fallback: true });
       }
-      return res.status(502).json({ error: 'Erro ao buscar produtos da Yampi.' });
+      return res.status(502).json({ error: 'Erro ao buscar produtos da Yampi.', detail: String(e.message).substring(0, 200) });
     }
   });
 
