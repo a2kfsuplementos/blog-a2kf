@@ -35,24 +35,30 @@ function skuInStock(s) {
 }
 
 function pickSku(skus) {
-  const withPrice = skus
-    .filter(skuAvailable)
+  const priced = skus
     .map(s => ({ s, ...skuPrices(s) }))
     .filter(x => x.current > 0);
 
-  // Prioriza SKUs com estoque; se nenhum tiver, usa os disponíveis mesmo assim
-  const pool = withPrice.some(x => skuInStock(x.s))
-    ? withPrice.filter(x => skuInStock(x.s))
-    : withPrice;
+  // Preferência em cascata: disponível + em estoque -> disponível -> qualquer SKU com preço.
+  // Nunca descarta o produto só porque os campos de status vieram diferentes do esperado.
+  const tiers = [
+    priced.filter(x => skuAvailable(x.s) && skuInStock(x.s)),
+    priced.filter(x => skuAvailable(x.s)),
+    priced,
+  ];
+  const pool = tiers.find(t => t.length) || [];
 
-  // Menor preço final ("a partir de"), como a loja costuma exibir
+  // Menor preço final ("a partir de")
   return pool.sort((a, b) => a.current - b.current)[0] || null;
 }
 
 function parseProducts(parsed) {
   return (parsed.data || []).map(p => {
     const best = pickSku(p.skus?.data || []);
-    if (!best) return null;
+    if (!best) {
+      console.warn(`[yampi] Produto sem preço válido, ignorado: ${p.name} (skus: ${(p.skus?.data || []).length})`);
+      return null;
+    }
 
     const images = p.images?.data || [];
     const image = images.length
@@ -104,6 +110,7 @@ module.exports = function registerYampiRoutes(app, { requireAuth }) {
     try {
       const parsed = await fetchYampi();
       const products = parseProducts(parsed);
+      console.log(`[yampi] Recebidos: ${parsed.data?.length || 0} | válidos: ${products.length}`);
       if (!products.length) throw new Error('Nenhum produto válido');
       cache = { products, ts: now };
       return res.json({ success: true, products });
