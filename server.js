@@ -19,9 +19,6 @@ const SITE_URL = process.env.SITE_URL || 'https://blog.a2kfsuplementos.com.br';
 const BREVO_API_KEY = process.env.BREVO_API_KEY || '';
 const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID || '5');
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
-const YAMPI_API_KEY = process.env.YAMPI_API_KEY || '';
-const YAMPI_TOKEN = process.env.YAMPI_TOKEN || '';
-const YAMPI_ALIAS = process.env.YAMPI_ALIAS || 'a2kf-suplementos2';
 
 app.use(express.json({ limit: '2mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -270,144 +267,9 @@ setInterval(checkScheduledPosts, 60 * 1000);
 console.log('[scheduler] Agendamento de posts ativo ✓');
 
 // ─── PRODUTOS DESTAQUE (Yampi) ───────────────────────────────────────────────
-// Cache em memória: evita bater na API a cada pageview
-let yampiCache = { products: null, ts: 0 };
-const YAMPI_TTL = 5 * 60 * 1000; // 5 minutos
-
-function parseYampiProducts(parsed) {
-  // Log da 1ª SKU para debug — remover depois de confirmar os campos
-  const firstSkus = (parsed.data?.[0]?.skus?.data || []);
-  if (firstSkus.length) {
-    const s = firstSkus[0];
-    console.log('[yampi] SKU campos:', JSON.stringify({
-      price: s.price,
-      price_sale: s.price_sale,
-      promotional_price: s.promotional_price,
-      price_discount: s.price_discount,
-      price_with_discount: s.price_with_discount,
-      sale_price: s.sale_price,
-    }));
-  }
-
-  return (parsed.data || []).map(p => {
-    const skus = p.skus?.data || [];
-    let originalPrice = 0;
-    let finalPrice = 0;
-
-    skus.forEach(s => {
-      // Na Yampi: price_sale = preço cheio de venda | price_discount = preço promocional
-      // O campo "price" pode vir vazio/zero — usar price_sale como preço base
-      const base = parseFloat(s.price_sale || s.price || 0);
-      const promo = parseFloat(s.price_discount || s.promotional_price || s.price_with_discount || 0);
-
-      if (base > 0) {
-        if (originalPrice === 0 || base < originalPrice) originalPrice = base;
-        const effective = (promo > 0 && promo < base) ? promo : base;
-        if (finalPrice === 0 || effective < finalPrice) finalPrice = effective;
-      }
-    });
-
-    const hasDiscount = finalPrice > 0 && finalPrice < originalPrice;
-    const images = p.images?.data || [];
-    const image = images.length
-      ? (images[0].thumb?.url || images[0].small?.url || images[0].large?.url || images[0].url || '')
-      : '';
-    const productUrl = p.url?.startsWith('http')
-      ? p.url
-      : `https://www.a2kfsuplementos.com.br/${p.url || p.slug || p.id}`;
-
-    console.log(`[yampi] ${p.name} → base: R$${originalPrice} | final: R$${finalPrice} | desconto: ${hasDiscount}`);
-
-    return {
-      id: p.id,
-      name: p.name,
-      slug: p.slug || '',
-      image,
-      price: finalPrice || originalPrice,
-      originalPrice: hasDiscount ? originalPrice : 0,
-      url: productUrl,
-    };
-  }).filter(p => p.name && p.price > 0);
-}
-
-app.get('/api/produtos-destaque', async (req, res) => {
-  if (!YAMPI_API_KEY) return res.status(503).json({ error: 'YAMPI_API_KEY não configurada.' });
-
-  const now = Date.now();
-  const forceRefresh = req.query.refresh === '1';
-
-  // Serve do cache se ainda válido e não forçou refresh
-  if (!forceRefresh && yampiCache.products && (now - yampiCache.ts) < YAMPI_TTL) {
-    console.log('[yampi] Servindo do cache');
-    res.set('Cache-Control', 'public, max-age=60');
-    return res.json({ success: true, products: yampiCache.products, cached: true });
-  }
-
-  try {
-    console.log('[yampi] Buscando produtos na API...');
-    const result = await new Promise((resolve, reject) => {
-      const opts = {
-        hostname: 'api.dooki.com.br',
-        path: `/v2/${YAMPI_ALIAS}/catalog/products?include=images,skus&limit=8&page=1&sortBy=total_sold&sortDirection=desc`,
-        method: 'GET',
-        headers: {
-          'User-Token': YAMPI_TOKEN,
-          'User-Secret-Key': YAMPI_API_KEY,
-          'Accept': 'application/json',
-        },
-      };
-      const r = https.request(opts, (response) => {
-        let data = '';
-        response.on('data', chunk => data += chunk);
-        response.on('end', () => resolve({ status: response.statusCode, body: data }));
-      });
-      r.on('error', reject);
-      // Timeout de 8 segundos
-      r.setTimeout(8000, () => { r.destroy(new Error('Timeout Yampi')); });
-      r.end();
-    });
-
-    console.log(`[yampi] Status HTTP: ${result.status}`);
-
-    if (result.status !== 200) {
-      console.error('[yampi] Resposta inesperada:', result.body.substring(0, 200));
-      // Retorna cache antigo se existir, mesmo expirado
-      if (yampiCache.products) {
-        console.log('[yampi] Usando cache antigo como fallback');
-        return res.json({ success: true, products: yampiCache.products, fallback: true });
-      }
-      return res.status(502).json({ error: 'Erro ao buscar produtos da Yampi.' });
-    }
-
-    const parsed = JSON.parse(result.body);
-    console.log(`[yampi] Total de produtos recebidos: ${parsed.data?.length || 0}`);
-
-    const products = parseYampiProducts(parsed);
-    console.log(`[yampi] Produtos processados: ${products.length}`);
-
-    if (products.length === 0) {
-      console.warn('[yampi] Nenhum produto válido retornado!');
-      if (yampiCache.products) {
-        return res.json({ success: true, products: yampiCache.products, fallback: true });
-      }
-      return res.status(404).json({ error: 'Nenhum produto encontrado.' });
-    }
-
-    // Atualiza cache em memória
-    yampiCache = { products, ts: now };
-
-    res.set('Cache-Control', 'public, max-age=60');
-    res.json({ success: true, products });
-  } catch (e) {
-    console.error('[yampi] Erro:', e.message);
-    // Fallback para cache antigo em caso de erro de rede
-    if (yampiCache.products) {
-      console.log('[yampi] Erro de rede — usando cache como fallback');
-      return res.json({ success: true, products: yampiCache.products, fallback: true });
-    }
-    res.status(500).json({ error: 'Erro interno ao buscar produtos.' });
-  }
-});
+// Lógica movida para yampi.js (preço de/por do mesmo SKU, ignora SKUs indisponíveis,
+// cache de 2 min e endpoint /api/produtos-destaque/debug para admin).
+require('./yampi')(app, { requireAuth });
 
 // ─── CRÍTICO 1: Groq — proxy autenticado (chave NUNCA vai ao cliente) ────────
 // O frontend envia o Bearer token do Supabase; o servidor valida a sessão
