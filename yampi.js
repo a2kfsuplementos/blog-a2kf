@@ -133,7 +133,7 @@ module.exports = function registerYampiRoutes(app, { requireAuth }) {
       if (cache.products && now - cache.ts < STALE_MAX) {
         return res.json({ success: true, products: cache.products, fallback: true });
       }
-      return res.status(502).json({ error: 'Erro ao buscar produtos da Yampi.', detail: String(e.message).substring(0, 200) });
+      return res.status(500).json({ error: 'Erro ao buscar produtos da Yampi.', detail: String(e.message).substring(0, 200) });
     }
   });
 
@@ -157,7 +157,7 @@ module.exports = function registerYampiRoutes(app, { requireAuth }) {
         })),
       })));
     } catch (e) {
-      res.status(502).json({ error: e.message });
+      res.status(500).json({ error: e.message });
     }
   });
 };
