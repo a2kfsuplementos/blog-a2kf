@@ -1022,7 +1022,7 @@
 
   async function loadProdutos() {
     try {
-      const res = await fetch('/api/produtos-destaque');
+      const res = await fetch('/api/produtos-destaque', { cache: 'no-store' });
       if (!res.ok) return;
       const data = await res.json();
       if (!data.success || !data.products.length) return;
